@@ -1,0 +1,183 @@
+/* ---------- actions ---------- */
+function addTask(raw,date,time){
+  let text=raw.trim(), cat='';
+  const m=text.match(/(?:^|\s)#(\S+)/); if(m){cat=m[1];text=text.replace(m[0],'').trim()}
+  if(!text)return;
+  const t=now();
+  db.tasks.push({id:uid(),text,done:false,memo:'',cat,date:date||'',time:time||'',created:t,updated:t,by:cfg.device});
+  commit();
+}
+function onAction(e){
+  if(e.target.closest('a'))return;
+  const el=e.target.closest('[data-a]'); if(!el)return;
+  const row=el.closest('[data-id]'); const t=row&&find(row.dataset.id); if(!t)return;
+  if(el.dataset.a==='chk'&&e.type==='click')toggleDone(t);
+  else if(el.dataset.a==='star'&&e.type==='click')touch(t,{star:!t.star});
+  else if(el.dataset.a==='edit'&&e.type==='click')openEdit(t.id);
+  else if(el.dataset.a==='date'&&e.type==='change'){snap('날짜 변경됨');touch(t,{date:el.value||''});toast()}
+}
+['click','change'].forEach(ev=>['#vList','#vWeek','#vFocus'].forEach(v=>$(v).addEventListener(ev,onAction)));
+document.addEventListener('click',e=>{const i=e.target.closest('.ico input[type=date],.ico input[type=time]');if(i&&i.showPicker){try{i.showPicker()}catch{}}},true);
+
+const grow=el=>{el.style.height='auto';el.style.height=el.scrollHeight+'px'};
+document.addEventListener('input',e=>{if(e.target.matches('textarea'))grow(e.target)});
+function submitAdd(){const a=$('#addTxt');if(!a.value.trim())return;addTask(a.value,addDate,addTime);a.value='';grow(a);setAdd('','')}
+$('#addBtn').addEventListener('click',submitAdd);
+$('#addTxt').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&!e.isComposing){e.preventDefault();submitAdd()}});
+function setAdd(d,t){addDate=d;addTime=t;$('#addDate').value=d;$('#addTime').value=t;$('#addPend').textContent=when({date:d,time:t});$('#addIco').classList.toggle('has',!!d);$('#addTIco').classList.toggle('has',!!t)}
+$('#addDate').addEventListener('change',e=>setAdd(e.target.value,addTime));
+$('#addTime').addEventListener('change',e=>setAdd(addDate,e.target.value));
+$('#addPend').addEventListener('click',()=>setAdd('',''));
+function submitDay(d){const i=$(`.dayadd[data-d="${d}"]`);if(!i||!i.value.trim())return;const v=i.value;i.value='';forceWeek=true;addTask(v,d);const n=$(`.dayadd[data-d="${d}"]`);n&&n.focus()}
+$('#days').addEventListener('click',e=>{const b=e.target.closest('.dbtn');if(b)submitDay(b.dataset.d)});
+$('#days').addEventListener('keydown',e=>{const i=e.target.closest('.dayadd');if(i&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&!e.isComposing){e.preventDefault();submitDay(i.dataset.d)}});
+$('#vSet').addEventListener('click',e=>{const b=e.target.closest('.seg[data-k] button');if(b)setUI(b.parentElement.dataset.k,b.dataset.v)});
+$$('input[data-k]').forEach(i=>{i.addEventListener('input',()=>{db.ui[i.dataset.k]=i.value;applyUI();paintSet()});i.addEventListener('change',()=>setUI(i.dataset.k,i.value,false))});
+$('#holX').addEventListener('change',e=>setUI('holX',e.target.value));
+mq.addEventListener&&mq.addEventListener('change',()=>render());
+document.addEventListener('focusout',e=>{if(isDayAdd(e.target))setTimeout(()=>{if(weekDirty&&!isDayAdd(document.activeElement)&&!drag)renderWeek()},300)});
+let noteT=null;
+$('#wNote').addEventListener('input',e=>{const n=e.target,w=n.dataset.w;clearTimeout(noteT);noteT=setTimeout(()=>{db.notes[w]=[n.value,now()];save(KEY,db);queueSync()},500)});
+function submitFocus(){const a=$('#fAdd');if(!a.value.trim())return;addTask(a.value,todayS(),'');a.value='';grow(a)}
+$('#fBtn').onclick=submitFocus;
+$('#fAdd').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&!e.isComposing){e.preventDefault();submitFocus()}});
+$('#foldA').onclick=()=>{cfg.archOpen=!cfg.archOpen;save(CFG,cfg);render()};
+$('#planBtn').onclick=()=>{cfg.plan=!cfg.plan;save(CFG,cfg);forceWeek=true;renderWeek()};
+$('#imgBtn').onclick=e=>showPv(e.currentTarget,['long','45','11','wall'].map(r=>`<button class="mi" data-img="${r}">${{long:'전체 길이',45:'세로 4:5',11:'정사각형 1:1',wall:'아이폰 배경화면'}[r]}<small>${{long:'AUTO',45:'1080×1350',11:'1080×1080',wall:'9:19.5'}[r]}</small></button>`).join(''));
+$('#sort').addEventListener('click',e=>{const b=e.target.closest('button');if(b){cfg.sort=b.dataset.s;save(CFG,cfg);render()}});
+$('#fold').addEventListener('click',()=>{cfg.fold=!cfg.fold;save(CFG,cfg);render()});
+$$('nav button').forEach(b=>b.addEventListener('click',()=>{view=b.dataset.v;cfg.lastView=view;save(CFG,cfg);render();scrollTo(0,0)}));
+$('#prev').onclick=()=>{weekOff--;render()};$('#next').onclick=()=>{weekOff++;render()};$('#today').onclick=()=>{weekOff=0;render()};
+$('#prt').onclick=()=>{renderPrint();print()};
+addEventListener('beforeprint',renderPrint);
+addEventListener('resize',navOn);
+$('#fsr').addEventListener('input',e=>{cfg.fs=+e.target.value;applyUI();$('#fsv').textContent=cfg.fs+'PX'});
+$('#fsr').addEventListener('change',()=>save(CFG,cfg));
+$('#splitSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(b){cfg.split=+b.dataset.x;save(CFG,cfg);render()}});
+
+/* ---------- drag (long-press) ---------- */
+let drag=null, pend=null, noClick=false;
+const ROW='.item[data-id],.wi[data-id]';
+document.addEventListener('pointerdown',e=>{
+  const row=e.target.closest(ROW);
+  if(!row||e.target.closest('button,input,label,textarea,a')||(e.pointerType==='mouse'&&e.button!==0))return;
+  pend={row,x:e.clientX,y:e.clientY,mouse:e.pointerType==='mouse'};
+  if(!pend.mouse)pend.timer=setTimeout(()=>startDrag(pend.x,pend.y),380);
+});
+document.addEventListener('pointermove',e=>{
+  if(drag){moveDrag(e.clientX,e.clientY);return}
+  if(!pend)return;
+  const d=Math.hypot(e.clientX-pend.x,e.clientY-pend.y);
+  if(pend.mouse&&d>6)startDrag(e.clientX,e.clientY);
+  else if(!pend.mouse&&d>8){clearTimeout(pend.timer);pend=null}
+});
+const stopPend=()=>{if(pend){clearTimeout(pend.timer);pend=null}};
+document.addEventListener('pointerup',e=>{stopPend();if(drag)endDrag()});
+document.addEventListener('pointercancel',()=>{stopPend();if(drag)endDrag(true)});
+document.addEventListener('touchmove',e=>{if(drag)e.preventDefault()},{passive:false});
+document.addEventListener('click',e=>{if(noClick){e.stopPropagation();e.preventDefault();noClick=false}},true);
+document.addEventListener('contextmenu',e=>{if(drag||pend)e.preventDefault()});
+function startDrag(x,y){
+  const row=pend.row;pend=null;if(!row.isConnected)return;
+  const r=row.getBoundingClientRect(), g=row.cloneNode(true);
+  g.classList.add('ghost');g.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.width}px`;
+  document.body.appendChild(g);row.classList.add('dragging');document.body.classList.add('drag');
+  drag={id:row.dataset.id,row,g,x0:x,y0:y,target:null};
+  if(navigator.vibrate)navigator.vibrate(8);
+}
+function clearMarks(){$$('.drop,.drop-before,.drop-after').forEach(el=>el.classList.remove('drop','drop-before','drop-after'))}
+function moveDrag(x,y){
+  drag.g.style.transform=`translate(${x-drag.x0}px,${y-drag.y0}px)`;
+  if(y<70)scrollBy(0,-10);else if(y>innerHeight-90)scrollBy(0,10);
+  clearMarks();drag.target=null;
+  const el=document.elementFromPoint(x,y);if(!el)return;
+  const day=el.closest('.day,.plan'), it=el.closest('#open .item');
+  if(day){day.classList.add('drop');drag.target={day:day.dataset.d}}
+  else if(it&&cfg.sort==='manual'&&drag.row.closest('#open')&&it.dataset.id!==drag.id){
+    const r=it.getBoundingClientRect(),after=y>r.top+r.height/2;
+    it.classList.add(after?'drop-after':'drop-before');drag.target={id:it.dataset.id,after}}
+}
+function endDrag(cancel){
+  const d=drag;drag=null;d.g.remove();d.row.classList.remove('dragging');document.body.classList.remove('drag');clearMarks();
+  noClick=true;setTimeout(()=>noClick=false,350);
+  const t=find(d.id);if(cancel||!t||!d.target)return;
+  if(d.target.day!==undefined){if((t.date||'')!==d.target.day){snap(d.target.day?'이동됨':'날짜 해제됨');touch(t,{date:d.target.day});toast()}return}
+  const ids=$$('#open .item').map(el=>el.dataset.id).filter(i=>i!==d.id);
+  ids.splice(ids.indexOf(d.target.id)+(d.target.after?1:0),0,d.id);
+  snap('순서 변경됨');const ts=now();ids.forEach((id,i)=>{const x=find(id);if(x&&x.order!==i)setF(x,{order:i},ts)});commit();toast();
+}
+
+/* ---------- editor ---------- */
+function openEdit(id){
+  const t=find(id); editId=id;
+  $('#eTxt').value=t.text;$('#eMemo').value=t.memo||'';$('#eCat').value=t.cat||'';paintCats();$('#eInfo').textContent=`LAST EDIT · ${t.by||'—'} · ${fmtTs(t.updated||t.created)}`;$('#eDate').value=t.date||'';$('#eTime').value=t.time||'';
+  eRep=t.repeat||'';eStar=!!t.star;paintEdit();
+  $('#back').classList.add('on');requestAnimationFrame(()=>grow($('#eTxt')));
+}
+function closeEdit(){
+  const t=find(editId); editId=null; $('#back').classList.remove('on');
+  if(!t)return;
+  const p={text:$('#eTxt').value.trim()||t.text,memo:$('#eMemo').value,cat:$('#eCat').value.trim(),date:$('#eDate').value||'',time:$('#eTime').value||'',repeat:eRep||undefined,star:eStar||undefined};
+  if(p.repeat&&!p.date)p.date=todayS();
+  const nv=v=>v===false||v===undefined||v===''?'':JSON.stringify(v);
+  if(!Object.keys(p).some(k=>nv(p[k])!==nv(t[k])))return;
+  snap(p.date!==(t.date||'')&&t.date?'날짜 변경됨':'수정됨');touch(t,p);toast();
+}
+$('#eClose').onclick=closeEdit;
+$('#back').addEventListener('click',e=>{if(e.target.id==='back')closeEdit()});
+function paintEdit(){$$('#eRep button').forEach(b=>b.classList.toggle('on',b.dataset.r===eRep));$('#eStar').classList.toggle('on',eStar)}
+$('#eRep').addEventListener('click',e=>{const b=e.target.closest('button');if(b){eRep=b.dataset.r;paintEdit()}});
+$('#eStar').onclick=()=>{eStar=!eStar;paintEdit()};
+$('#eNoDate').onclick=()=>{$('#eDate').value=''};$('#eNoTime').onclick=()=>{$('#eTime').value=''};
+$('#eDel').onclick=()=>{const t=find(editId);editId=null;$('#back').classList.remove('on');if(t){snap('삭제됨');touch(t,{deleted:true});toast()}};
+$('#undoBtn').onclick=undo;
+$('#catList').addEventListener('click',e=>{const b=e.target.closest('button[data-c]');if(b){db.colors[b.dataset.c]=[+b.dataset.i,now()];commit()}});
+
+
+/* ---------- v11 interactions ---------- */
+function paintCats(){
+  const cats=[...new Set(live().map(t=>t.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko')), v=$('#eCat').value.trim();
+  $('#eCats').innerHTML=cats.map(c=>`<button class="cchip${c===v?' on':''}" data-c="${esc(c)}" style="--ul:${catColor(c)}">${esc(c)}</button>`).join('');
+}
+$('#eCats').addEventListener('click',e=>{const b=e.target.closest('.cchip');if(!b)return;const e2=$('#eCat');e2.value=e2.value.trim()===b.dataset.c?'':b.dataset.c;paintCats()});
+$('#eCat').addEventListener('input',paintCats);
+// group fold (91)
+$('#open').addEventListener('click',e=>{const g=e.target.closest('.grp[data-g]');if(!g)return;cfg.gfold=cfg.gfold||{};cfg.gfold[g.dataset.g]=!cfg.gfold[g.dataset.g];save(CFG,cfg);renderList()});
+// settings sections / local segs (A, 86)
+$('#vSet').addEventListener('click',e=>{
+  const sh=e.target.closest('.sh');if(sh){const k=sh.parentElement.dataset.sec;cfg.secs=cfg.secs||{};cfg.secs[k]=!cfg.secs[k];save(CFG,cfg);paintSet();return}
+  const b=e.target.closest('.seg[data-c] button');if(b){cfg[b.parentElement.dataset.c]=b.dataset.v;save(CFG,cfg);paintSet()}
+});
+$('#gDev').addEventListener('change',e=>{cfg.device=e.target.value.trim()||'Device';save(CFG,cfg)});
+// weekly fixed (90)
+$('#wfix').addEventListener('click',e=>{
+  const row=e.target.closest('.fx');if(!row)return;const id=row.dataset.fx, wk=ymd(weekStart(weekOff));
+  const b=e.target.closest('.fxb button');
+  if(b){const k=wk+':'+id,c=(db.wprog[k]||[0])[0],n=+b.dataset.n;db.wprog[k]=[n===c?n-1:n,now()];if(n>c)tick();save(KEY,db);renderFix();queueSync();return}
+  if(e.target.closest('.fxd')){const it=db.wfixT[0].find(x=>x.id===id);if(it&&confirm(`"${it.text}" 주간 항목을 삭제할까요?`)){db.wfixT=[db.wfixT[0].filter(x=>x.id!==id),now()];save(KEY,db);renderFix();queueSync()}}
+});
+$('#wfix').addEventListener('keydown',e=>{
+  const i=e.target.closest('#fxAdd');if(!i||e.key!=='Enter'||e.isComposing)return;e.preventDefault();
+  const m=i.value.trim().match(/^(.*?)\s*(\d+)\s*(회|번|x)?$/i), text=(m?m[1]:i.value).trim(), goal=Math.min(14,Math.max(1,m?+m[2]:1));if(!text)return;
+  db.wfixT=[[...db.wfixT[0],{id:uid(),text,goal}],now()];save(KEY,db);i.value='';renderFix();$('#fxAdd').focus();queueSync();
+});
+// popover (82, 99)
+function showPv(anchor,html){
+  const p=$('#pv');p.innerHTML=html;p.hidden=false;const r=anchor.getBoundingClientRect(),w=p.offsetWidth;
+  p.style.top=(r.bottom+8)+'px';p.style.left=Math.max(12,Math.min(innerWidth-w-12,r.right-w))+'px';
+}
+const hidePv=()=>{$('#pv').hidden=true};
+document.addEventListener('click',e=>{if(!$('#pv').hidden&&!e.target.closest('#pv')&&!e.target.closest('#sync,#imgBtn'))hidePv()},true);
+$('#pv').addEventListener('click',e=>{
+  const m=e.target.closest('[data-img]');if(m){hidePv();weekImage(m.dataset.img);return}
+  if(e.target.closest('#pvSync')){hidePv();sync()}
+});
+$('#sync').addEventListener('click',e=>showPv(e.currentTarget,syncInfo()));
+// pinch zoom (78)
+function setWz(v,sv){cfg.wz=Math.min(1.6,Math.max(.7,Math.round(v*100)/100));applyUI();if(sv)save(CFG,cfg)}
+let gz=null;const dEl=$('#days');
+dEl.addEventListener('gesturestart',e=>{if(innerWidth<768)return;e.preventDefault();gz=cfg.wz||1});
+dEl.addEventListener('gesturechange',e=>{if(gz===null)return;e.preventDefault();setWz(gz*e.scale,false)});
+dEl.addEventListener('gestureend',()=>{if(gz===null)return;gz=null;save(CFG,cfg)});
+dEl.addEventListener('wheel',e=>{if(!e.ctrlKey||innerWidth<768)return;e.preventDefault();setWz((cfg.wz||1)*(1-e.deltaY*.01),true)},{passive:false});
+$('#wzBtn').onclick=()=>setWz(1,true);
