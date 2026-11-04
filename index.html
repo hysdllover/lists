@@ -245,17 +245,15 @@ input[type=text],textarea{font-size:16px}
       <p class="note">.ttf · .otf · .woff 파일은 이 기기에만 저장됩니다.</p>
     </div>
     <div class="sec">
-      <span class="lbl">GitHub Sync</span>
-      <div class="field"><span>저장소</span><input id="gRepo" placeholder="owner/repo" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
-      <div class="field"><span>브랜치</span><input id="gBranch" placeholder="main" autocapitalize="off" spellcheck="false"></div>
-      <div class="field"><span>파일</span><input id="gPath" placeholder="data/todo.json" autocapitalize="off" spellcheck="false"></div>
-      <div class="field"><span>토큰</span><input id="gToken" type="password" placeholder="github_pat_…" autocomplete="off"></div>
+      <span class="lbl">Gist Sync</span>
+      <div class="field"><span>토큰</span><input id="gToken" type="password" placeholder="ghp_…" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+      <div class="field"><span>Gist ID</span><input id="gId" placeholder="비우면 자동 검색 · 생성" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
       <div class="btns">
         <button class="btn pri" id="gSave">저장 · 동기화</button>
         <button class="btn" id="gNow">지금 동기화</button>
         <button class="btn del" id="gOff">연결 해제</button>
       </div>
-      <p class="note">Fine-grained 토큰에 해당 저장소의 Contents 읽기/쓰기 권한만 부여하세요. 토큰은 기기에만 저장되며, 기기마다 한 번 입력합니다.</p>
+      <p class="note">클래식 토큰(scope: gist)을 입력하세요. Gist ID를 비우면 내 Gist 중 weekly-todo.json을 찾아 쓰고, 없으면 비공개 Gist를 새로 만듭니다. 토큰은 기기에만 저장되며 기기마다 한 번 입력합니다.</p>
       <p class="note num" id="gLast"></p>
     </div>
     <div class="sec">
@@ -298,7 +296,7 @@ const load=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{retur
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
 
 let db=load(KEY,{tasks:[]});
-let cfg=Object.assign({sort:'date',fold:true,fs:13,split:1,repo:'',branch:'main',path:'data/todo.json',token:'',sha:null,last:0},load(CFG,{}));
+let cfg=Object.assign({sort:'date',fold:true,fs:13,split:1,token:'',gist:'',last:0},load(CFG,{}));
 let view='list', weekOff=0, editId=null, addDate='';
 
 const live=()=>db.tasks.filter(t=>!t.deleted);
@@ -478,53 +476,65 @@ $('#imp').addEventListener('change',async e=>{
 });
 $('#clr').onclick=()=>{const d=live().filter(t=>t.done);if(d.length&&confirm(`완료 항목 ${d.length}개를 삭제할까요?`)){const t=now();d.forEach(x=>{x.deleted=true;x.updated=t});commit()}};
 
-/* ---------- GitHub sync ---------- */
+/* ---------- GitHub Gist sync ---------- */
+const GFILE='weekly-todo.json';
 function merge(a,b){
   const m=new Map();
   for(const t of [...a,...b]){const o=m.get(t.id);if(!o||(t.updated||0)>(o.updated||0))m.set(t.id,t)}
   const cut=now()-30*864e5;
   return [...m.values()].filter(t=>!(t.deleted&&t.updated<cut));
 }
-const b64e=s=>{const u=new TextEncoder().encode(s);let r='';for(let i=0;i<u.length;i+=8192)r+=String.fromCharCode(...u.subarray(i,i+8192));return btoa(r)};
-const b64d=s=>new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g,'')),c=>c.charCodeAt(0)));
-const ready=()=>cfg.repo&&cfg.token&&cfg.path;
+const ready=()=>!!cfg.token;
 function status(cls,txt){$('#dot').className='dot '+cls;$('#syncTxt').textContent=txt}
-function api(method,body){
-  const url=`https://api.github.com/repos/${cfg.repo}/contents/${cfg.path.split('/').map(encodeURIComponent).join('/')}`+(method==='GET'?`?ref=${encodeURIComponent(cfg.branch||'main')}&t=${now()}`:'');
-  return fetch(url,{method,cache:'no-store',headers:{Authorization:`Bearer ${cfg.token}`,Accept:'application/vnd.github+json'},body:body&&JSON.stringify(body)});
+async function gh(method,path,body){
+  const r=await fetch('https://api.github.com'+path,{method,cache:'no-store',headers:{Authorization:`token ${cfg.token}`,Accept:'application/vnd.github+json',...(body?{'Content-Type':'application/json'}:{})},body:body&&JSON.stringify(body)});
+  if(!r.ok){const e=new Error(r.status===401?'토큰 오류':r.status===403?'권한(gist) 확인':r.status===404?'Gist 없음':'HTTP '+r.status);e.status=r.status;throw e}
+  return r.json();
+}
+async function findGist(){
+  for(let p=1;p<=10;p++){
+    const l=await gh('GET',`/gists?per_page=100&page=${p}`);
+    const g=l.find(x=>x.files&&x.files[GFILE]); if(g)return g.id;
+    if(l.length<100)break;
+  }
+  const g=await gh('POST','/gists',{description:'Weekly to-do data',public:false,files:{[GFILE]:{content:JSON.stringify({tasks:[]})}}});
+  return g.id;
+}
+async function readGist(g){
+  const f=g.files&&g.files[GFILE]; if(!f)return [];
+  let c=f.content;
+  if(f.truncated)c=await (await fetch(f.raw_url,{cache:'no-store'})).text();
+  try{return JSON.parse(c||'{}').tasks||[]}catch{return []}
 }
 let syncing=false, again=false, timer=null;
 function queueSync(){if(!ready())return;clearTimeout(timer);timer=setTimeout(sync,1200)}
-async function sync(tries=2){
+async function sync(){
   if(!ready()){status('','로컬');return}
   if(syncing){again=true;return}
   syncing=true;status('busy','동기화 중');
   try{
-    const r=await api('GET');let remote=[],sha=null;
-    if(r.ok){const j=await r.json();sha=j.sha;remote=JSON.parse(b64d(j.content||'')||'{"tasks":[]}').tasks||[]}
-    else if(r.status!==404)throw new Error(r.status===401?'토큰 오류':r.status===403?'권한 없음':'HTTP '+r.status);
-    const merged=merge(db.tasks,remote);
+    if(!cfg.gist){cfg.gist=await findGist();save(CFG,cfg);fillCfg()}
+    let g;
+    try{g=await gh('GET',`/gists/${cfg.gist}`)}
+    catch(e){if(e.status!==404)throw e;cfg.gist=await findGist();save(CFG,cfg);fillCfg();g=await gh('GET',`/gists/${cfg.gist}`)}
+    const remote=await readGist(g), merged=merge(db.tasks,remote);
     const sig=x=>JSON.stringify([...x].sort((p,q)=>p.id<q.id?-1:1));
     if(sig(merged)!==sig(db.tasks)){db.tasks=merged;save(KEY,db);render()}
-    if(sha===null||sig(merged)!==sig(remote)){
-      const p=await api('PUT',{message:`sync ${new Date().toISOString()}`,content:b64e(JSON.stringify({tasks:merged},null,1)),branch:cfg.branch||'main',...(sha?{sha}:{})});
-      if(p.status===409||p.status===422){syncing=false;if(tries>0)return sync(tries-1);throw new Error('충돌')}
-      if(!p.ok)throw new Error(p.status===404?'저장소/브랜치 확인':'HTTP '+p.status);
-    }
+    if(sig(merged)!==sig(remote))await gh('PATCH',`/gists/${cfg.gist}`,{files:{[GFILE]:{content:JSON.stringify({tasks:merged},null,1)}}});
     cfg.last=now();save(CFG,cfg);
     const d=new Date(cfg.last);status('ok',`${pad(d.getHours())}:${pad(d.getMinutes())}`);
     $('#gLast').textContent=`LAST SYNC ${ymd(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  }catch(e){status('err',e.message==='Failed to fetch'?'오프라인':e.message)}
+  }catch(e){status('err',e.message==='Failed to fetch'||e.message==='Load failed'?'오프라인':e.message)}
   syncing=false;if(again){again=false;queueSync()}
 }
-function fillCfg(){$('#gRepo').value=cfg.repo;$('#gBranch').value=cfg.branch;$('#gPath').value=cfg.path;$('#gToken').value=cfg.token}
+function fillCfg(){$('#gToken').value=cfg.token;$('#gId').value=cfg.gist||''}
 $('#gSave').onclick=()=>{
-  cfg.repo=$('#gRepo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\.git$|\/$/g,'');
-  cfg.branch=$('#gBranch').value.trim()||'main';cfg.path=$('#gPath').value.trim().replace(/^\//,'')||'data/todo.json';cfg.token=$('#gToken').value.trim();
+  cfg.token=$('#gToken').value.trim();
+  cfg.gist=$('#gId').value.trim().replace(/^.*gist\.github\.com\/(?:[^/]+\/)?/,'').replace(/[/#?].*$/,'');
   save(CFG,cfg);fillCfg();sync();
 };
 $('#gNow').onclick=()=>sync();
-$('#gOff').onclick=()=>{if(confirm('동기화 설정을 이 기기에서 삭제할까요? (할 일 데이터는 유지됩니다)')){cfg.token='';cfg.repo='';save(CFG,cfg);fillCfg();status('','로컬')}};
+$('#gOff').onclick=()=>{if(confirm('동기화 설정을 이 기기에서 삭제할까요? (할 일 데이터는 유지됩니다)')){cfg.token='';cfg.gist='';save(CFG,cfg);fillCfg();status('','로컬')}};
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();sync()}});
 setInterval(()=>{if(document.visibilityState==='visible'&&ready())sync()},60000);
 
