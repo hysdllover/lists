@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Weekly">
 <meta name="theme-color" content="#f9fafb" id="themeColor">
-<script>try{document.documentElement.dataset.theme=(JSON.parse(localStorage.getItem('weekly.cfg'))||{}).theme||'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
+<script>try{var u=(JSON.parse(localStorage.getItem('weekly.v1'))||{}).ui,c=JSON.parse(localStorage.getItem('weekly.cfg'))||{};document.documentElement.dataset.theme=(u&&u.theme)||c.theme||'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-512.png">
@@ -24,7 +24,7 @@
   --c0:#a9b8c9; --c1:#adbeaa; --c2:#cdb8a4; --c3:#b9aec6; --c4:#a5c0bd; --c5:#cbbf9c; --c6:#c9aeb5; --c7:#b4bbc2;
   --font:"Noto Sans KR",-apple-system,"Apple SD Gothic Neo",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
-  --fs:14px;
+  --fs:14px; --dn:1; --ls:-.005em; --lh:1.6;
   --top:env(safe-area-inset-top); --bot:env(safe-area-inset-bottom);
 }
 :root[data-theme=dark]{
@@ -41,7 +41,7 @@
 }}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{font-size:var(--fs);height:100%}
-body{min-height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-weight:300;font-size:1rem;line-height:1.6;letter-spacing:-.005em;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+body{min-height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-weight:300;font-size:1rem;line-height:var(--lh);letter-spacing:var(--ls);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
 button,input,select,textarea{font:inherit;color:inherit;background:none;border:0;border-radius:0;outline:0;-webkit-appearance:none;appearance:none;letter-spacing:inherit}
 button{cursor:pointer}
 ::placeholder{color:var(--faint);opacity:1}
@@ -78,7 +78,7 @@ main{max-width:1400px;margin:0 auto}
 }
 
 /* hero */
-.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:1.8rem}
+.hero{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:1.8rem}
 .big{font-size:2.9rem;font-weight:200;line-height:1;letter-spacing:-.03em;margin-top:.55rem}
 .stat{display:flex;gap:1.3rem;text-align:right;padding-bottom:.25rem}
 .stat b{display:block;font-size:1.35rem;font-weight:200;line-height:1.1}
@@ -107,7 +107,7 @@ main{max-width:1400px;margin:0 auto}
 
 /* items */
 ul{list-style:none}
-.item{display:flex;align-items:flex-start;gap:.9rem;padding:1rem 0;border-bottom:1px solid var(--hair)}
+.item{position:relative;display:flex;align-items:flex-start;gap:.9rem;padding:calc(1rem*var(--dn)) 0;border-bottom:1px solid var(--hair)}
 .chk{width:1rem;height:1rem;border:1px solid var(--faint);flex:none;margin-top:.28rem;display:grid;place-items:center;transition:background .15s,border-color .15s}
 .chk.on{background:var(--accent);border-color:var(--accent)}
 .chk.on::after{content:"";width:.46rem;height:.24rem;border:solid var(--surface);border-width:0 0 1px 1px;transform:translateY(-.06rem) rotate(-45deg)}
@@ -135,7 +135,7 @@ ul{list-style:none}
 .ctl button{font-size:.68rem;letter-spacing:.12em;color:var(--sub)}
 .ctl .arr{font-size:1.25rem;font-weight:200;color:var(--text);line-height:1;padding:0 .1rem}
 .days{border-top:1px solid var(--line)}
-.day{display:grid;grid-template-columns:3.6rem 1fr;gap:.9rem;padding:1rem 0;border-bottom:1px solid var(--hair);min-width:0}
+.day{position:relative;display:grid;grid-template-columns:3.6rem 1fr;gap:.9rem;padding:calc(1rem*var(--dn)) 0;border-bottom:1px solid var(--hair);min-width:0}
 .dh{display:flex;flex-direction:column;align-items:flex-start}
 .dh .lbl{font-size:.56rem;display:flex;align-items:center;gap:.35rem}
 .dh .d{font-size:1.75rem;font-weight:200;line-height:1.1;letter-spacing:-.02em}
@@ -144,7 +144,7 @@ ul{list-style:none}
 .day.today .dh .d{color:var(--accent)}
 .day.today .dh .lbl::after{content:"";width:4px;height:4px;background:var(--accent)}
 .dl{min-width:0;padding-top:.1rem}
-.wi{display:flex;gap:.6rem;align-items:flex-start;padding:.28rem 0;font-size:.9rem}
+.wi{display:flex;gap:.6rem;align-items:flex-start;padding:calc(.28rem*var(--dn)) 0;font-size:.9rem}
 .wi .chk{width:.82rem;height:.82rem;margin-top:.32rem}
 .wi .chk.on::after{width:.38rem;height:.2rem}
 .wi .tag{margin-left:.55rem;font-size:.62rem}
@@ -231,6 +231,55 @@ body.drag{cursor:grabbing;-webkit-user-select:none;user-select:none}
 .shead{display:flex;justify-content:space-between;align-items:center;margin-bottom:.2rem}
 .sheet .seg{flex-wrap:wrap;gap:.9rem}
 
+/* v10 */
+.field .seg{flex-wrap:wrap;gap:.5rem 1rem}
+.seg.sw{gap:.6rem}.seg.sw button{width:1.05rem;height:1.05rem;padding:0;border:0}
+.seg.sw button.on{outline:1px solid var(--text);outline-offset:2px}
+body[data-paper=grid]{background-image:linear-gradient(var(--hair) 1px,transparent 1px),linear-gradient(90deg,var(--hair) 1px,transparent 1px);background-size:1.6rem 1.6rem}
+body[data-paper=lined]{background-image:linear-gradient(transparent calc(1.8rem - 1px),var(--hair) calc(1.8rem - 1px));background-size:100% 1.8rem}
+body[data-paper=dot]{background-image:radial-gradient(circle,var(--line) .07rem,transparent .085rem);background-size:1.2rem 1.2rem}
+body.memoopen .memo{white-space:pre-wrap;overflow:visible}
+.dd{font-family:var(--mono);font-size:.62rem;color:var(--sub);letter-spacing:.04em}
+.dd.now{color:var(--accent)}
+body.dimpast .day.past .dh,body.dimpast .day.past .dl{opacity:.42}
+.hn{font-size:.52rem;color:var(--danger);line-height:1.3;margin-top:.15rem;letter-spacing:.02em}
+body.corner .day.today::before,body.corner .item.starred::before{content:"";position:absolute;top:calc(1rem*var(--dn) + .05rem);left:-.55rem;width:.42rem;height:.42rem;border-top:1px solid var(--accent);border-left:1px solid var(--accent)}
+@media (min-width:768px){body.corner .day.today::before{top:-.55rem;left:.2rem}}
+@media (max-width:767px){
+  body.collapse .day.empty{padding:calc(.45rem*var(--dn)) 0;align-items:center}
+  body.collapse .day.empty .dh{flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:.45rem}
+  body.collapse .day.empty .dh .d{font-size:1.05rem}
+  body.collapse .day.empty .dh .n{display:none}
+  body.collapse .day.empty .dl{padding-top:0}
+}
+.wnote{display:block;width:100%;resize:none;overflow:hidden;font-size:.88rem;line-height:1.6;padding:0 0 1rem;margin-top:-.6rem;min-height:2.45rem}
+.plan{position:sticky;top:calc(3.4rem + var(--top));z-index:3;background:var(--bg);border:1px solid var(--line);padding:.7rem .9rem;margin-bottom:1.2rem;max-height:32vh;overflow:auto}
+.plan[hidden]{display:none}
+.plan.drop{background:var(--soft)}
+.ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem}
+@media (min-width:768px){.pl{display:grid;grid-template-columns:repeat(auto-fill,minmax(12rem,1fr));gap:0 1.4rem}}
+.empty2{font-size:.75rem;color:var(--faint)}
+.ctl{flex-wrap:wrap}
+.ctl button.on{color:var(--text);text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
+.arch .item{opacity:.7}
+#vFocus{max-width:46rem;margin:0 auto}
+.fbig{font-size:4.6rem;font-weight:200;line-height:1;letter-spacing:-.04em;margin:.55rem 0 1.3rem}
+.fbar{height:1px;background:var(--line);margin-bottom:.55rem}
+.fbar i{display:block;height:1px;width:0;background:var(--accent);transition:width .5s}
+.fhero{margin-bottom:1.6rem}
+#vFocus .item{font-size:1.18rem}
+#vFocus .item .chk{width:1.1rem;height:1.1rem;margin-top:.42rem}
+.fadd{margin-top:1.4rem;align-items:flex-end}
+#fAdd{flex:1;min-width:0;padding:.8rem 0;font-size:1rem;line-height:1.55;resize:none;overflow:hidden;display:block}
+#fAdd:placeholder-shown~.addbtn{opacity:.25;pointer-events:none}
+.fadd .addbtn{margin-bottom:.55rem}
+.pop .chk{background:var(--accent);border-color:var(--accent);animation:pchk .28s ease-out}
+.pop .chk::after{content:"";width:.46rem;height:.24rem;border:solid var(--surface);border-width:0 0 1px 1px;transform:translateY(-.06rem) rotate(-45deg)}
+.wi.pop .chk::after{width:.38rem;height:.2rem}
+@keyframes pchk{from{transform:scale(.7)}}
+.pop .tx,.pop .tx.ul{text-decoration:line-through;text-decoration-thickness:1px;text-decoration-color:var(--faint);color:var(--faint);animation:pstk .42s ease-out}
+@keyframes pstk{from{text-decoration-color:transparent;color:var(--text)}}
+
 /* print: A4 */
 #print{display:none}
 @media print{
@@ -251,6 +300,12 @@ body.drag{cursor:grabbing;-webkit-user-select:none;user-select:none}
   #print .und{margin-top:8pt}
   #print .und h2{font-size:7pt;letter-spacing:.24em;font-weight:400;color:#666;border-bottom:.4pt solid #ccc;padding-bottom:3pt;margin-bottom:3pt}
   #print .cols{columns:2;column-gap:10mm}
+  #print{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #print .pnote{font-size:9pt;color:#444;padding:2pt 0 6pt;border-bottom:.4pt solid #ccc;white-space:pre-wrap}
+  #print td.h i{display:block;font-style:normal;font-size:6.5pt;color:#a66;letter-spacing:0;margin-top:2pt}
+  #print.pp-grid td.c{background-image:linear-gradient(#e4e4e4 .4pt,transparent .4pt),linear-gradient(90deg,#e4e4e4 .4pt,transparent .4pt);background-size:5mm 5mm}
+  #print.pp-lined td.c{background-image:linear-gradient(transparent calc(6mm - .4pt),#e0e0e0 calc(6mm - .4pt));background-size:100% 6mm}
+  #print.pp-dot td.c{background-image:radial-gradient(circle,#c4c4c4 .5pt,transparent .6pt);background-size:5mm 5mm}
 }
 </style>
 </head>
@@ -261,6 +316,7 @@ body.drag{cursor:grabbing;-webkit-user-select:none;user-select:none}
     <nav>
       <button data-v="list" class="on" id="tabList">LIST</button>
       <button data-v="week" id="tabWeek">WEEK</button>
+      <button data-v="focus" id="tabFocus">TODAY</button>
       <button data-v="set" id="tabSet">SETTING</button>
     </nav>
     <span class="sync" id="sync"><span class="dot" id="dot"></span><span id="syncTxt">LOCAL</span></span>
@@ -291,29 +347,65 @@ body.drag{cursor:grabbing;-webkit-user-select:none;user-select:none}
     <ul id="open"></ul>
     <button class="fold" id="fold"><i>›</i><span class="lbl">Completed</span><span class="num" id="doneN"></span></button>
     <ul id="done"></ul>
+    <button class="fold" id="foldA"><i>›</i><span class="lbl">Archive</span><span class="num" id="archN"></span></button>
+    <ul id="arch" class="arch"></ul>
   </section>
 
   <section class="view" id="vWeek">
     <div class="hero">
       <div><span class="lbl" id="wMon"></span><div class="big num" id="rng"></div></div>
-      <div class="ctl"><button class="arr" id="prev" aria-label="이전 주">‹</button><button id="today">TODAY</button><button class="arr" id="next" aria-label="다음 주">›</button><button id="prt">PRINT</button></div>
+      <div class="ctl"><button class="arr" id="prev" aria-label="이전 주">‹</button><button id="today">NOW</button><button class="arr" id="next" aria-label="다음 주">›</button><button id="planBtn">PLAN</button><button id="imgBtn">IMAGE</button><button id="prt">PRINT</button></div>
     </div>
+    <textarea class="wnote" id="wNote" rows="1" placeholder="이번 주 메모"></textarea>
+    <div class="plan" id="plan" data-d="" hidden></div>
     <div class="days" id="days"></div>
+  </section>
+
+  <section class="view" id="vFocus">
+    <div class="fhero">
+      <span class="lbl" id="fDay"></span>
+      <div class="fbig num" id="fDate"></div>
+      <div class="fbar"><i id="fProg"></i></div>
+      <span class="lbl num" id="fCount"></span>
+    </div>
+    <ul id="fList"></ul>
+    <div class="add fadd"><textarea id="fAdd" rows="1" placeholder="오늘 할 일 추가"></textarea><button class="addbtn" id="fBtn">ADD</button></div>
   </section>
 
   <section class="view" id="vSet">
     <div class="sec">
       <span class="lbl">Display</span>
-      <div class="field"><span>글자 크기</span>
-        <div class="size"><span class="a1">A</span><input type="range" id="fsr" min="11" max="19" step="0.5"><span class="a2">A</span><span class="val" id="fsv"></span></div>
-      </div>
-      <div class="field"><span>테마</span>
-        <div class="seg" id="themeSeg"><button data-t="light">라이트</button><button data-t="dark">다크</button><button data-t="auto">시스템</button></div>
-      </div>
+      <div class="field"><span>글자 크기</span><div class="size"><span class="a1">A</span><input type="range" id="fsr" min="11" max="19" step="0.5"><span class="a2">A</span><span class="val" id="fsv"></span></div></div>
+      <div class="field"><span>자간</span><div class="size"><input type="range" data-k="ls" min="-0.04" max="0.1" step="0.005"><span class="val" data-val="ls"></span></div></div>
+      <div class="field"><span>줄 간격</span><div class="size"><input type="range" data-k="lh" min="1.3" max="2.1" step="0.05"><span class="val" data-val="lh"></span></div></div>
+      <div class="field"><span>여백</span><div class="seg" data-k="dens"><button data-v="loose">넉넉하게</button><button data-v="normal">보통</button><button data-v="tight">촘촘하게</button></div></div>
+      <div class="field"><span>선</span><div class="seg" data-k="line"><button data-v="0">아주 옅게</button><button data-v="1">옅게</button><button data-v="2">보통</button><button data-v="3">진하게</button></div></div>
+      <div class="field"><span>테마</span><div class="seg" data-k="theme"><button data-v="light">라이트</button><button data-v="dark">다크</button><button data-v="auto">시스템</button></div></div>
+      <div class="field"><span>강조색</span><div class="seg sw" data-k="accent"><button data-v="bluegray" style="background:#7489a2" aria-label="블루그레이"></button><button data-v="steel" style="background:#6a88ad" aria-label="스틸"></button><button data-v="slate" style="background:#7b8692" aria-label="슬레이트"></button><button data-v="sage" style="background:#6f9095" aria-label="세이지"></button><button data-v="lavender" style="background:#8580a3" aria-label="라벤더"></button></div></div>
+      <div class="field"><span>종이 배경</span><div class="seg" data-k="paper"><button data-v="none">없음</button><button data-v="grid">모눈</button><button data-v="lined">줄</button><button data-v="dot">점</button></div></div>
+      <div class="field"><span>인쇄 배경</span><div class="seg" data-k="paperPrint"><button data-v="1">적용</button><button data-v="0">미적용</button></div></div>
       <div class="field" id="splitRow"><span>분할 화면</span>
         <div class="seg" id="splitSeg"><button data-x="1">켜기</button><button data-x="0">끄기</button></div>
       </div>
-      <p class="note">글자 크기를 바꾸면 여백과 아이콘도 함께 조정됩니다. 분할 화면은 아이패드 가로에서 리스트와 주간 보기를 나란히 보여줍니다.</p>
+    </div>
+    <div class="sec">
+      <span class="lbl">Date</span>
+      <div class="field"><span>날짜 표기</span><div class="seg" data-k="dstyle"><button data-v="dot">11.04</button><button data-v="en">Nov 4</button><button data-v="ko">11월 4일</button></div></div>
+      <div class="field"><span>요일 표기</span><div class="seg" data-k="dow"><button data-v="en">SUN</button><button data-v="ko">일</button><button data-v="both">둘 다</button></div></div>
+      <div class="field"><span>주 번호</span><div class="seg" data-k="weekNo"><button data-v="1">켜기</button><button data-v="0">끄기</button></div></div>
+      <div class="field"><span>D-day</span><div class="seg" data-k="dday"><button data-v="1">켜기</button><button data-v="0">끄기</button></div></div>
+      <div class="field"><span>공휴일</span><div class="seg" data-k="hol"><button data-v="1">켜기</button><button data-v="0">끄기</button></div></div>
+      <div class="field"><span>휴일 추가</span><textarea id="holX" placeholder="2026-07-17 제헌절"></textarea></div>
+      <p class="note">2026–2027년 한국 공휴일이 들어 있습니다. 그 밖의 날짜는 한 줄에 하나씩 “YYYY-MM-DD 이름”으로 추가하세요.</p>
+    </div>
+    <div class="sec">
+      <span class="lbl">Layout</span>
+      <div class="field"><span>메모</span><div class="seg" data-k="memo"><button data-v="0">첫 줄만</button><button data-v="1">모두 펼침</button></div></div>
+      <div class="field"><span>완료 위치</span><div class="seg" data-k="doneBottom"><button data-v="1">아래로</button><button data-v="0">그대로</button></div></div>
+      <div class="field"><span>빈 요일</span><div class="seg" data-k="collapse"><button data-v="1">접기</button><button data-v="0">펼치기</button></div></div>
+      <div class="field"><span>지난 날</span><div class="seg" data-k="dimPast"><button data-v="1">흐리게</button><button data-v="0">그대로</button></div></div>
+      <div class="field"><span>모서리 표시</span><div class="seg" data-k="corner"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
+      <p class="note">화면 설정은 Gist로 기기 간 동기화됩니다. 글자 크기, 분할 화면, 업로드한 폰트는 기기마다 따로 저장됩니다.</p>
     </div>
     <div class="sec">
       <span class="lbl">Font</span>
@@ -349,7 +441,7 @@ body.drag{cursor:grabbing;-webkit-user-select:none;user-select:none}
         <button class="btn del" id="clr">완료 항목 삭제</button>
       </div>
     </div>
-    <p class="ver">VERSION 9</p>
+    <p class="ver">VERSION 10</p>
   </section>
 </main>
 
@@ -382,12 +474,23 @@ const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const parse=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
 const todayS=()=>ymd(new Date());
 const when=t=>t.date?fmtD(t.date)+(t.time?' '+t.time:''):(t.time||'');
-const fmtD=s=>{const d=parse(s);return `${pad(d.getMonth()+1)}.${pad(d.getDate())} ${DOW[d.getDay()]}`};
+const MONS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], DOWS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const U=k=>db.ui[k];
+const dowS=d=>U('dow')==='en'?DOWS[d.getDay()]:DOW[d.getDay()];
+const dowL=(d,long)=>{const e=DOWE[d.getDay()],k=DOW[d.getDay()]+(long?'요일':'');return U('dow')==='en'?e:U('dow')==='ko'?k:`${e} · ${k}`};
+const fmtD=s=>{const d=parse(s),st=U('dstyle');return st==='en'?`${MONS[d.getMonth()]} ${d.getDate()} ${dowS(d)}`:st==='ko'?`${d.getMonth()+1}월 ${d.getDate()}일 ${dowS(d)}`:`${pad(d.getMonth()+1)}.${pad(d.getDate())} ${dowS(d)}`};
+const bigD=d=>{const st=U('dstyle');return st==='en'?`${MONS[d.getMonth()]} ${d.getDate()}`:st==='ko'?`${d.getMonth()+1}월 ${d.getDate()}일`:`${pad(d.getMonth()+1)}.${pad(d.getDate())}`};
 const load=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
 
 let db=load(KEY,{tasks:[]}); db.colors=db.colors||{};
 let cfg=Object.assign({sort:'date',fold:true,fs:14,theme:'light',split:1,token:'',gist:'',last:0},load(CFG,{}));
+const UID={theme:'light',accent:'bluegray',paper:'none',paperPrint:'0',line:'1',dens:'normal',ls:'-0.005',lh:'1.6',dstyle:'dot',dow:'en',weekNo:'1',dday:'1',hol:'1',holX:'',memo:'0',doneBottom:'1',collapse:'1',dimPast:'1',corner:'1'};
+db.notes=db.notes||{};db.uiT=db.uiT||0;db.ui=Object.assign({},UID,!db.ui&&cfg.theme?{theme:cfg.theme}:{},db.ui||{});
+const HOL={'2026-01-01':'신정','2026-02-16':'설날','2026-02-17':'설날','2026-02-18':'설날','2026-03-01':'삼일절','2026-03-02':'대체공휴일','2026-05-05':'어린이날','2026-05-24':'부처님오신날','2026-05-25':'대체공휴일','2026-06-03':'지방선거','2026-06-06':'현충일','2026-08-15':'광복절','2026-08-17':'대체공휴일','2026-09-24':'추석','2026-09-25':'추석','2026-09-26':'추석','2026-10-03':'개천절','2026-10-05':'대체공휴일','2026-10-09':'한글날','2026-12-25':'성탄절',
+'2027-01-01':'신정','2027-02-06':'설날','2027-02-07':'설날','2027-02-08':'설날','2027-02-09':'대체공휴일','2027-03-01':'삼일절','2027-05-05':'어린이날','2027-05-13':'부처님오신날','2027-06-06':'현충일','2027-08-15':'광복절','2027-08-16':'대체공휴일','2027-09-14':'추석','2027-09-15':'추석','2027-09-16':'추석','2027-10-03':'개천절','2027-10-04':'대체공휴일','2027-10-09':'한글날','2027-10-11':'대체공휴일','2027-12-25':'성탄절','2027-12-27':'대체공휴일'};
+function holidays(){const m=U('hol')==='1'?{...HOL}:{};for(const l of (U('holX')||'').split('\n')){const r=l.trim().match(/^(\d{4}-\d{2}-\d{2})\s*(.*)$/);if(r)m[r[1]]=r[2]||'휴일'}return m}
+function isoWeek(d){const t=new Date(d.getFullYear(),d.getMonth(),d.getDate()+(d.getDay()===0?1:0));t.setDate(t.getDate()-((t.getDay()+6)%7)+3);const j=new Date(t.getFullYear(),0,4);return 1+Math.round(((t-j)/864e5-3+((j.getDay()+6)%7))/7)}
 let eRep='', eStar=false;
 let view='list', weekOff=0, editId=null, addDate='', addTime='', rangeTxt='';
 
@@ -417,9 +520,15 @@ function nextDate(d,r){const x=parse(d);
   else if(r==='weekly')x.setDate(x.getDate()+7);
   else if(r==='monthly'){const day=x.getDate();x.setDate(1);x.setMonth(x.getMonth()+1);x.setDate(Math.min(day,new Date(x.getFullYear(),x.getMonth()+1,0).getDate()))}
   return ymd(x)}
+const popping=new Set();
 function toggleDone(t){
-  const ts=now();
-  if(t.done){setF(t,{done:false},ts);commit();return}
+  if(t.done){setF(t,{done:false},now());commit();return}
+  if(popping.has(t.id))return;popping.add(t.id);
+  $$(`[data-id="${t.id}"]`).forEach(r=>r.classList.add('pop'));
+  setTimeout(()=>finishDone(t),430);
+}
+function finishDone(t){
+  popping.delete(t.id);const ts=now();
   snap('완료됨');const p={done:true};
   if(t.repeat&&!t.spawned){const id=uid();
     db.tasks.push({id,text:t.text,done:false,memo:t.memo||'',cat:t.cat||'',date:nextDate(t.date||todayS(),t.repeat),time:t.time||'',repeat:t.repeat,star:t.star||false,order:t.order,created:ts,updated:ts});
@@ -432,18 +541,19 @@ function catIdx(c){if(db.colors[c])return db.colors[c][0];let h=0;for(const ch o
 const catColor=c=>`var(--c${catIdx(c)})`;
 const STAR='<svg viewBox="0 0 16 16"><path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></svg>';
 const txHTML=t=>t.cat?`<span class="tx ul" style="--ul:${catColor(t.cat)}">${esc(t.text)}</span>`:`<span class="tx">${esc(t.text)}</span>`;
+const ddHTML=t=>{if(!t.date||t.done||U('dday')!=='1')return '';const n=Math.round((parse(t.date)-parse(todayS()))/864e5);return `<span class="dd${n===0?' now':''}">${n===0?'D-DAY':n>0?'D-'+n:'D+'+(-n)}</span>`};
 const tagHTML=c=>c?`<span class="tag"><i style="background:${catColor(c)}"></i>${esc(c)}</span>`:'';
 
 /* ---------- list ---------- */
 const CAL='<svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="11"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg>';
 function itemHTML(t){
   const late=t.date&&!t.done&&t.date<todayS();
-  return `<li class="item${t.done?' done':''}" data-id="${t.id}">
+  return `<li class="item${t.done?' done':''}${t.star&&!t.done?' starred':''}" data-id="${t.id}">
     <button class="chk${t.done?' on':''}" data-a="chk" aria-label="완료"></button>
     <div class="body" data-a="edit">
       <div class="txt">${txHTML(t)}</div>
       ${t.memo?`<div class="memo">${esc(t.memo.split('\n')[0])}</div>`:''}
-      ${t.date||t.time||t.repeat?`<div class="meta">${t.date||t.time?`<span class="date${late?' late':''}">${when(t)}</span>`:''}${t.repeat?`<span class="rep">↻ ${REP[t.repeat]}</span>`:''}</div>`:''}
+      ${t.date||t.time||t.repeat?`<div class="meta">${t.date||t.time?`<span class="date${late?' late':''}">${when(t)}</span>`:''}${ddHTML(t)}${t.repeat?`<span class="rep">↻ ${REP[t.repeat]}</span>`:''}</div>`:''}
     </div>
     <button class="star${t.star?' on':''}" data-a="star" aria-label="중요">${STAR}</button>
     <label class="ico${t.date?' has':''}">${CAL}<input type="date" data-a="date" value="${t.date||''}"></label>
@@ -459,7 +569,7 @@ function sorted(arr){
   return a;
 }
 function renderList(){
-  const L=live(), pin=sorted(L.filter(t=>!t.done&&t.star)), rest=sorted(L.filter(t=>!t.done&&!t.star)), open=[...pin,...rest], done=sorted(L.filter(t=>t.done));
+  const L=live(), pin=sorted(L.filter(t=>!t.done&&t.star)), rest=sorted(L.filter(t=>!t.done&&!t.star)), open=[...pin,...rest], isArch=t=>t.done&&ft(t,'done')<now()-30*864e5, done=sorted(L.filter(t=>t.done&&!isArch(t))), arch=L.filter(isArch).sort((a,b)=>ft(b,'done')-ft(a,'done'));
   let h='', g=null;
   if(pin.length&&cfg.sort==='cat')h+='<li class="grp lbl">Starred</li>';
   h+=pin.map(itemHTML).join('');
@@ -472,8 +582,9 @@ function renderList(){
   $('#fold').classList.toggle('open',!cfg.fold);
   $('#fold').style.display=done.length?'':'none';
   $('#doneN').textContent=done.length;
+  $('#foldA').style.display=arch.length?'':'none';$('#archN').textContent=arch.length;$('#foldA').classList.toggle('open',!!cfg.archOpen);$('#arch').innerHTML=cfg.archOpen?arch.map(itemHTML).join(''):'';
   $('#sOpen').textContent=open.length;$('#sDone').textContent=done.length;
-  const n=new Date();$('#lDay').textContent=`${DOWE[n.getDay()]} · ${DOW[n.getDay()]}요일`;$('#lDate').textContent=`${pad(n.getMonth()+1)}.${pad(n.getDate())}`;
+  const n=new Date();$('#lDay').textContent=dowL(n,true);$('#lDate').textContent=bigD(n);
   $$('#sort button').forEach(b=>b.classList.toggle('on',b.dataset.s===cfg.sort));
   const cats=[...new Set(L.map(t=>t.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko'));
   $('#cats').innerHTML=cats.map(c=>`<option value="${esc(c)}">`).join('');
@@ -484,44 +595,90 @@ function renderList(){
 /* ---------- week (Sunday start) ---------- */
 function weekStart(off){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-d.getDay()+off*7);return d}
 function weekDays(off){const s=weekStart(off);return[...Array(7)].map((_,i)=>{const d=new Date(s);d.setDate(s.getDate()+i);return d})}
+let weekDirty=false, forceWeek=false;
+const weekSort=a=>a.sort((x,y)=>(U('doneBottom')==='1'?x.done-y.done:0)||!!y.star-!!x.star||(x.time||'99').localeCompare(y.time||'99')||x.created-y.created);
+const wiHTML=t=>`<div class="wi${t.done?' done':''}" data-id="${t.id}"><button class="chk${t.done?' on':''}" data-a="chk"></button><div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${t.time?`<span class="tm">${t.time}</span>`:''}${txHTML(t)}${t.repeat?` <span class="rep">↻</span>`:''}</span></div></div>`;
+const isDayAdd=el=>!!(el&&el.classList&&el.classList.contains('dayadd'));
 function renderWeek(){
-  const days=weekDays(weekOff), L=live(), td=todayS();
-  const a=days[0], b=days[6];
+  const ae=document.activeElement;
+  if(!forceWeek&&isDayAdd(ae)){weekDirty=true;return}
+  forceWeek=false;weekDirty=false;
+  const keep={};$$('.dayadd').forEach(i=>{if(i.value)keep[i.dataset.d]=i.value});
+  const days=weekDays(weekOff), L=live(), td=todayS(), H=holidays(), a=days[0], b=days[6], st=U('dstyle');
   const MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
   rangeTxt=`${a.getFullYear()}.${pad(a.getMonth()+1)}.${pad(a.getDate())} – ${pad(b.getMonth()+1)}.${pad(b.getDate())}`;
-  $('#wMon').textContent=`${MON[a.getMonth()]}${a.getMonth()!==b.getMonth()?' – '+MON[b.getMonth()]:''} ${b.getFullYear()}`;
-  $('#rng').textContent=`${pad(a.getDate())} — ${pad(b.getDate())}`;
+  $('#wMon').textContent=`${MON[a.getMonth()]}${a.getMonth()!==b.getMonth()?' – '+MON[b.getMonth()]:''} ${b.getFullYear()}${U('weekNo')==='1'?' · W'+pad(isoWeek(a)):''}`;
+  $('#rng').textContent=st==='en'?`${MONS[a.getMonth()]} ${a.getDate()} — ${a.getMonth()!==b.getMonth()?MONS[b.getMonth()]+' ':''}${b.getDate()}`:st==='ko'?`${a.getDate()}일 — ${b.getDate()}일`:`${pad(a.getDate())} — ${pad(b.getDate())}`;
+  const wk=ymd(a), n=$('#wNote'); n.dataset.w=wk; if(ae!==n){n.value=(db.notes[wk]||[''])[0];grow(n)}
+  const un=sorted(L.filter(t=>!t.date&&!t.done));
+  $('#plan').hidden=!cfg.plan;$('#planBtn').classList.toggle('on',!!cfg.plan);$('#planBtn').textContent='PLAN'+(un.length?' '+un.length:'');
+  $('#plan').innerHTML=`<div class="ph"><span class="lbl">Unscheduled · ${un.length}</span><span class="hint lbl">Hold &amp; drag to a day</span></div><div class="pl">${un.map(wiHTML).join('')||'<span class="empty2">날짜 없는 할 일이 없습니다</span>'}</div>`;
   $('#days').innerHTML=days.map(d=>{
-    const s=ymd(d), ts=L.filter(t=>t.date===s).sort((x,y)=>x.done-y.done||!!y.star-!!x.star||(x.time||'99').localeCompare(y.time||'99')||x.created-y.created);
-    return `<div class="day${s===td?' today':''}${d.getDay()===0?' sun':''}" data-d="${s}">
-      <div class="dh"><span class="lbl">${DOWE[d.getDay()]}</span><span class="d num">${pad(d.getDate())}</span><span class="n num">${ts.length?ts.filter(t=>t.done).length+'/'+ts.length:''}</span></div><div class="dl">
-      ${ts.map(t=>`<div class="wi${t.done?' done':''}" data-id="${t.id}"><button class="chk${t.done?' on':''}" data-a="chk"></button><div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${t.time?`<span class="tm">${t.time}</span>`:''}${txHTML(t)}${t.repeat?` <span class="rep">↻</span>`:''}</span></div></div>`).join('')}
+    const s=ymd(d), ts=weekSort(L.filter(t=>t.date===s)), h=H[s];
+    const cls=['day',s===td&&'today',s<td&&'past',(d.getDay()===0||h)&&'sun',!ts.length&&s!==td&&'empty'].filter(Boolean).join(' ');
+    return `<div class="${cls}" data-d="${s}">
+      <div class="dh"><span class="lbl">${dowL(d)}</span><span class="d num">${pad(d.getDate())}</span>${h?`<span class="hn">${esc(h)}</span>`:''}<span class="n num">${ts.length?ts.filter(t=>t.done).length+'/'+ts.length:''}</span></div><div class="dl">
+      ${ts.map(wiHTML).join('')}
       <div class="dadd"><textarea class="dayadd" rows="1" placeholder="+" data-d="${s}"></textarea><button class="dbtn" data-d="${s}">ADD</button></div>
     </div></div>`}).join('');
+  for(const d in keep){const i=$(`.dayadd[data-d="${d}"]`);if(i){i.value=keep[d];grow(i)}}
+}
+function renderFocus(){
+  const n=new Date(), td=todayS(), L=live();
+  $('#fDay').textContent=dowL(n,true)+(U('weekNo')==='1'?' · W'+pad(isoWeek(n)):'');
+  $('#fDate').textContent=bigD(n);
+  const ts=weekSort(L.filter(t=>t.date===td)), late=sorted(L.filter(t=>t.date&&t.date<td&&!t.done)), dn=ts.filter(t=>t.done).length;
+  $('#fProg').style.width=ts.length?dn/ts.length*100+'%':'0';
+  $('#fCount').textContent=`${dn} / ${ts.length} Done`;
+  $('#fList').innerHTML=(ts.map(itemHTML).join('')||'<li class="empty">오늘 할 일이 없습니다</li>')+(late.length?`<li class="grp lbl">Overdue · ${late.length}</li>`+late.map(itemHTML).join(''):'');
 }
 
 /* ---------- print (A4) ---------- */
 function renderPrint(){
-  const days=weekDays(weekOff), L=live(), und=L.filter(t=>!t.date&&!t.done);
+  const days=weekDays(weekOff), L=live(), H=holidays(), und=L.filter(t=>!t.date&&!t.done), note=(db.notes[ymd(days[0])]||[''])[0].trim();
   const pi=t=>`<div class="pi${t.done?' x':''}">${t.star?'★ ':''}${t.time?t.time+' ':''}${esc(t.text).replace(/\n/g,'<br>')}${t.cat?` <small>· ${esc(t.cat)}</small>`:''}</div>`;
-  $('#print').innerHTML=`<h1><span>WEEKLY</span><span>${rangeTxt}</span></h1>
-  <table>${days.map(d=>{const s=ymd(d);return `<tr><td class="h">${DOWE[d.getDay()]}<b>${pad(d.getMonth()+1)}.${pad(d.getDate())}</b></td><td>${L.filter(t=>t.date===s).map(pi).join('')}</td></tr>`}).join('')}</table>
+  $('#print').className=U('paperPrint')==='1'&&U('paper')!=='none'?'pp-'+U('paper'):'';
+  $('#print').innerHTML=`<h1><span>WEEKLY${U('weekNo')==='1'?' · W'+pad(isoWeek(days[0])):''}</span><span>${rangeTxt}</span></h1>
+  ${note?`<div class="pnote">${esc(note)}</div>`:''}
+  <table>${days.map(d=>{const s=ymd(d);return `<tr><td class="h">${dowL(d)}<b>${pad(d.getMonth()+1)}.${pad(d.getDate())}</b>${H[s]?`<i>${esc(H[s])}</i>`:''}</td><td class="c">${weekSort(L.filter(t=>t.date===s)).map(pi).join('')}</td></tr>`}).join('')}</table>
   ${und.length?`<div class="und"><h2>날짜 없음</h2><div class="cols">${und.map(pi).join('')}</div></div>`:''}`;
 }
 
-function render(){
-  renderList();renderWeek();
-  $$('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===view||(view==='week'&&isSplit()&&b.dataset.v==='list')));
-  $('#main').classList.toggle('board',view!=='set');
-  $$('.view').forEach(v=>v.classList.remove('on'));
-  $({list:'#vList',week:'#vWeek',set:'#vSet'}[view]).classList.add('on');
-  document.body.classList.toggle('split',!!cfg.split);
-  document.documentElement.style.setProperty('--fs',cfg.fs+'px');
+const ACC={bluegray:['#7489a2','#9aadc2'],steel:['#6a88ad','#93afcf'],slate:['#7b8692','#a3adb8'],sage:['#6f9095','#97b5b9'],lavender:['#8580a3','#aba6c6']};
+const HAIR=[['#f2f4f6','#edf0f3','#e3e7eb','#d6dce2'],['#252a31','#2a3038','#323943','#3d4651']];
+const LINE=[['#e8ebef','#e1e6eb','#d3d9e0','#c2cad3'],['#2e353e','#343c46','#3f4854','#4b5562']];
+const mq=matchMedia('(prefers-color-scheme: dark)');
+function applyUI(){
+  const r=document.documentElement, B=document.body, dk=U('theme')==='dark'||(U('theme')==='auto'&&mq.matches)?1:0, li=+U('line')||0;
+  r.dataset.theme=U('theme');
+  r.style.setProperty('--fs',cfg.fs+'px');
+  r.style.setProperty('--accent',(ACC[U('accent')]||ACC.bluegray)[dk]);
+  r.style.setProperty('--hair',HAIR[dk][li]);r.style.setProperty('--line',LINE[dk][li]);
+  r.style.setProperty('--ls',U('ls')+'em');r.style.setProperty('--lh',U('lh'));
+  r.style.setProperty('--dn',{loose:1.3,normal:1,tight:.7}[U('dens')]||1);
+  B.dataset.paper=U('paper');
+  B.classList.toggle('collapse',U('collapse')==='1');B.classList.toggle('dimpast',U('dimPast')==='1');
+  B.classList.toggle('corner',U('corner')==='1');B.classList.toggle('memoopen',U('memo')==='1');
+  requestAnimationFrame(()=>$('#themeColor').content=getComputedStyle(B).backgroundColor);
+}
+function paintSet(){
+  $$('.seg[data-k]').forEach(g=>g.querySelectorAll('button').forEach(b=>b.classList.toggle('on',U(g.dataset.k)===b.dataset.v)));
+  $$('input[data-k]').forEach(i=>{if(document.activeElement!==i)i.value=U(i.dataset.k)});
+  $('[data-val=ls]').textContent=(+U('ls')).toFixed(3)+'EM';$('[data-val=lh]').textContent=(+U('lh')).toFixed(2);
+  if(document.activeElement!==$('#holX'))$('#holX').value=U('holX');
   $('#fsr').value=cfg.fs;$('#fsv').textContent=cfg.fs+'PX';
-  document.documentElement.dataset.theme=cfg.theme;$$('#themeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.t===cfg.theme));
-  requestAnimationFrame(()=>$('#themeColor').content=getComputedStyle(document.body).backgroundColor);
   $$('#splitSeg button').forEach(b=>b.classList.toggle('on',+b.dataset.x===cfg.split));
 }
+const navOn=()=>$$('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===view||(view==='week'&&isSplit()&&b.dataset.v==='list')));
+function render(){
+  applyUI();renderList();renderWeek();renderFocus();navOn();
+  $('#main').classList.toggle('board',view==='list'||view==='week');
+  $$('.view').forEach(v=>v.classList.remove('on'));
+  $({list:'#vList',week:'#vWeek',focus:'#vFocus',set:'#vSet'}[view]).classList.add('on');
+  document.body.classList.toggle('split',!!cfg.split);
+  paintSet();
+}
+function setUI(k,v,full=true){db.ui[k]=v;db.uiT=now();save(KEY,db);if(full)render();else{applyUI();paintSet()}queueSync()}
 const isSplit=()=>cfg.split&&innerWidth>=1100;
 
 /* ---------- actions ---------- */
@@ -541,7 +698,7 @@ function onAction(e){
   else if(el.dataset.a==='edit'&&e.type==='click')openEdit(t.id);
   else if(el.dataset.a==='date'&&e.type==='change'){snap('날짜 변경됨');touch(t,{date:el.value||''});toast()}
 }
-['click','change'].forEach(ev=>{$('#vList').addEventListener(ev,onAction);$('#days').addEventListener(ev,onAction)});
+['click','change'].forEach(ev=>['#vList','#vWeek','#vFocus'].forEach(v=>$(v).addEventListener(ev,onAction)));
 document.addEventListener('click',e=>{const i=e.target.closest('.ico input[type=date],.ico input[type=time]');if(i&&i.showPicker){try{i.showPicker()}catch{}}},true);
 
 const grow=el=>{el.style.height='auto';el.style.height=el.scrollHeight+'px'};
@@ -553,18 +710,30 @@ function setAdd(d,t){addDate=d;addTime=t;$('#addDate').value=d;$('#addTime').val
 $('#addDate').addEventListener('change',e=>setAdd(e.target.value,addTime));
 $('#addTime').addEventListener('change',e=>setAdd(addDate,e.target.value));
 $('#addPend').addEventListener('click',()=>setAdd('',''));
-function submitDay(d){const i=$(`.dayadd[data-d="${d}"]`);if(!i||!i.value.trim())return;const v=i.value;i.value='';addTask(v,d);const n=$(`.dayadd[data-d="${d}"]`);n&&n.focus()}
+function submitDay(d){const i=$(`.dayadd[data-d="${d}"]`);if(!i||!i.value.trim())return;const v=i.value;i.value='';forceWeek=true;addTask(v,d);const n=$(`.dayadd[data-d="${d}"]`);n&&n.focus()}
 $('#days').addEventListener('click',e=>{const b=e.target.closest('.dbtn');if(b)submitDay(b.dataset.d)});
 $('#days').addEventListener('keydown',e=>{const i=e.target.closest('.dayadd');if(i&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&!e.isComposing){e.preventDefault();submitDay(i.dataset.d)}});
-$('#themeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(b){cfg.theme=b.dataset.t;save(CFG,cfg);render()}});
+$('#vSet').addEventListener('click',e=>{const b=e.target.closest('.seg[data-k] button');if(b)setUI(b.parentElement.dataset.k,b.dataset.v)});
+$$('input[data-k]').forEach(i=>{i.addEventListener('input',()=>{db.ui[i.dataset.k]=i.value;applyUI();paintSet()});i.addEventListener('change',()=>setUI(i.dataset.k,i.value,false))});
+$('#holX').addEventListener('change',e=>setUI('holX',e.target.value));
+mq.addEventListener&&mq.addEventListener('change',()=>render());
+document.addEventListener('focusout',e=>{if(isDayAdd(e.target))setTimeout(()=>{if(weekDirty&&!isDayAdd(document.activeElement)&&!drag)renderWeek()},300)});
+let noteT=null;
+$('#wNote').addEventListener('input',e=>{const n=e.target,w=n.dataset.w;clearTimeout(noteT);noteT=setTimeout(()=>{db.notes[w]=[n.value,now()];save(KEY,db);queueSync()},500)});
+function submitFocus(){const a=$('#fAdd');if(!a.value.trim())return;addTask(a.value,todayS(),'');a.value='';grow(a)}
+$('#fBtn').onclick=submitFocus;
+$('#fAdd').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&!e.isComposing){e.preventDefault();submitFocus()}});
+$('#foldA').onclick=()=>{cfg.archOpen=!cfg.archOpen;save(CFG,cfg);render()};
+$('#planBtn').onclick=()=>{cfg.plan=!cfg.plan;save(CFG,cfg);forceWeek=true;renderWeek()};
+$('#imgBtn').onclick=()=>weekImage();
 $('#sort').addEventListener('click',e=>{const b=e.target.closest('button');if(b){cfg.sort=b.dataset.s;save(CFG,cfg);render()}});
 $('#fold').addEventListener('click',()=>{cfg.fold=!cfg.fold;save(CFG,cfg);render()});
 $$('nav button').forEach(b=>b.addEventListener('click',()=>{view=b.dataset.v;render();scrollTo(0,0)}));
 $('#prev').onclick=()=>{weekOff--;render()};$('#next').onclick=()=>{weekOff++;render()};$('#today').onclick=()=>{weekOff=0;render()};
 $('#prt').onclick=()=>{renderPrint();print()};
 addEventListener('beforeprint',renderPrint);
-addEventListener('resize',()=>$$('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===view||(view==='week'&&isSplit()&&b.dataset.v==='list'))));
-$('#fsr').addEventListener('input',e=>{cfg.fs=+e.target.value;document.documentElement.style.setProperty('--fs',cfg.fs+'px');$('#fsv').textContent=cfg.fs+'PX'});
+addEventListener('resize',navOn);
+$('#fsr').addEventListener('input',e=>{cfg.fs=+e.target.value;applyUI();$('#fsv').textContent=cfg.fs+'PX'});
 $('#fsr').addEventListener('change',()=>save(CFG,cfg));
 $('#splitSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(b){cfg.split=+b.dataset.x;save(CFG,cfg);render()}});
 
@@ -604,7 +773,7 @@ function moveDrag(x,y){
   if(y<70)scrollBy(0,-10);else if(y>innerHeight-90)scrollBy(0,10);
   clearMarks();drag.target=null;
   const el=document.elementFromPoint(x,y);if(!el)return;
-  const day=el.closest('.day'), it=el.closest('#open .item');
+  const day=el.closest('.day,.plan'), it=el.closest('#open .item');
   if(day){day.classList.add('drop');drag.target={day:day.dataset.d}}
   else if(it&&cfg.sort==='manual'&&drag.row.closest('#open')&&it.dataset.id!==drag.id){
     const r=it.getBoundingClientRect(),after=y>r.top+r.height/2;
@@ -614,7 +783,7 @@ function endDrag(cancel){
   const d=drag;drag=null;d.g.remove();d.row.classList.remove('dragging');document.body.classList.remove('drag');clearMarks();
   noClick=true;setTimeout(()=>noClick=false,350);
   const t=find(d.id);if(cancel||!t||!d.target)return;
-  if(d.target.day){if(t.date!==d.target.day){snap('이동됨');touch(t,{date:d.target.day});toast()}return}
+  if(d.target.day!==undefined){if((t.date||'')!==d.target.day){snap(d.target.day?'이동됨':'날짜 해제됨');touch(t,{date:d.target.day});toast()}return}
   const ids=$$('#open .item').map(el=>el.dataset.id).filter(i=>i!==d.id);
   ids.splice(ids.indexOf(d.target.id)+(d.target.after?1:0),0,d.id);
   snap('순서 변경됨');const ts=now();ids.forEach((id,i)=>{const x=find(id);if(x&&x.order!==i)setF(x,{order:i},ts)});commit();toast();
@@ -667,12 +836,12 @@ $('#fontReset').onclick=async()=>{await kv('readwrite',s=>s.delete('font'));appl
 
 /* ---------- backup ---------- */
 $('#exp').onclick=()=>{
-  const b=new Blob([JSON.stringify({tasks:live(),colors:db.colors},null,1)],{type:'application/json'});
+  const b=new Blob([JSON.stringify({tasks:live(),colors:db.colors,notes:db.notes,ui:db.ui,uiT:db.uiT},null,1)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`weekly-${todayS()}.json`;a.click();
 };
 $('#imp').addEventListener('change',async e=>{
   const f=e.target.files[0];if(!f)return;
-  try{const d=JSON.parse(await f.text());db.tasks=merge(db.tasks,(d.tasks||[]).map(t=>({...t,updated:t.updated||now()})));db.colors=mergeColors(db.colors,d.colors||{});commit()}catch{alert('JSON 형식이 올바르지 않습니다.')}
+  try{const d=JSON.parse(await f.text());db.tasks=merge(db.tasks,(d.tasks||[]).map(t=>({...t,updated:t.updated||now()})));db.colors=mergeColors(db.colors,d.colors||{});db.notes=mergeColors(db.notes,d.notes||{});if((d.uiT||0)>db.uiT){db.ui={...UID,...d.ui};db.uiT=d.uiT}commit()}catch{alert('JSON 형식이 올바르지 않습니다.')}
   e.target.value='';
 });
 $('#clr').onclick=()=>{const d=live().filter(t=>t.done);if(d.length){snap(`완료 항목 ${d.length}개 삭제됨`);const t=now();d.forEach(x=>setF(x,{deleted:true},t));commit();toast()}};
@@ -713,10 +882,10 @@ async function findGist(){
   return g.id;
 }
 async function readGist(g){
-  const f=g.files&&g.files[GFILE]; if(!f)return {tasks:[],colors:{}};
+  const f=g.files&&g.files[GFILE]; if(!f)return {tasks:[],colors:{},notes:{}};
   let c=f.content;
   if(f.truncated)c=await (await fetch(f.raw_url,{cache:'no-store'})).text();
-  try{const j=JSON.parse(c||'{}');return {tasks:j.tasks||[],colors:j.colors||{}}}catch{return {tasks:[],colors:{}}}
+  try{const j=JSON.parse(c||'{}');return {tasks:j.tasks||[],colors:j.colors||{},notes:j.notes||{},ui:j.ui,uiT:j.uiT||0}}catch{return {tasks:[],colors:{},notes:{}}}
 }
 let syncing=false, again=false, timer=null;
 function queueSync(){if(!ready())return;clearTimeout(timer);timer=setTimeout(sync,1200)}
@@ -729,10 +898,13 @@ async function sync(){
     let g;
     try{g=await gh('GET',`/gists/${cfg.gist}`)}
     catch(e){if(e.status!==404)throw e;cfg.gist=await findGist();save(CFG,cfg);fillCfg();g=await gh('GET',`/gists/${cfg.gist}`)}
-    const remote=await readGist(g), merged=merge(db.tasks,remote.tasks), colors=mergeColors(db.colors,remote.colors);
-    const sig=(x,c)=>JSON.stringify([[...x].sort((p,q)=>p.id<q.id?-1:1),Object.keys(c).sort().map(k=>[k,c[k]])]);
-    if(sig(merged,colors)!==sig(db.tasks,db.colors)&&!drag){db.tasks=merged;db.colors=colors;save(KEY,db);render()}
-    if(sig(merged,colors)!==sig(remote.tasks,remote.colors))await gh('PATCH',`/gists/${cfg.gist}`,{files:{[GFILE]:{content:JSON.stringify({tasks:merged,colors},null,1)}}});
+    const remote=await readGist(g), merged=merge(db.tasks,remote.tasks), colors=mergeColors(db.colors,remote.colors), notes=mergeColors(db.notes,remote.notes);
+    const rNew=(remote.uiT||0)>db.uiT, ui=rNew?{...UID,...remote.ui}:db.ui, uiT=Math.max(remote.uiT||0,db.uiT);
+    const kv2=o=>Object.keys(o).sort().map(k=>[k,o[k]]);
+    const sig=(t,c,n,u,ut)=>JSON.stringify([[...t].sort((p,q)=>p.id<q.id?-1:1),kv2(c),kv2(n),u?kv2(u):null,ut]);
+    const all=sig(merged,colors,notes,ui,uiT);
+    if(all!==sig(db.tasks,db.colors,db.notes,db.ui,db.uiT)&&!drag){db.tasks=merged;db.colors=colors;db.notes=notes;db.ui=ui;db.uiT=uiT;save(KEY,db);render()}
+    if(all!==sig(remote.tasks,remote.colors,remote.notes,remote.ui,remote.uiT||0))await gh('PATCH',`/gists/${cfg.gist}`,{files:{[GFILE]:{content:JSON.stringify({tasks:merged,colors,notes,ui,uiT},null,1)}}});
     cfg.last=now();save(CFG,cfg);
     const d=new Date(cfg.last);status('ok',`${pad(d.getHours())}:${pad(d.getMinutes())}`);
     $('#gLast').textContent=`LAST SYNC ${ymd(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -749,6 +921,55 @@ $('#gNow').onclick=()=>sync();
 $('#gOff').onclick=()=>{if(confirm('동기화 설정을 이 기기에서 삭제할까요? (할 일 데이터는 유지됩니다)')){cfg.token='';cfg.gist='';save(CFG,cfg);fillCfg();status('','LOCAL')}};
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();sync()}});
 setInterval(()=>{if(document.visibilityState==='visible'&&ready())sync()},60000);
+
+/* ---------- week image ---------- */
+async function weekImage(){
+  try{await document.fonts.ready}catch{}
+  const days=weekDays(weekOff), L=live(), H=holidays(), td=todayS(), cs=getComputedStyle(document.documentElement), V=k=>cs.getPropertyValue(k).trim();
+  const C={bg:getComputedStyle(document.body).backgroundColor,text:V('--text'),sub:V('--sub'),faint:V('--faint'),line:V('--line'),hair:V('--hair'),acc:V('--accent'),red:V('--danger'),surf:V('--surface')};
+  const fam=V('--font')||'sans-serif', W=1080, P=84, LW=170, TX=P+LW+40, TW=W-P-TX, S=2;
+  const cv=document.createElement('canvas'), x=cv.getContext('2d');
+  const font=(w,z)=>`${w} ${z}px ${fam}`, sp=v=>{if('letterSpacing' in x)x.letterSpacing=v+'px'};
+  const wrap=(t,f)=>{x.font=f;sp(0);const out=[];for(const para of String(t).split('\n')){let l='';for(const ch of para){if(l&&x.measureText(l+ch).width>TW){out.push(l);l=ch}else l+=ch}out.push(l)}return out};
+  const note=((db.notes[ymd(days[0])]||[''])[0]||'').trim();
+  const pass=draw=>{
+    let y=P;
+    const txt=(t,X,Y,f,c,l=0)=>{if(!draw)return;x.font=f;sp(l);x.fillStyle=c;x.fillText(t,X,Y)};
+    const hl=(Y,c)=>{if(draw){x.fillStyle=c;x.fillRect(P,Y,W-P*2,1.5)}};
+    txt($('#wMon').textContent,P,y+20,font(400,19),C.sub,4);y+=34;
+    txt($('#rng').textContent,P-3,y+88,font(200,92),C.text,-2);y+=126;
+    if(note){const ls=wrap(note,font(300,26));ls.forEach((l,i)=>txt(l,P,y+28+i*40,font(300,26),C.sub));y+=ls.length*40+28}
+    hl(y,C.line);
+    for(const d of days){
+      const s=ymd(d), ts=weekSort(L.filter(t=>t.date===s)), top=y, red=d.getDay()===0||H[s];
+      txt(dowL(d),P,top+42,font(400,16),red?C.red:C.sub,3);
+      txt(pad(d.getDate()),P-2,top+98,font(200,54),s===td?C.acc:C.text,-1);
+      if(H[s])txt(H[s],P,top+126,font(400,15),C.red);
+      let ty=top+30;
+      for(const t of ts){
+        const f=font(300,28), ls=wrap((t.star?'★ ':'')+(t.time?t.time+'  ':'')+t.text,f);
+        if(draw){
+          if(t.done){x.fillStyle=C.acc;x.fillRect(P+LW,ty+5,22,22);x.strokeStyle=C.surf;x.lineWidth=2;x.beginPath();x.moveTo(P+LW+5,ty+16);x.lineTo(P+LW+10,ty+21);x.lineTo(P+LW+18,ty+11);x.stroke()}
+          else{x.strokeStyle=C.faint;x.lineWidth=1.5;x.strokeRect(P+LW+.75,ty+5.75,20.5,20.5)}
+        }
+        ls.forEach((l,i)=>{const Y=ty+26+i*42;txt(l,TX,Y,f,t.done?C.faint:C.text);
+          if(draw&&l){x.font=f;sp(0);const w=x.measureText(l).width;
+            if(t.done){x.fillStyle=C.faint;x.fillRect(TX,Y-9,w,1.5)}
+            else if(t.cat){x.fillStyle=V('--c'+catIdx(t.cat));x.fillRect(TX,Y+9,w,2)}}});
+        ty+=ls.length*42+14;
+      }
+      y=Math.max(top+150,ty+20);hl(y,C.hair);
+    }
+    y+=46;txt('WEEKLY',P,y+14,font(400,15),C.faint,6);
+    return y+P;
+  };
+  const h=pass(false);cv.width=W*S;cv.height=h*S;x.scale(S,S);x.fillStyle=C.bg;x.fillRect(0,0,W,h);pass(true);
+  cv.toBlob(async b=>{
+    const f=new File([b],`weekly-${ymd(days[0])}.png`,{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f]})}catch{}}
+    else{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=f.name;a.click()}
+  },'image/png');
+}
 
 /* ---------- init ---------- */
 if(innerWidth>=1100&&cfg.split)view='list';
