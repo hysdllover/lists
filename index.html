@@ -450,9 +450,9 @@ async function kv(mode,fn){const d=await idb();return new Promise((res,rej)=>{co
 async function applyFont(){
   try{
     const f=await kv('readonly',s=>s.get('font'));
-    if(!f){document.documentElement.style.removeProperty('--font');$('#fontName').textContent='기본 (Noto Sans KR Light)';return}
+    if(!f){['--font','--mono'].forEach(v=>document.documentElement.style.removeProperty(v));$('#fontName').textContent='기본 (Noto Sans KR Light)';return}
     const ff=new FontFace('UserFont',f.buf);await ff.load();document.fonts.add(ff);
-    document.documentElement.style.setProperty('--font','"UserFont",-apple-system,sans-serif');
+    ['--font','--mono'].forEach(v=>document.documentElement.style.setProperty(v,'"UserFont",-apple-system,sans-serif'));
     $('#fontName').textContent=f.name;
   }catch(e){$('#fontName').textContent='폰트를 불러오지 못했습니다'}
 }
