@@ -114,6 +114,8 @@ ul{list-style:none}
 .body{flex:1;min-width:0;cursor:pointer}
 .txt{word-break:break-word;white-space:pre-wrap}
 .done .txt{color:var(--faint);text-decoration:line-through;text-decoration-thickness:1px;text-decoration-color:var(--faint)}
+.tx.ul{text-decoration:underline;text-decoration-color:var(--ul);text-decoration-thickness:.16em;text-underline-offset:.32em;text-decoration-skip-ink:none}
+.done .tx.ul{text-decoration:line-through;text-decoration-color:var(--faint);text-decoration-thickness:1px}
 .memo{font-size:.78rem;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.1rem}
 .meta{display:flex;gap:.9rem;align-items:center;flex-wrap:wrap;margin-top:.3rem}
 .date{font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;color:var(--accent)}
@@ -347,7 +349,7 @@ body.drag{cursor:grabbing;-webkit-user-select:none;user-select:none}
         <button class="btn del" id="clr">완료 항목 삭제</button>
       </div>
     </div>
-    <p class="ver">VERSION 7</p>
+    <p class="ver">VERSION 8</p>
   </section>
 </main>
 
@@ -429,6 +431,7 @@ function toggleDone(t){
 function catIdx(c){if(db.colors[c])return db.colors[c][0];let h=0;for(const ch of c)h=(h*31+ch.charCodeAt(0))>>>0;return h%6}
 const catColor=c=>`var(--c${catIdx(c)})`;
 const STAR='<svg viewBox="0 0 16 16"><path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></svg>';
+const txHTML=t=>t.cat?`<span class="tx ul" style="--ul:${catColor(t.cat)}">${esc(t.text)}</span>`:`<span class="tx">${esc(t.text)}</span>`;
 const tagHTML=c=>c?`<span class="tag"><i style="background:${catColor(c)}"></i>${esc(c)}</span>`:'';
 
 /* ---------- list ---------- */
@@ -438,9 +441,9 @@ function itemHTML(t){
   return `<li class="item${t.done?' done':''}" data-id="${t.id}">
     <button class="chk${t.done?' on':''}" data-a="chk" aria-label="완료"></button>
     <div class="body" data-a="edit">
-      <div class="txt">${esc(t.text)}</div>
+      <div class="txt">${txHTML(t)}</div>
       ${t.memo?`<div class="memo">${esc(t.memo.split('\n')[0])}</div>`:''}
-      ${t.date||t.time||t.cat||t.repeat?`<div class="meta">${t.date||t.time?`<span class="date${late?' late':''}">${when(t)}</span>`:''}${t.repeat?`<span class="rep">↻ ${REP[t.repeat]}</span>`:''}${tagHTML(t.cat)}</div>`:''}
+      ${t.date||t.time||t.repeat?`<div class="meta">${t.date||t.time?`<span class="date${late?' late':''}">${when(t)}</span>`:''}${t.repeat?`<span class="rep">↻ ${REP[t.repeat]}</span>`:''}</div>`:''}
     </div>
     <button class="star${t.star?' on':''}" data-a="star" aria-label="중요">${STAR}</button>
     <label class="ico${t.date?' has':''}">${CAL}<input type="date" data-a="date" value="${t.date||''}"></label>
@@ -492,7 +495,7 @@ function renderWeek(){
     const s=ymd(d), ts=L.filter(t=>t.date===s).sort((x,y)=>x.done-y.done||!!y.star-!!x.star||(x.time||'99').localeCompare(y.time||'99')||x.created-y.created);
     return `<div class="day${s===td?' today':''}${d.getDay()===0?' sun':''}" data-d="${s}">
       <div class="dh"><span class="lbl">${DOWE[d.getDay()]}</span><span class="d num">${pad(d.getDate())}</span><span class="n num">${ts.length?ts.filter(t=>t.done).length+'/'+ts.length:''}</span></div><div class="dl">
-      ${ts.map(t=>`<div class="wi${t.done?' done':''}" data-id="${t.id}"><button class="chk${t.done?' on':''}" data-a="chk"></button><div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${t.time?`<span class="tm">${t.time}</span>`:''}${esc(t.text)}${t.repeat?` <span class="rep">↻</span>`:''}</span>${tagHTML(t.cat)}</div></div>`).join('')}
+      ${ts.map(t=>`<div class="wi${t.done?' done':''}" data-id="${t.id}"><button class="chk${t.done?' on':''}" data-a="chk"></button><div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${t.time?`<span class="tm">${t.time}</span>`:''}${txHTML(t)}${t.repeat?` <span class="rep">↻</span>`:''}</span></div></div>`).join('')}
       <div class="dadd"><textarea class="dayadd" rows="1" placeholder="+" data-d="${s}"></textarea><button class="dbtn" data-d="${s}">ADD</button></div>
     </div></div>`}).join('');
 }
