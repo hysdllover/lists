@@ -7,177 +7,204 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Weekly">
-<meta name="theme-color" content="#f4f6f8" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1c2026" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f3f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b1f24" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-512.png">
 <title>Weekly</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400&family=Noto+Sans+KR:wght@300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400&family=Noto+Sans+KR:wght@200;300;400&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f4f6f8; --surface:#fbfcfd; --line:#dfe4ea; --line2:#eaeef2;
-  --text:#3a4450; --sub:#808b98; --faint:#aab3be;
-  --accent:#6f86a0; --soft:#e7edf3; --danger:#a47878;
-  --c0:#e1e8ef; --c1:#e4ebe2; --c2:#efe7df; --c3:#e8e3ec; --c4:#e0eceb; --c5:#eee9dc;
+  --bg:#f3f5f7; --surface:#fafbfc; --line:#dde2e8; --hair:#e9edf1;
+  --text:#36404b; --sub:#8a94a1; --faint:#b6bec8;
+  --accent:#7489a2; --soft:#e7ecf1; --danger:#b38989;
+  --c0:#a9b8c9; --c1:#adbeaa; --c2:#cdb8a4; --c3:#b9aec6; --c4:#a5c0bd; --c5:#cbbf9c;
   --font:"Noto Sans KR",-apple-system,"Apple SD Gothic Neo",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
-  --fs:13px;
+  --fs:14px;
   --top:env(safe-area-inset-top); --bot:env(safe-area-inset-bottom);
 }
 @media (prefers-color-scheme:dark){:root{
-  --bg:#1c2026; --surface:#22272e; --line:#333b45; --line2:#2a3038;
-  --text:#d3d9e0; --sub:#8b96a3; --faint:#5f6975;
-  --accent:#94a8bd; --soft:#2a323c; --danger:#c09393;
-  --c0:#2c3540; --c1:#2e3730; --c2:#3a332d; --c3:#342f3a; --c4:#2b3838; --c5:#38352b;
+  --bg:#1b1f24; --surface:#21262c; --line:#343c46; --hair:#2a3038;
+  --text:#d6dce3; --sub:#8c97a4; --faint:#5d6773;
+  --accent:#9aadc2; --soft:#29313a; --danger:#c49c9c;
+  --c0:#7d8fa3; --c1:#849681; --c2:#a28f7c; --c3:#91879f; --c4:#7c9895; --c5:#a09673;
 }}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%}
-body{background:var(--bg);color:var(--text);font-family:var(--font);font-weight:300;font-size:var(--fs);line-height:1.55;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
-button,input,select,textarea{font:inherit;color:inherit;background:none;border:0;border-radius:0;outline:0;-webkit-appearance:none;appearance:none}
+html{font-size:var(--fs);height:100%}
+body{min-height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-weight:300;font-size:1rem;line-height:1.6;letter-spacing:-.005em;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit;background:none;border:0;border-radius:0;outline:0;-webkit-appearance:none;appearance:none;letter-spacing:inherit}
 button{cursor:pointer}
-.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);font-weight:400}
-.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+::placeholder{color:var(--faint);opacity:1}
+.lbl{font-size:.64rem;letter-spacing:.2em;text-transform:uppercase;color:var(--sub);font-weight:400}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono)}
 
-/* header / nav */
-header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:calc(var(--top) + 10px) 16px 0}
-.hrow{display:flex;align-items:center;justify-content:space-between;height:32px}
-.brand{font-size:11px;letter-spacing:.28em;font-weight:400}
-.sync{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--sub)}
-.dot{width:6px;height:6px;background:var(--faint)}
-.dot.ok{background:#8fa98f}.dot.busy{background:#c2b38a}.dot.err{background:var(--danger)}
-nav{display:flex;gap:22px}
-nav button{padding:10px 0 9px;font-size:12px;color:var(--sub);border-bottom:1px solid transparent;margin-bottom:-1px}
-nav button.on{color:var(--text);border-color:var(--text)}
+/* header */
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--hair);padding-top:var(--top)}
+.hrow{display:flex;align-items:center;height:3.4rem;padding:0 1.25rem;max-width:1400px;margin:0 auto}
+.brand{font-size:.66rem;letter-spacing:.42em;font-weight:400}
+nav{display:flex;gap:2rem;margin-left:auto;margin-right:2rem}
+nav button{position:relative;font-size:.72rem;letter-spacing:.14em;color:var(--faint);padding:.4rem 0;transition:color .2s}
+nav button.on{color:var(--text)}
+nav button.on::after{content:"";position:absolute;left:50%;bottom:-.15rem;width:3px;height:3px;background:var(--accent);transform:translateX(-50%)}
+.sync{display:flex;align-items:center;gap:.45rem;font-size:.62rem;letter-spacing:.08em;color:var(--sub);font-family:var(--mono)}
+.dot{width:5px;height:5px;background:var(--faint)}
+.dot.ok{background:#94ab94}.dot.busy{background:#c4b48c}.dot.err{background:var(--danger)}
 @media (max-width:767px){
-  nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-top:1px solid var(--line);justify-content:space-around;padding-bottom:var(--bot)}
-  nav button{flex:1;padding:13px 0;border:0;border-top:1px solid transparent;margin:-1px 0 0}
-  nav button.on{border-top-color:var(--text)}
-  main{padding-bottom:calc(64px + var(--bot))}
+  .sync{margin-left:auto}
+  nav{position:fixed;left:0;right:0;bottom:0;z-index:6;margin:0;gap:0;background:var(--bg);border-top:1px solid var(--hair);padding-bottom:var(--bot)}
+  nav button{flex:1;padding:1.05rem 0 .95rem}
+  nav button.on::after{bottom:auto;top:.45rem}
+  main{padding-bottom:calc(4.4rem + var(--bot))}
 }
 main{max-width:1400px;margin:0 auto}
-.view{display:none;padding:18px 16px 40px}
+.view{display:none;padding:2rem 1.25rem 3rem}
 .view.on{display:block}
-
-/* split (iPad landscape) */
 @media (min-width:1100px){
   body.split #tabWeek{display:none}
-  body.split main.board{display:grid;grid-template-columns:360px 1fr}
-  body.split main.board #vList{display:block;border-right:1px solid var(--line);min-height:calc(100vh - 80px)}
-  body.split main.board #vWeek{display:block}
+  body.split main.board{display:grid;grid-template-columns:23rem 1fr}
+  body.split main.board #vList{display:block;border-right:1px solid var(--hair);min-height:calc(100vh - 3.4rem)}
+  body.split main.board #vWeek{display:block;padding-left:2rem}
 }
 
-/* add row */
-.add{display:flex;align-items:center;border:1px solid var(--line);background:var(--surface)}
-.add input[type=text]{flex:1;min-width:0;padding:11px 12px}
-.add input::placeholder,.dayadd::placeholder,.field input::placeholder,.field textarea::placeholder{color:var(--faint)}
-.ico{position:relative;width:40px;height:40px;display:grid;place-items:center;color:var(--sub);flex:none}
-.ico svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.2}
-.ico input[type=date]{position:absolute;inset:0;opacity:0;width:100%;height:100%;font-size:16px}
+/* hero */
+.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:1.8rem}
+.big{font-size:2.9rem;font-weight:200;line-height:1;letter-spacing:-.03em;margin-top:.55rem}
+.stat{display:flex;gap:1.3rem;text-align:right;padding-bottom:.25rem}
+.stat b{display:block;font-size:1.35rem;font-weight:200;line-height:1.1}
+.stat .lbl{font-size:.56rem}
+
+/* add */
+.add{display:flex;align-items:center;border-bottom:1px solid var(--line);transition:border-color .2s}
+.add:focus-within{border-color:var(--accent)}
+.add input[type=text]{flex:1;min-width:0;padding:.8rem 0;font-size:1rem}
+.ico{position:relative;width:2.2rem;height:2.2rem;display:grid;place-items:center;color:var(--faint);flex:none}
+.ico svg{width:1rem;height:1rem;stroke:currentColor;fill:none;stroke-width:1}
+.ico input[type=date]{position:absolute;inset:0;opacity:0;width:100%;height:100%}
 .ico.has{color:var(--accent)}
-.pend{font-size:11px;color:var(--accent);padding-right:4px;white-space:nowrap}
+.pend{font-family:var(--mono);font-size:.7rem;color:var(--accent);white-space:nowrap;cursor:pointer}
+.pend:not(:empty)::after{content:" ×";color:var(--faint)}
 
-.bar{display:flex;align-items:center;justify-content:space-between;margin:16px 0 6px}
-.seg{display:flex;border:1px solid var(--line)}
-.seg button{padding:4px 10px;font-size:11px;color:var(--sub)}
-.seg button+button{border-left:1px solid var(--line)}
-.seg button.on{background:var(--soft);color:var(--text)}
-.count{font-size:10px;color:var(--sub);letter-spacing:.08em}
+/* toolbar */
+.bar{display:flex;align-items:center;justify-content:space-between;margin:1.4rem 0 .3rem}
+.seg{display:flex;gap:1.1rem}
+.seg button{font-size:.72rem;letter-spacing:.06em;color:var(--faint);padding:.15rem 0;border-bottom:1px solid transparent;transition:color .2s}
+.seg button.on{color:var(--text);border-color:var(--text)}
 
-/* list items */
+/* items */
 ul{list-style:none}
-.item{display:flex;align-items:flex-start;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line2)}
-.chk{width:15px;height:15px;border:1px solid var(--faint);flex:none;margin-top:2px;display:grid;place-items:center}
+.item{display:flex;align-items:flex-start;gap:.9rem;padding:1rem 0;border-bottom:1px solid var(--hair)}
+.chk{width:1rem;height:1rem;border:1px solid var(--faint);flex:none;margin-top:.28rem;display:grid;place-items:center;transition:background .15s,border-color .15s}
 .chk.on{background:var(--accent);border-color:var(--accent)}
-.chk.on::after{content:"";width:7px;height:4px;border:solid var(--surface);border-width:0 0 1px 1px;transform:translateY(-1px) rotate(-45deg)}
+.chk.on::after{content:"";width:.46rem;height:.24rem;border:solid var(--surface);border-width:0 0 1px 1px;transform:translateY(-.06rem) rotate(-45deg)}
 .body{flex:1;min-width:0;cursor:pointer}
 .txt{word-break:break-word}
-.done .txt{color:var(--faint);text-decoration:line-through;text-decoration-color:var(--faint)}
-.memo{font-size:11px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px}
-.date{font-family:var(--mono);font-size:10.5px;color:var(--accent);background:var(--soft);padding:0 5px}
+.done .txt{color:var(--faint);text-decoration:line-through;text-decoration-thickness:1px;text-decoration-color:var(--faint)}
+.memo{font-size:.78rem;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.1rem}
+.meta{display:flex;gap:.9rem;align-items:center;flex-wrap:wrap;margin-top:.3rem}
+.date{font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;color:var(--accent)}
 .date.late{color:var(--danger)}
-.tag{font-size:10px;padding:0 6px;color:var(--text);white-space:nowrap;display:inline-block}
-.item .ico{width:28px;height:22px;margin-top:-1px}
-.grp{margin-top:14px;padding-bottom:4px;border-bottom:1px solid var(--line)}
-.fold{display:flex;align-items:center;gap:8px;width:100%;margin-top:22px;padding:6px 0;border-bottom:1px solid var(--line)}
-.fold i{font-style:normal;font-size:9px;color:var(--sub);transition:transform .15s}
+.tag{display:inline-flex;align-items:center;gap:.38rem;font-size:.68rem;letter-spacing:.02em;color:var(--sub);white-space:nowrap}
+.tag i{width:.42rem;height:.42rem;flex:none}
+.item .ico{width:1.8rem;height:1.6rem;margin-top:.05rem}
+.grp{margin-top:1.6rem;padding-bottom:.35rem;border-bottom:1px solid var(--line)}
+.fold{display:flex;align-items:center;gap:.6rem;width:100%;margin-top:2.2rem;padding:.5rem 0;border-bottom:1px solid var(--hair)}
+.fold i{font-style:normal;font-size:.8rem;color:var(--sub);transition:transform .2s;width:.6rem}
 .fold.open i{transform:rotate(90deg)}
-.empty{padding:28px 0;text-align:center;color:var(--faint);font-size:12px}
+.fold .num{font-size:.68rem;color:var(--faint);font-family:var(--mono)}
+.empty{padding:3.5rem 0;text-align:center;color:var(--faint);font-size:.78rem;letter-spacing:.08em}
 
 /* week */
-.wk{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px}
-.wk .rng{font-size:12px}
-.wk .nav2{display:flex;border:1px solid var(--line)}
-.wk .nav2 button{padding:4px 11px;font-size:12px;color:var(--sub)}
-.wk .nav2 button+button{border-left:1px solid var(--line)}
-.days{display:grid;grid-template-columns:1fr;border-top:1px solid var(--line)}
-.day{border-bottom:1px solid var(--line);padding:10px 0 8px;min-width:0}
-.dh{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}
-.dh .d{font-family:var(--mono);font-size:18px;font-weight:300;line-height:1}
-.dh .n{margin-left:auto;font-size:10px;color:var(--faint)}
-.day.today .dh .d,.day.today .dh .lbl{color:var(--accent)}
-.day.today{box-shadow:inset 0 2px 0 var(--accent)}
+.ctl{display:flex;align-items:center;gap:1.1rem;padding-bottom:.3rem}
+.ctl button{font-size:.68rem;letter-spacing:.12em;color:var(--sub)}
+.ctl .arr{font-size:1.25rem;font-weight:200;color:var(--text);line-height:1;padding:0 .1rem}
+.days{border-top:1px solid var(--line)}
+.day{display:grid;grid-template-columns:3.6rem 1fr;gap:.9rem;padding:1rem 0;border-bottom:1px solid var(--hair);min-width:0}
+.dh{display:flex;flex-direction:column;align-items:flex-start}
+.dh .lbl{font-size:.56rem;display:flex;align-items:center;gap:.35rem}
+.dh .d{font-size:1.75rem;font-weight:200;line-height:1.1;letter-spacing:-.02em}
+.dh .n{font-family:var(--mono);font-size:.58rem;color:var(--faint);margin-top:.2rem}
 .day.sun .dh .lbl{color:var(--danger)}
-.wi{display:flex;gap:7px;align-items:flex-start;padding:5px 0;font-size:12px}
-.wi .chk{width:13px;height:13px;margin-top:3px}
-.wi .chk.on::after{width:6px;height:3px}
-.wi .tag{font-size:9px;margin-left:4px}
-.dayadd{width:100%;padding:5px 0;font-size:12px;border-top:1px dashed transparent}
-.dayadd:focus{border-top-color:var(--line)}
+.day.today .dh .d{color:var(--accent)}
+.day.today .dh .lbl::after{content:"";width:4px;height:4px;background:var(--accent)}
+.dl{min-width:0;padding-top:.1rem}
+.wi{display:flex;gap:.6rem;align-items:flex-start;padding:.28rem 0;font-size:.9rem}
+.wi .chk{width:.82rem;height:.82rem;margin-top:.32rem}
+.wi .chk.on::after{width:.38rem;height:.2rem}
+.wi .tag{margin-left:.55rem;font-size:.62rem}
+.dayadd{width:100%;padding:.3rem 0;font-size:.86rem}
 @media (min-width:768px){
-  .days{grid-template-columns:repeat(7,minmax(0,1fr));border-left:1px solid var(--line)}
-  .day{border-right:1px solid var(--line);padding:10px 8px;min-height:calc(100vh - 210px)}
-  .dh{flex-direction:column;gap:3px;align-items:flex-start}
-  .dh .n{margin:0}
+  .days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:0}
+  .day{display:block;border:0;border-left:1px solid var(--hair);padding:0 .75rem 1rem;min-height:calc(100vh - 15rem)}
+  .day:first-child{border-left:0;padding-left:0}
+  .dh{padding-bottom:.7rem;margin-bottom:.6rem;border-bottom:1px solid var(--line)}
+  .dh .n{min-height:.95rem}
+  .day.today .dh{border-bottom-color:var(--accent)}
+  .wi .body{display:flex;flex-direction:column}
+  .wi .tag{margin:.05rem 0 0}
 }
 
 /* settings */
-.sec{margin-bottom:28px;max-width:560px}
-.sec>.lbl{display:block;padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:10px}
-.field{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.field>span{width:72px;flex:none;font-size:11px;color:var(--sub)}
-.field input,.field textarea,.field select{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);padding:7px 9px;font-size:16px;transform-origin:left;}
-.field textarea{resize:vertical;min-height:70px}
-.btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
-.btn{border:1px solid var(--line);padding:6px 12px;font-size:12px;background:var(--surface)}
-.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.sec{margin-bottom:2.6rem;max-width:36rem}
+.sec>.lbl{display:block;margin-bottom:.6rem}
+.field{display:flex;align-items:center;gap:1rem;padding:.6rem 0;border-bottom:1px solid var(--hair)}
+.field>span{width:5.4rem;flex:none;font-size:.78rem;color:var(--sub)}
+.field input,.field textarea{flex:1;min-width:0;padding:.2rem 0;font-size:.95rem}
+.field textarea{resize:none;min-height:4.6rem;line-height:1.55}
+.field input[type=date]{text-align:left;min-height:1.8rem}
+.field input[type=date]::-webkit-date-and-time-value{text-align:left}
+.fontprev{flex:1;font-size:.88rem}
+.size{flex:1;display:flex;align-items:center;gap:.8rem}
+.size .a1{font-size:.7rem;color:var(--sub)}.size .a2{font-size:1.1rem;color:var(--sub)}
+.val{font-family:var(--mono);font-size:.68rem;color:var(--sub);width:2.6rem;text-align:right}
+input[type=range]{flex:1;height:1.6rem;background:none}
+input[type=range]::-webkit-slider-runnable-track{height:1px;background:var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:.85rem;height:.85rem;background:var(--accent);border:0;border-radius:0;margin-top:-.4rem}
+input[type=range]::-moz-range-track{height:1px;background:var(--line)}
+input[type=range]::-moz-range-thumb{width:.85rem;height:.85rem;background:var(--accent);border:0;border-radius:0}
+.preview{margin-top:.8rem;padding:.9rem 1rem;background:var(--surface);border:1px solid var(--hair);font-size:.95rem;color:var(--sub)}
+.btns{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}
+.btn{border:1px solid var(--line);padding:.5rem 1rem;font-size:.74rem;letter-spacing:.04em;transition:background .15s}
+.btn:active{background:var(--soft)}
+.btn.pri{background:var(--text);border-color:var(--text);color:var(--bg)}
 .btn.del{color:var(--danger)}
-.note{font-size:11px;color:var(--sub);margin-top:6px}
-.fontprev{font-size:12px;color:var(--sub)}
+.note{font-size:.72rem;color:var(--sub);margin-top:.8rem;line-height:1.65}
+.ver{font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;color:var(--faint)}
 
 /* editor sheet */
-.back{position:fixed;inset:0;background:rgba(40,48,58,.18);z-index:20;display:none;align-items:flex-end;justify-content:center}
+.back{position:fixed;inset:0;z-index:20;display:none;align-items:flex-end;justify-content:center;background:rgba(40,48,58,.14);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .back.on{display:flex}
-.sheet{width:100%;max-width:520px;background:var(--surface);border:1px solid var(--line);padding:16px 16px calc(16px + var(--bot))}
-@media (min-width:768px){.back{align-items:center}.sheet{padding:20px}}
-.sheet .field>span{width:44px}
-.sheet .row{display:flex;justify-content:space-between;margin-top:12px}
-
-/* small inputs: keep 16px to stop iOS zoom but look small */
-input[type=text],textarea{font-size:16px}
-.add input[type=text],.dayadd{font-size:16px;zoom:.82}
+.sheet{width:100%;max-width:34rem;background:var(--surface);border-top:1px solid var(--line);padding:1.4rem 1.25rem calc(1.2rem + var(--bot));animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(1.5rem);opacity:0}}
+@media (min-width:768px){.back{align-items:center}.sheet{border:1px solid var(--line);padding:1.8rem}}
+.sheet>.lbl{display:block;margin-bottom:.4rem}
+.sheet .field>span{width:3.4rem}
+.sheet .row{display:flex;justify-content:space-between;margin-top:1.4rem}
+.sheet .btn.sm{padding:.25rem .6rem;font-size:.66rem}
 
 /* print: A4 */
 #print{display:none}
 @media print{
   @page{size:A4;margin:14mm}
-  body{background:#fff;color:#222;font-size:10pt}
+  html{font-size:10pt}
+  body{background:#fff;color:#222}
   header,nav,main,.back{display:none!important}
   #print{display:block}
-  #print h1{font-size:9pt;letter-spacing:.24em;font-weight:400;display:flex;justify-content:space-between;border-bottom:.6pt solid #888;padding-bottom:4pt;margin-bottom:6pt}
+  #print h1{font-size:8pt;letter-spacing:.3em;font-weight:400;display:flex;justify-content:space-between;border-bottom:.6pt solid #777;padding-bottom:4pt;margin-bottom:4pt}
   #print table{width:100%;border-collapse:collapse}
-  #print td{border-bottom:.4pt solid #bbb;vertical-align:top;padding:5pt 4pt;height:30mm}
-  #print td.h{width:22mm;font-family:var(--mono);font-size:8pt;color:#555}
-  #print td.h b{display:block;font-size:15pt;font-weight:300;color:#222}
+  #print td{border-bottom:.4pt solid #ccc;vertical-align:top;padding:5pt 4pt;height:30mm}
+  #print td.h{width:22mm;font-family:var(--mono);font-size:7pt;letter-spacing:.15em;color:#666}
+  #print td.h b{display:block;font-family:var(--font);font-size:18pt;font-weight:200;letter-spacing:0;color:#222}
   #print .pi{padding:1pt 0;font-size:9.5pt}
-  #print .pi::before{content:"☐ ";color:#777}
+  #print .pi::before{content:"☐ ";color:#888}
   #print .pi.x{color:#999;text-decoration:line-through}
   #print .pi.x::before{content:"☑ "}
   #print .und{margin-top:8pt}
-  #print .und h2{font-size:8pt;letter-spacing:.2em;font-weight:400;color:#555;border-bottom:.4pt solid #bbb;padding-bottom:3pt;margin-bottom:3pt}
+  #print .und h2{font-size:7pt;letter-spacing:.24em;font-weight:400;color:#666;border-bottom:.4pt solid #ccc;padding-bottom:3pt;margin-bottom:3pt}
   #print .cols{columns:2;column-gap:10mm}
 }
 </style>
@@ -186,19 +213,23 @@ input[type=text],textarea{font-size:16px}
 <header>
   <div class="hrow">
     <span class="brand">WEEKLY</span>
-    <span class="sync" id="sync"><span class="dot" id="dot"></span><span id="syncTxt">로컬</span></span>
+    <nav>
+      <button data-v="list" class="on" id="tabList">LIST</button>
+      <button data-v="week" id="tabWeek">WEEK</button>
+      <button data-v="set" id="tabSet">SETTING</button>
+    </nav>
+    <span class="sync" id="sync"><span class="dot" id="dot"></span><span id="syncTxt">LOCAL</span></span>
   </div>
-  <nav>
-    <button data-v="list" class="on" id="tabList">할 일</button>
-    <button data-v="week" id="tabWeek">주간</button>
-    <button data-v="set" id="tabSet">설정</button>
-  </nav>
 </header>
 
 <main id="main" class="board">
   <section class="view on" id="vList">
+    <div class="hero">
+      <div><span class="lbl" id="lDay"></span><div class="big num" id="lDate"></div></div>
+      <div class="stat num"><div><b id="sOpen">0</b><span class="lbl">Open</span></div><div><b id="sDone">0</b><span class="lbl">Done</span></div></div>
+    </div>
     <div class="add">
-      <input type="text" id="addTxt" placeholder="할 일 추가  ·  #분류" enterkeyhint="done" autocomplete="off">
+      <input type="text" id="addTxt" placeholder="새로운 할 일  #분류" enterkeyhint="done" autocomplete="off">
       <span class="pend" id="addPend"></span>
       <label class="ico" id="addIco" title="날짜">
         <svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="11"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg>
@@ -207,19 +238,18 @@ input[type=text],textarea{font-size:16px}
     </div>
     <div class="bar">
       <div class="seg" id="sort">
-        <button data-s="date">날짜</button><button data-s="added">추가</button><button data-s="cat">분류</button>
+        <button data-s="date">날짜순</button><button data-s="added">추가순</button><button data-s="cat">분류순</button>
       </div>
-      <span class="count num" id="count"></span>
     </div>
     <ul id="open"></ul>
-    <button class="fold" id="fold"><i>▶</i><span class="lbl">완료</span><span class="count num" id="doneN"></span></button>
+    <button class="fold" id="fold"><i>›</i><span class="lbl">Completed</span><span class="num" id="doneN"></span></button>
     <ul id="done"></ul>
   </section>
 
   <section class="view" id="vWeek">
-    <div class="wk">
-      <span class="rng num" id="rng"></span>
-      <div class="nav2"><button id="prev">‹</button><button id="today">오늘</button><button id="next">›</button><button id="prt" title="인쇄">⎙</button></div>
+    <div class="hero">
+      <div><span class="lbl" id="wMon"></span><div class="big num" id="rng"></div></div>
+      <div class="ctl"><button class="arr" id="prev" aria-label="이전 주">‹</button><button id="today">TODAY</button><button class="arr" id="next" aria-label="다음 주">›</button><button id="prt">PRINT</button></div>
     </div>
     <div class="days" id="days"></div>
   </section>
@@ -228,21 +258,22 @@ input[type=text],textarea{font-size:16px}
     <div class="sec">
       <span class="lbl">Display</span>
       <div class="field"><span>글자 크기</span>
-        <div class="seg" id="fsz"><button data-f="12">S</button><button data-f="13">M</button><button data-f="15">L</button></div>
+        <div class="size"><span class="a1">A</span><input type="range" id="fsr" min="11" max="19" step="0.5"><span class="a2">A</span><span class="val" id="fsv"></span></div>
       </div>
       <div class="field" id="splitRow"><span>분할 화면</span>
         <div class="seg" id="splitSeg"><button data-x="1">켜기</button><button data-x="0">끄기</button></div>
       </div>
-      <p class="note">분할 화면은 가로 1100pt 이상(아이패드 가로)에서 리스트와 주간 보기를 나란히 표시합니다.</p>
+      <p class="note">글자 크기를 바꾸면 여백과 아이콘도 함께 조정됩니다. 분할 화면은 아이패드 가로에서 리스트와 주간 보기를 나란히 보여줍니다.</p>
     </div>
     <div class="sec">
       <span class="lbl">Font</span>
-      <div class="field"><span>현재</span><span class="fontprev" id="fontName" style="width:auto">기본 (Noto Sans KR Light)</span></div>
+      <div class="field"><span>현재 폰트</span><span class="fontprev" id="fontName">기본</span></div>
+      <div class="preview">가나다라마바사 ABC 0123 — 오늘의 할 일을 정리합니다.</div>
       <div class="btns">
         <label class="btn">폰트 업로드<input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2,font/*" hidden></label>
         <button class="btn" id="fontReset">기본으로</button>
       </div>
-      <p class="note">.ttf · .otf · .woff 파일은 이 기기에만 저장됩니다.</p>
+      <p class="note">.ttf · .otf · .woff 파일은 이 기기에만 저장되며 숫자와 날짜를 포함한 모든 글자에 적용됩니다.</p>
     </div>
     <div class="sec">
       <span class="lbl">Gist Sync</span>
@@ -253,7 +284,7 @@ input[type=text],textarea{font-size:16px}
         <button class="btn" id="gNow">지금 동기화</button>
         <button class="btn del" id="gOff">연결 해제</button>
       </div>
-      <p class="note">클래식 토큰(scope: gist)을 입력하세요. Gist ID를 비우면 내 Gist 중 weekly-todo.json을 찾아 쓰고, 없으면 비공개 Gist를 새로 만듭니다. 토큰은 기기에만 저장되며 기기마다 한 번 입력합니다.</p>
+      <p class="note">클래식 토큰(scope: gist)을 입력하세요. Gist ID를 비우면 내 Gist 중 weekly-todo.json을 찾아 쓰고, 없으면 비공개 Gist를 새로 만듭니다. 토큰은 기기에만 저장됩니다.</p>
       <p class="note num" id="gLast"></p>
     </div>
     <div class="sec">
@@ -264,17 +295,18 @@ input[type=text],textarea{font-size:16px}
         <button class="btn del" id="clr">완료 항목 삭제</button>
       </div>
     </div>
-    <p class="note num">VERSION 4</p>
+    <p class="ver">VERSION 5</p>
   </section>
 </main>
 
 <div class="back" id="back">
   <div class="sheet" id="sheet">
+    <span class="lbl">Edit</span>
     <div class="field"><span>내용</span><input type="text" id="eTxt"></div>
     <div class="field"><span>메모</span><textarea id="eMemo" placeholder="메모"></textarea></div>
     <div class="field"><span>분류</span><input type="text" id="eCat" list="cats" placeholder="없음" autocapitalize="off"></div>
-    <div class="field"><span>날짜</span><input type="date" id="eDate"><button class="btn" id="eNoDate">해제</button></div>
-    <div class="row"><button class="btn del" id="eDel">삭제</button><button class="btn pri" id="eClose">닫기</button></div>
+    <div class="field"><span>날짜</span><input type="date" id="eDate"><button class="btn sm" id="eNoDate">해제</button></div>
+    <div class="row"><button class="btn del" id="eDel">삭제</button><button class="btn pri" id="eClose">완료</button></div>
   </div>
 </div>
 <datalist id="cats"></datalist>
@@ -297,8 +329,8 @@ const load=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{retur
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
 
 let db=load(KEY,{tasks:[]});
-let cfg=Object.assign({sort:'date',fold:true,fs:13,split:1,token:'',gist:'',last:0},load(CFG,{}));
-let view='list', weekOff=0, editId=null, addDate='';
+let cfg=Object.assign({sort:'date',fold:true,fs:14,split:1,token:'',gist:'',last:0},load(CFG,{}));
+let view='list', weekOff=0, editId=null, addDate='', rangeTxt='';
 
 const live=()=>db.tasks.filter(t=>!t.deleted);
 const find=id=>db.tasks.find(t=>t.id===id);
@@ -307,7 +339,7 @@ function touch(t,p){Object.assign(t,p,{updated:now()});commit()}
 
 /* ---------- categories ---------- */
 function catColor(c){let h=0;for(const ch of c)h=(h*31+ch.charCodeAt(0))>>>0;return `var(--c${h%6})`}
-const tagHTML=c=>c?`<span class="tag" style="background:${catColor(c)}">${esc(c)}</span>`:'';
+const tagHTML=c=>c?`<span class="tag"><i style="background:${catColor(c)}"></i>${esc(c)}</span>`:'';
 
 /* ---------- list ---------- */
 const CAL='<svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="11"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg>';
@@ -343,7 +375,8 @@ function renderList(){
   $('#fold').classList.toggle('open',!cfg.fold);
   $('#fold').style.display=done.length?'':'none';
   $('#doneN').textContent=done.length;
-  $('#count').textContent=`OPEN ${open.length} · DONE ${done.length}`;
+  $('#sOpen').textContent=open.length;$('#sDone').textContent=done.length;
+  const n=new Date();$('#lDay').textContent=`${DOWE[n.getDay()]} · ${DOW[n.getDay()]}요일`;$('#lDate').textContent=`${pad(n.getMonth()+1)}.${pad(n.getDate())}`;
   $$('#sort button').forEach(b=>b.classList.toggle('on',b.dataset.s===cfg.sort));
   const cats=[...new Set(L.map(t=>t.cat).filter(Boolean))].sort();
   $('#cats').innerHTML=cats.map(c=>`<option value="${esc(c)}">`).join('');
@@ -355,21 +388,24 @@ function weekDays(off){const s=weekStart(off);return[...Array(7)].map((_,i)=>{co
 function renderWeek(){
   const days=weekDays(weekOff), L=live(), td=todayS();
   const a=days[0], b=days[6];
-  $('#rng').textContent=`${a.getFullYear()}.${pad(a.getMonth()+1)}.${pad(a.getDate())} – ${pad(b.getMonth()+1)}.${pad(b.getDate())}`;
+  const MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  rangeTxt=`${a.getFullYear()}.${pad(a.getMonth()+1)}.${pad(a.getDate())} – ${pad(b.getMonth()+1)}.${pad(b.getDate())}`;
+  $('#wMon').textContent=`${MON[a.getMonth()]}${a.getMonth()!==b.getMonth()?' – '+MON[b.getMonth()]:''} ${b.getFullYear()}`;
+  $('#rng').textContent=`${pad(a.getDate())} — ${pad(b.getDate())}`;
   $('#days').innerHTML=days.map(d=>{
     const s=ymd(d), ts=L.filter(t=>t.date===s).sort((x,y)=>x.done-y.done||x.created-y.created);
     return `<div class="day${s===td?' today':''}${d.getDay()===0?' sun':''}" data-d="${s}">
-      <div class="dh"><span class="lbl">${DOWE[d.getDay()]} · ${DOW[d.getDay()]}</span><span class="d">${pad(d.getDate())}</span><span class="n num">${ts.length?ts.filter(t=>t.done).length+'/'+ts.length:''}</span></div>
+      <div class="dh"><span class="lbl">${DOWE[d.getDay()]}</span><span class="d num">${pad(d.getDate())}</span><span class="n num">${ts.length?ts.filter(t=>t.done).length+'/'+ts.length:''}</span></div><div class="dl">
       ${ts.map(t=>`<div class="wi${t.done?' done':''}" data-id="${t.id}"><button class="chk${t.done?' on':''}" data-a="chk"></button><div class="body" data-a="edit"><span class="txt">${esc(t.text)}</span>${tagHTML(t.cat)}</div></div>`).join('')}
       <input class="dayadd" type="text" placeholder="+" enterkeyhint="done" data-d="${s}">
-    </div>`}).join('');
+    </div></div>`}).join('');
 }
 
 /* ---------- print (A4) ---------- */
 function renderPrint(){
   const days=weekDays(weekOff), L=live(), und=L.filter(t=>!t.date&&!t.done);
   const pi=t=>`<div class="pi${t.done?' x':''}">${esc(t.text)}${t.cat?` <small>· ${esc(t.cat)}</small>`:''}</div>`;
-  $('#print').innerHTML=`<h1><span>WEEKLY</span><span>${$('#rng').textContent}</span></h1>
+  $('#print').innerHTML=`<h1><span>WEEKLY</span><span>${rangeTxt}</span></h1>
   <table>${days.map(d=>{const s=ymd(d);return `<tr><td class="h">${DOWE[d.getDay()]}<b>${pad(d.getMonth()+1)}.${pad(d.getDate())}</b></td><td>${L.filter(t=>t.date===s).map(pi).join('')}</td></tr>`}).join('')}</table>
   ${und.length?`<div class="und"><h2>날짜 없음</h2><div class="cols">${und.map(pi).join('')}</div></div>`:''}`;
 }
@@ -382,7 +418,7 @@ function render(){
   $({list:'#vList',week:'#vWeek',set:'#vSet'}[view]).classList.add('on');
   document.body.classList.toggle('split',!!cfg.split);
   document.documentElement.style.setProperty('--fs',cfg.fs+'px');
-  $$('#fsz button').forEach(b=>b.classList.toggle('on',+b.dataset.f===cfg.fs));
+  $('#fsr').value=cfg.fs;$('#fsv').textContent=cfg.fs+'PX';
   $$('#splitSeg button').forEach(b=>b.classList.toggle('on',+b.dataset.x===cfg.split));
 }
 const isSplit=()=>cfg.split&&innerWidth>=1100;
@@ -425,7 +461,8 @@ $('#prev').onclick=()=>{weekOff--;render()};$('#next').onclick=()=>{weekOff++;re
 $('#prt').onclick=()=>{renderPrint();print()};
 addEventListener('beforeprint',renderPrint);
 addEventListener('resize',()=>$$('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===view||(view==='week'&&isSplit()&&b.dataset.v==='list'))));
-$('#fsz').addEventListener('click',e=>{const b=e.target.closest('button');if(b){cfg.fs=+b.dataset.f;save(CFG,cfg);render()}});
+$('#fsr').addEventListener('input',e=>{cfg.fs=+e.target.value;document.documentElement.style.setProperty('--fs',cfg.fs+'px');$('#fsv').textContent=cfg.fs+'PX'});
+$('#fsr').addEventListener('change',()=>save(CFG,cfg));
 $('#splitSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(b){cfg.split=+b.dataset.x;save(CFG,cfg);render()}});
 
 /* ---------- editor ---------- */
@@ -451,7 +488,7 @@ async function kv(mode,fn){const d=await idb();return new Promise((res,rej)=>{co
 async function applyFont(){
   try{
     const f=await kv('readonly',s=>s.get('font'));
-    if(!f){['--font','--mono'].forEach(v=>document.documentElement.style.removeProperty(v));$('#fontName').textContent='기본 (Noto Sans KR Light)';return}
+    if(!f){['--font','--mono'].forEach(v=>document.documentElement.style.removeProperty(v));$('#fontName').textContent='기본 (Noto Sans KR)';return}
     const ff=new FontFace('UserFont',f.buf);await ff.load();document.fonts.add(ff);
     ['--font','--mono'].forEach(v=>document.documentElement.style.setProperty(v,'"UserFont",-apple-system,sans-serif'));
     $('#fontName').textContent=f.name;
@@ -510,9 +547,9 @@ async function readGist(g){
 let syncing=false, again=false, timer=null;
 function queueSync(){if(!ready())return;clearTimeout(timer);timer=setTimeout(sync,1200)}
 async function sync(){
-  if(!ready()){status('','로컬');return}
+  if(!ready()){status('','LOCAL');return}
   if(syncing){again=true;return}
-  syncing=true;status('busy','동기화 중');
+  syncing=true;status('busy','SYNC');
   try{
     if(!cfg.gist){cfg.gist=await findGist();save(CFG,cfg);fillCfg()}
     let g;
@@ -535,7 +572,7 @@ $('#gSave').onclick=()=>{
   save(CFG,cfg);fillCfg();sync();
 };
 $('#gNow').onclick=()=>sync();
-$('#gOff').onclick=()=>{if(confirm('동기화 설정을 이 기기에서 삭제할까요? (할 일 데이터는 유지됩니다)')){cfg.token='';cfg.gist='';save(CFG,cfg);fillCfg();status('','로컬')}};
+$('#gOff').onclick=()=>{if(confirm('동기화 설정을 이 기기에서 삭제할까요? (할 일 데이터는 유지됩니다)')){cfg.token='';cfg.gist='';save(CFG,cfg);fillCfg();status('','LOCAL')}};
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();sync()}});
 setInterval(()=>{if(document.visibilityState==='visible'&&ready())sync()},60000);
 
