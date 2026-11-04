@@ -7,8 +7,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Weekly">
-<meta name="theme-color" content="#f3f5f7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1b1f24" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f9fafb" id="themeColor">
+<script>try{document.documentElement.dataset.theme=(JSON.parse(localStorage.getItem('weekly.cfg'))||{}).theme||'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-512.png">
@@ -18,16 +18,22 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400&family=Noto+Sans+KR:wght@200;300;400&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f3f5f7; --surface:#fafbfc; --line:#dde2e8; --hair:#e9edf1;
+  --bg:#f9fafb; --surface:#ffffff; --line:#e1e6eb; --hair:#edf0f3;
   --text:#36404b; --sub:#8a94a1; --faint:#b6bec8;
-  --accent:#7489a2; --soft:#e7ecf1; --danger:#b38989;
+  --accent:#7489a2; --soft:#edf1f5; --danger:#b38989;
   --c0:#a9b8c9; --c1:#adbeaa; --c2:#cdb8a4; --c3:#b9aec6; --c4:#a5c0bd; --c5:#cbbf9c;
   --font:"Noto Sans KR",-apple-system,"Apple SD Gothic Neo",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
   --fs:14px;
   --top:env(safe-area-inset-top); --bot:env(safe-area-inset-bottom);
 }
-@media (prefers-color-scheme:dark){:root{
+:root[data-theme=dark]{
+  --bg:#1b1f24; --surface:#21262c; --line:#343c46; --hair:#2a3038;
+  --text:#d6dce3; --sub:#8c97a4; --faint:#5d6773;
+  --accent:#9aadc2; --soft:#29313a; --danger:#c49c9c;
+  --c0:#7d8fa3; --c1:#849681; --c2:#a28f7c; --c3:#91879f; --c4:#7c9895; --c5:#a09673;
+}
+@media (prefers-color-scheme:dark){:root[data-theme=auto]{
   --bg:#1b1f24; --surface:#21262c; --line:#343c46; --hair:#2a3038;
   --text:#d6dce3; --sub:#8c97a4; --faint:#5d6773;
   --accent:#9aadc2; --soft:#29313a; --danger:#c49c9c;
@@ -79,12 +85,16 @@ main{max-width:1400px;margin:0 auto}
 .stat .lbl{font-size:.56rem}
 
 /* add */
-.add{display:flex;align-items:center;border-bottom:1px solid var(--line);transition:border-color .2s}
+.add{display:flex;align-items:flex-end;gap:.2rem;border-bottom:1px solid var(--line);transition:border-color .2s}
 .add:focus-within{border-color:var(--accent)}
-.add input[type=text]{flex:1;min-width:0;padding:.8rem 0;font-size:1rem}
+.add textarea{flex:1;min-width:0;padding:.8rem 0;font-size:1rem;line-height:1.55;resize:none;overflow:hidden;display:block}
+.addbar{display:flex;align-items:center;flex:none;padding-bottom:.15rem}
+.addbtn{font-size:.64rem;letter-spacing:.16em;color:var(--bg);background:var(--text);padding:.35rem .6rem;margin-left:.3rem;transition:opacity .15s}
+#addTxt:placeholder-shown~.addbar .addbtn{opacity:.25;pointer-events:none}
+.tm{font-family:var(--mono);font-size:.68rem;color:var(--accent);margin-right:.45rem;letter-spacing:.02em}
 .ico{position:relative;width:2.2rem;height:2.2rem;display:grid;place-items:center;color:var(--faint);flex:none}
 .ico svg{width:1rem;height:1rem;stroke:currentColor;fill:none;stroke-width:1}
-.ico input[type=date]{position:absolute;inset:0;opacity:0;width:100%;height:100%}
+.ico input[type=date],.ico input[type=time]{position:absolute;inset:0;opacity:0;width:100%;height:100%}
 .ico.has{color:var(--accent)}
 .pend{font-family:var(--mono);font-size:.7rem;color:var(--accent);white-space:nowrap;cursor:pointer}
 .pend:not(:empty)::after{content:" ×";color:var(--faint)}
@@ -102,7 +112,7 @@ ul{list-style:none}
 .chk.on{background:var(--accent);border-color:var(--accent)}
 .chk.on::after{content:"";width:.46rem;height:.24rem;border:solid var(--surface);border-width:0 0 1px 1px;transform:translateY(-.06rem) rotate(-45deg)}
 .body{flex:1;min-width:0;cursor:pointer}
-.txt{word-break:break-word}
+.txt{word-break:break-word;white-space:pre-wrap}
 .done .txt{color:var(--faint);text-decoration:line-through;text-decoration-thickness:1px;text-decoration-color:var(--faint)}
 .memo{font-size:.78rem;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.1rem}
 .meta{display:flex;gap:.9rem;align-items:center;flex-wrap:wrap;margin-top:.3rem}
@@ -136,7 +146,10 @@ ul{list-style:none}
 .wi .chk{width:.82rem;height:.82rem;margin-top:.32rem}
 .wi .chk.on::after{width:.38rem;height:.2rem}
 .wi .tag{margin-left:.55rem;font-size:.62rem}
-.dayadd{width:100%;padding:.3rem 0;font-size:.86rem}
+.dadd{display:flex;align-items:flex-end;gap:.3rem}
+.dayadd{flex:1;min-width:0;padding:.3rem 0;font-size:.86rem;line-height:1.5;resize:none;overflow:hidden;display:block}
+.dbtn{font-size:.56rem;letter-spacing:.14em;color:var(--bg);background:var(--text);padding:.2rem .4rem;margin-bottom:.35rem}
+.dayadd:placeholder-shown+.dbtn{display:none}
 @media (min-width:768px){
   .days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:0}
   .day{display:block;border:0;border-left:1px solid var(--hair);padding:0 .75rem 1rem;min-height:calc(100vh - 15rem)}
@@ -154,9 +167,12 @@ ul{list-style:none}
 .field{display:flex;align-items:center;gap:1rem;padding:.6rem 0;border-bottom:1px solid var(--hair)}
 .field>span{width:5.4rem;flex:none;font-size:.78rem;color:var(--sub)}
 .field input,.field textarea{flex:1;min-width:0;padding:.2rem 0;font-size:.95rem}
+#eTxt{resize:none;min-height:2rem;line-height:1.55}
+.field:has(textarea){align-items:flex-start}
+.field:has(textarea)>span{padding-top:.3rem}
 .field textarea{resize:none;min-height:4.6rem;line-height:1.55}
-.field input[type=date]{text-align:left;min-height:1.8rem}
-.field input[type=date]::-webkit-date-and-time-value{text-align:left}
+.field input[type=date],.field input[type=time]{text-align:left;min-height:1.8rem}
+.field input::-webkit-date-and-time-value{text-align:left}
 .fontprev{flex:1;font-size:.88rem}
 .size{flex:1;display:flex;align-items:center;gap:.8rem}
 .size .a1{font-size:.7rem;color:var(--sub)}.size .a2{font-size:1.1rem;color:var(--sub)}
@@ -229,12 +245,13 @@ input[type=range]::-moz-range-thumb{width:.85rem;height:.85rem;background:var(--
       <div class="stat num"><div><b id="sOpen">0</b><span class="lbl">Open</span></div><div><b id="sDone">0</b><span class="lbl">Done</span></div></div>
     </div>
     <div class="add">
-      <input type="text" id="addTxt" placeholder="새로운 할 일  #분류" enterkeyhint="done" autocomplete="off">
-      <span class="pend" id="addPend"></span>
-      <label class="ico" id="addIco" title="날짜">
-        <svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="11"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg>
-        <input type="date" id="addDate">
-      </label>
+      <textarea id="addTxt" rows="1" placeholder="새로운 할 일  #분류" autocomplete="off"></textarea>
+      <div class="addbar">
+        <span class="pend" id="addPend"></span>
+        <label class="ico" id="addIco" title="날짜"><svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="11"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg><input type="date" id="addDate"></label>
+        <label class="ico" id="addTIco" title="시간"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg><input type="time" id="addTime"></label>
+        <button class="addbtn" id="addBtn">ADD</button>
+      </div>
     </div>
     <div class="bar">
       <div class="seg" id="sort">
@@ -259,6 +276,9 @@ input[type=range]::-moz-range-thumb{width:.85rem;height:.85rem;background:var(--
       <span class="lbl">Display</span>
       <div class="field"><span>글자 크기</span>
         <div class="size"><span class="a1">A</span><input type="range" id="fsr" min="11" max="19" step="0.5"><span class="a2">A</span><span class="val" id="fsv"></span></div>
+      </div>
+      <div class="field"><span>테마</span>
+        <div class="seg" id="themeSeg"><button data-t="light">라이트</button><button data-t="dark">다크</button><button data-t="auto">시스템</button></div>
       </div>
       <div class="field" id="splitRow"><span>분할 화면</span>
         <div class="seg" id="splitSeg"><button data-x="1">켜기</button><button data-x="0">끄기</button></div>
@@ -295,17 +315,18 @@ input[type=range]::-moz-range-thumb{width:.85rem;height:.85rem;background:var(--
         <button class="btn del" id="clr">완료 항목 삭제</button>
       </div>
     </div>
-    <p class="ver">VERSION 5</p>
+    <p class="ver">VERSION 6</p>
   </section>
 </main>
 
 <div class="back" id="back">
   <div class="sheet" id="sheet">
     <span class="lbl">Edit</span>
-    <div class="field"><span>내용</span><input type="text" id="eTxt"></div>
+    <div class="field"><span>내용</span><textarea id="eTxt" rows="1"></textarea></div>
     <div class="field"><span>메모</span><textarea id="eMemo" placeholder="메모"></textarea></div>
     <div class="field"><span>분류</span><input type="text" id="eCat" list="cats" placeholder="없음" autocapitalize="off"></div>
     <div class="field"><span>날짜</span><input type="date" id="eDate"><button class="btn sm" id="eNoDate">해제</button></div>
+    <div class="field"><span>시간</span><input type="time" id="eTime"><button class="btn sm" id="eNoTime">해제</button></div>
     <div class="row"><button class="btn del" id="eDel">삭제</button><button class="btn pri" id="eClose">완료</button></div>
   </div>
 </div>
@@ -324,13 +345,14 @@ const pad=n=>String(n).padStart(2,'0');
 const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const parse=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
 const todayS=()=>ymd(new Date());
+const when=t=>t.date?fmtD(t.date)+(t.time?' '+t.time:''):(t.time||'');
 const fmtD=s=>{const d=parse(s);return `${pad(d.getMonth()+1)}.${pad(d.getDate())} ${DOW[d.getDay()]}`};
 const load=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
 
 let db=load(KEY,{tasks:[]});
-let cfg=Object.assign({sort:'date',fold:true,fs:14,split:1,token:'',gist:'',last:0},load(CFG,{}));
-let view='list', weekOff=0, editId=null, addDate='', rangeTxt='';
+let cfg=Object.assign({sort:'date',fold:true,fs:14,theme:'light',split:1,token:'',gist:'',last:0},load(CFG,{}));
+let view='list', weekOff=0, editId=null, addDate='', addTime='', rangeTxt='';
 
 const live=()=>db.tasks.filter(t=>!t.deleted);
 const find=id=>db.tasks.find(t=>t.id===id);
@@ -350,14 +372,14 @@ function itemHTML(t){
     <div class="body" data-a="edit">
       <div class="txt">${esc(t.text)}</div>
       ${t.memo?`<div class="memo">${esc(t.memo.split('\n')[0])}</div>`:''}
-      ${t.date||t.cat?`<div class="meta">${t.date?`<span class="date${late?' late':''}">${fmtD(t.date)}</span>`:''}${tagHTML(t.cat)}</div>`:''}
+      ${t.date||t.time||t.cat?`<div class="meta">${t.date||t.time?`<span class="date${late?' late':''}">${when(t)}</span>`:''}${tagHTML(t.cat)}</div>`:''}
     </div>
     <label class="ico${t.date?' has':''}">${CAL}<input type="date" data-a="date" value="${t.date||''}"></label>
   </li>`;
 }
 function sorted(arr){
   const s=cfg.sort, a=[...arr];
-  const byDate=(x,y)=>(x.date||'9999')<(y.date||'9999')?-1:(x.date||'9999')>(y.date||'9999')?1:x.created-y.created;
+  const k=t=>(t.date||'9999')+(t.time||'99:99'), byDate=(x,y)=>k(x)<k(y)?-1:k(x)>k(y)?1:x.created-y.created;
   if(s==='added')a.sort((x,y)=>y.created-x.created);
   else if(s==='cat')a.sort((x,y)=>(x.cat||'￿').localeCompare(y.cat||'￿','ko')||byDate(x,y));
   else a.sort(byDate);
@@ -393,18 +415,18 @@ function renderWeek(){
   $('#wMon').textContent=`${MON[a.getMonth()]}${a.getMonth()!==b.getMonth()?' – '+MON[b.getMonth()]:''} ${b.getFullYear()}`;
   $('#rng').textContent=`${pad(a.getDate())} — ${pad(b.getDate())}`;
   $('#days').innerHTML=days.map(d=>{
-    const s=ymd(d), ts=L.filter(t=>t.date===s).sort((x,y)=>x.done-y.done||x.created-y.created);
+    const s=ymd(d), ts=L.filter(t=>t.date===s).sort((x,y)=>x.done-y.done||(x.time||'99').localeCompare(y.time||'99')||x.created-y.created);
     return `<div class="day${s===td?' today':''}${d.getDay()===0?' sun':''}" data-d="${s}">
       <div class="dh"><span class="lbl">${DOWE[d.getDay()]}</span><span class="d num">${pad(d.getDate())}</span><span class="n num">${ts.length?ts.filter(t=>t.done).length+'/'+ts.length:''}</span></div><div class="dl">
-      ${ts.map(t=>`<div class="wi${t.done?' done':''}" data-id="${t.id}"><button class="chk${t.done?' on':''}" data-a="chk"></button><div class="body" data-a="edit"><span class="txt">${esc(t.text)}</span>${tagHTML(t.cat)}</div></div>`).join('')}
-      <input class="dayadd" type="text" placeholder="+" enterkeyhint="done" data-d="${s}">
+      ${ts.map(t=>`<div class="wi${t.done?' done':''}" data-id="${t.id}"><button class="chk${t.done?' on':''}" data-a="chk"></button><div class="body" data-a="edit"><span class="txt">${t.time?`<span class="tm">${t.time}</span>`:''}${esc(t.text)}</span>${tagHTML(t.cat)}</div></div>`).join('')}
+      <div class="dadd"><textarea class="dayadd" rows="1" placeholder="+" data-d="${s}"></textarea><button class="dbtn" data-d="${s}">ADD</button></div>
     </div></div>`}).join('');
 }
 
 /* ---------- print (A4) ---------- */
 function renderPrint(){
   const days=weekDays(weekOff), L=live(), und=L.filter(t=>!t.date&&!t.done);
-  const pi=t=>`<div class="pi${t.done?' x':''}">${esc(t.text)}${t.cat?` <small>· ${esc(t.cat)}</small>`:''}</div>`;
+  const pi=t=>`<div class="pi${t.done?' x':''}">${t.time?t.time+' ':''}${esc(t.text).replace(/\n/g,'<br>')}${t.cat?` <small>· ${esc(t.cat)}</small>`:''}</div>`;
   $('#print').innerHTML=`<h1><span>WEEKLY</span><span>${rangeTxt}</span></h1>
   <table>${days.map(d=>{const s=ymd(d);return `<tr><td class="h">${DOWE[d.getDay()]}<b>${pad(d.getMonth()+1)}.${pad(d.getDate())}</b></td><td>${L.filter(t=>t.date===s).map(pi).join('')}</td></tr>`}).join('')}</table>
   ${und.length?`<div class="und"><h2>날짜 없음</h2><div class="cols">${und.map(pi).join('')}</div></div>`:''}`;
@@ -419,17 +441,19 @@ function render(){
   document.body.classList.toggle('split',!!cfg.split);
   document.documentElement.style.setProperty('--fs',cfg.fs+'px');
   $('#fsr').value=cfg.fs;$('#fsv').textContent=cfg.fs+'PX';
+  document.documentElement.dataset.theme=cfg.theme;$$('#themeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.t===cfg.theme));
+  requestAnimationFrame(()=>$('#themeColor').content=getComputedStyle(document.body).backgroundColor);
   $$('#splitSeg button').forEach(b=>b.classList.toggle('on',+b.dataset.x===cfg.split));
 }
 const isSplit=()=>cfg.split&&innerWidth>=1100;
 
 /* ---------- actions ---------- */
-function addTask(raw,date){
+function addTask(raw,date,time){
   let text=raw.trim(), cat='';
   const m=text.match(/(?:^|\s)#(\S+)/); if(m){cat=m[1];text=text.replace(m[0],'').trim()}
   if(!text)return;
   const t=now();
-  db.tasks.push({id:uid(),text,done:false,memo:'',cat,date:date||'',created:t,updated:t});
+  db.tasks.push({id:uid(),text,done:false,memo:'',cat,date:date||'',time:time||'',created:t,updated:t});
   commit();
 }
 function onAction(e){
@@ -440,20 +464,21 @@ function onAction(e){
   else if(el.dataset.a==='date'&&e.type==='change')touch(t,{date:el.value||''});
 }
 ['click','change'].forEach(ev=>{$('#vList').addEventListener(ev,onAction);$('#days').addEventListener(ev,onAction)});
-document.addEventListener('click',e=>{const i=e.target.closest('.ico input[type=date]');if(i&&i.showPicker){try{i.showPicker()}catch{}}},true);
+document.addEventListener('click',e=>{const i=e.target.closest('.ico input[type=date],.ico input[type=time]');if(i&&i.showPicker){try{i.showPicker()}catch{}}},true);
 
-$('#addTxt').addEventListener('keydown',e=>{
-  if(e.key!=='Enter'||e.isComposing)return;
-  e.preventDefault();addTask(e.target.value,addDate);e.target.value='';setAddDate('');
-});
-function setAddDate(v){addDate=v;$('#addDate').value=v;$('#addPend').textContent=v?fmtD(v):'';$('#addIco').classList.toggle('has',!!v)}
-$('#addDate').addEventListener('change',e=>setAddDate(e.target.value));
-$('#addPend').addEventListener('click',()=>setAddDate(''));
-$('#days').addEventListener('keydown',e=>{
-  const i=e.target.closest('.dayadd'); if(!i||e.key!=='Enter'||e.isComposing)return;
-  e.preventDefault(); const d=i.dataset.d, v=i.value; i.value=''; addTask(v,d);
-  const n=$(`.dayadd[data-d="${d}"]`); n&&n.focus();
-});
+const grow=el=>{el.style.height='auto';el.style.height=el.scrollHeight+'px'};
+document.addEventListener('input',e=>{if(e.target.matches('textarea'))grow(e.target)});
+function submitAdd(){const a=$('#addTxt');if(!a.value.trim())return;addTask(a.value,addDate,addTime);a.value='';grow(a);setAdd('','')}
+$('#addBtn').addEventListener('click',submitAdd);
+$('#addTxt').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&!e.isComposing){e.preventDefault();submitAdd()}});
+function setAdd(d,t){addDate=d;addTime=t;$('#addDate').value=d;$('#addTime').value=t;$('#addPend').textContent=when({date:d,time:t});$('#addIco').classList.toggle('has',!!d);$('#addTIco').classList.toggle('has',!!t)}
+$('#addDate').addEventListener('change',e=>setAdd(e.target.value,addTime));
+$('#addTime').addEventListener('change',e=>setAdd(addDate,e.target.value));
+$('#addPend').addEventListener('click',()=>setAdd('',''));
+function submitDay(d){const i=$(`.dayadd[data-d="${d}"]`);if(!i||!i.value.trim())return;const v=i.value;i.value='';addTask(v,d);const n=$(`.dayadd[data-d="${d}"]`);n&&n.focus()}
+$('#days').addEventListener('click',e=>{const b=e.target.closest('.dbtn');if(b)submitDay(b.dataset.d)});
+$('#days').addEventListener('keydown',e=>{const i=e.target.closest('.dayadd');if(i&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&!e.isComposing){e.preventDefault();submitDay(i.dataset.d)}});
+$('#themeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(b){cfg.theme=b.dataset.t;save(CFG,cfg);render()}});
 $('#sort').addEventListener('click',e=>{const b=e.target.closest('button');if(b){cfg.sort=b.dataset.s;save(CFG,cfg);render()}});
 $('#fold').addEventListener('click',()=>{cfg.fold=!cfg.fold;save(CFG,cfg);render()});
 $$('nav button').forEach(b=>b.addEventListener('click',()=>{view=b.dataset.v;render();scrollTo(0,0)}));
@@ -468,18 +493,18 @@ $('#splitSeg').addEventListener('click',e=>{const b=e.target.closest('button');i
 /* ---------- editor ---------- */
 function openEdit(id){
   const t=find(id); editId=id;
-  $('#eTxt').value=t.text;$('#eMemo').value=t.memo||'';$('#eCat').value=t.cat||'';$('#eDate').value=t.date||'';
-  $('#back').classList.add('on');
+  $('#eTxt').value=t.text;$('#eMemo').value=t.memo||'';$('#eCat').value=t.cat||'';$('#eDate').value=t.date||'';$('#eTime').value=t.time||'';
+  $('#back').classList.add('on');requestAnimationFrame(()=>grow($('#eTxt')));
 }
 function closeEdit(){
   const t=find(editId); editId=null; $('#back').classList.remove('on');
   if(!t)return;
-  const p={text:$('#eTxt').value.trim()||t.text,memo:$('#eMemo').value,cat:$('#eCat').value.trim(),date:$('#eDate').value||''};
-  if(p.text!==t.text||p.memo!==(t.memo||'')||p.cat!==(t.cat||'')||p.date!==(t.date||''))touch(t,p);
+  const p={text:$('#eTxt').value.trim()||t.text,memo:$('#eMemo').value,cat:$('#eCat').value.trim(),date:$('#eDate').value||'',time:$('#eTime').value||''};
+  if(p.text!==t.text||p.memo!==(t.memo||'')||p.cat!==(t.cat||'')||p.date!==(t.date||'')||p.time!==(t.time||''))touch(t,p);
 }
 $('#eClose').onclick=closeEdit;
 $('#back').addEventListener('click',e=>{if(e.target.id==='back')closeEdit()});
-$('#eNoDate').onclick=()=>{$('#eDate').value=''};
+$('#eNoDate').onclick=()=>{$('#eDate').value=''};$('#eNoTime').onclick=()=>{$('#eTime').value=''};
 $('#eDel').onclick=()=>{const t=find(editId);editId=null;$('#back').classList.remove('on');if(t)touch(t,{deleted:true})};
 
 /* ---------- font (IndexedDB) ---------- */
