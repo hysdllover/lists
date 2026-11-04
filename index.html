@@ -264,6 +264,7 @@ input[type=text],textarea{font-size:16px}
         <button class="btn del" id="clr">완료 항목 삭제</button>
       </div>
     </div>
+    <p class="note num">VERSION 4</p>
   </section>
 </main>
 
@@ -541,7 +542,11 @@ setInterval(()=>{if(document.visibilityState==='visible'&&ready())sync()},60000)
 /* ---------- init ---------- */
 if(innerWidth>=1100&&cfg.split)view='list';
 fillCfg();render();applyFont();sync();
-if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js');
+if('serviceWorker' in navigator&&location.protocol==='https:'){
+  const had=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{r.update();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')r.update()})});
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had)location.reload()});
+}
 })();
 </script>
 </body>
