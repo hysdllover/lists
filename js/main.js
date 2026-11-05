@@ -1,5 +1,15 @@
 /* ---------- init ---------- */
-view=cfg.start==='last'?(['list','week','focus'].includes(cfg.lastView)?cfg.lastView:'list'):(cfg.start||'list');
+view=cfg.start==='last'?(['list','week','month','focus'].includes(cfg.lastView)?cfg.lastView:'list'):(cfg.start||'list');
+(function(){
+  const q=new URLSearchParams(location.search);if(![...q.keys()].length)return;
+  const VM={list:'list',week:'week',month:'month',today:'focus',focus:'focus'};if(VM[q.get('view')])view=VM[q.get('view')];
+  const dw={'오늘':0,today:0,'내일':1,tomorrow:1,'모레':2};
+  const dt=v=>!v?'':(v in dw)?addDays(todayS(),dw[v]):/^\d{4}-\d{2}-\d{2}$/.test(v)?v:'';
+  const tm=v=>/^\d{1,2}:\d{2}$/.test(v||'')?v.padStart(5,'0'):'';
+  const a=q.get('add');if(a&&a.trim()){snap('단축어로 추가됨');addTask(a,dt(q.get('date')),tm(q.get('time')));toast()}
+  const dd=q.get('dday');if(dd&&dt(q.get('date'))){db.events[uid()]=[{name:dd,date:dt(q.get('date')),mode:['once','yearly','since'].includes(q.get('mode'))?q.get('mode'):'once'},now()];save(KEY,db)}
+  history.replaceState(null,'',location.pathname);
+})();
 fillCfg();render();applyFont();sync();
 let curDay=todayS();
 setInterval(()=>{if(todayS()!==curDay){curDay=todayS();weekOff=0;render()}},30000);

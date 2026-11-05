@@ -8,20 +8,26 @@ const pad=n=>String(n).padStart(2,'0');
 const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const parse=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
 const todayS=()=>ymd(new Date());
-const when=t=>t.date?fmtD(t.date)+(t.time?' '+t.time:''):(t.time||'');
+const pz=n=>U('zero')==='0'?String(n):pad(n);
+const fmtT=h=>{if(!h)return '';if(U('tfmt')!=='12')return h;const[H,M]=h.split(':').map(Number);return `${H<12?'오전':'오후'} ${H%12||12}:${pad(M)}`};
+const when=t=>{let s='';if(t.date){s=fmtD(t.date);if(t.end&&t.end>t.date)s+=' – '+fmtD(t.end)}if(t.time)s+=(s?' ':'')+fmtT(t.time)+(t.tend?'–'+fmtT(t.tend):'');return s};
+const tasksOn=(L,s)=>L.filter(t=>t.date&&t.date<=s&&(t.end&&t.end>t.date?t.end:t.date)>=s);
+const MONU=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const addDays=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return ymd(d)};
+const dayDiff=(a,b)=>Math.round((parse(b)-parse(a))/864e5);
 const MONS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], DOWS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const U=k=>db.ui[k];
 const dowS=d=>U('dow')==='en'?DOWS[d.getDay()]:DOW[d.getDay()];
 const dowL=(d,long)=>{const e=DOWE[d.getDay()],k=DOW[d.getDay()]+(long?'요일':'');return U('dow')==='en'?e:U('dow')==='ko'?k:`${e} · ${k}`};
-const fmtD=s=>{const d=parse(s),st=U('dstyle');return st==='en'?`${MONS[d.getMonth()]} ${d.getDate()} ${dowS(d)}`:st==='ko'?`${d.getMonth()+1}월 ${d.getDate()}일 ${dowS(d)}`:`${pad(d.getMonth()+1)}.${pad(d.getDate())} ${dowS(d)}`};
-const bigD=d=>{const st=U('dstyle');return st==='en'?`${MONS[d.getMonth()]} ${d.getDate()}`:st==='ko'?`${d.getMonth()+1}월 ${d.getDate()}일`:`${pad(d.getMonth()+1)}.${pad(d.getDate())}`};
+const fmtD=s=>{const d=parse(s),st=U('dstyle');return st==='en'?`${MONS[d.getMonth()]} ${d.getDate()} ${dowS(d)}`:st==='ko'?`${d.getMonth()+1}월 ${d.getDate()}일 ${dowS(d)}`:`${pz(d.getMonth()+1)}.${pz(d.getDate())} ${dowS(d)}`};
+const bigD=d=>{const st=U('dstyle');return st==='en'?`${MONS[d.getMonth()]} ${d.getDate()}`:st==='ko'?`${d.getMonth()+1}월 ${d.getDate()}일`:`${pz(d.getMonth()+1)}.${pz(d.getDate())}`};
 const load=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
 
 let db=load(KEY,{tasks:[]}); db.colors=db.colors||{};
 let cfg=Object.assign({sort:'date',fold:true,fs:14,theme:'light',split:1,token:'',gist:'',last:0,start:'list',secs:{Quick:true},gfold:{},wz:1},load(CFG,{}));
 cfg.device=cfg.device||((/iPad/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1))?'iPad':/iPhone/.test(navigator.userAgent)?'iPhone':'Browser');
-const UID={theme:'light',accent:'bluegray',paper:'none',paperPrint:'0',line:'1',dens:'normal',ls:'-0.005',lh:'1.6',dstyle:'dot',dow:'en',weekNo:'1',dday:'1',hol:'1',holX:'',memo:'0',doneBottom:'1',collapse:'1',dimPast:'1',corner:'1',sound:'1'};
+const UID={theme:'light',accent:'bluegray',paper:'none',paperPrint:'0',line:'1',dens:'normal',ls:'-0.005',lh:'1.6',dstyle:'dot',dow:'en',weekNo:'1',dday:'1',hol:'1',holX:'',memo:'0',doneBottom:'1',collapse:'1',dimPast:'1',corner:'1',sound:'1',tfmt:'24',zero:'1',ddPos:'both',fLate:'1',fBar:'1',lStat:'1',hCnt:'1',hHol:'1',hEv:'1',rDate:'1',rRep:'1',rMemo:'1'};
 db.notes=db.notes||{};db.events=db.events||{};db.wfixT=db.wfixT||[[],0];db.wprog=db.wprog||{};db.uiT=db.uiT||0;db.ui=Object.assign({},UID,!db.ui&&cfg.theme?{theme:cfg.theme}:{},db.ui||{});
 const HOL={'2026-01-01':'신정','2026-02-16':'설날','2026-02-17':'설날','2026-02-18':'설날','2026-03-01':'삼일절','2026-03-02':'대체공휴일','2026-05-05':'어린이날','2026-05-24':'부처님오신날','2026-05-25':'대체공휴일','2026-06-03':'지방선거','2026-06-06':'현충일','2026-08-15':'광복절','2026-08-17':'대체공휴일','2026-09-24':'추석','2026-09-25':'추석','2026-09-26':'추석','2026-10-03':'개천절','2026-10-05':'대체공휴일','2026-10-09':'한글날','2026-12-25':'성탄절',
 '2027-01-01':'신정','2027-02-06':'설날','2027-02-07':'설날','2027-02-08':'설날','2027-02-09':'대체공휴일','2027-03-01':'삼일절','2027-05-05':'어린이날','2027-05-13':'부처님오신날','2027-06-06':'현충일','2027-08-15':'광복절','2027-08-16':'대체공휴일','2027-09-14':'추석','2027-09-15':'추석','2027-09-16':'추석','2027-10-03':'개천절','2027-10-04':'대체공휴일','2027-10-09':'한글날','2027-10-11':'대체공휴일','2027-12-25':'성탄절','2027-12-27':'대체공휴일'};
@@ -33,7 +39,7 @@ let view='list', weekOff=0, editId=null, addDate='', addTime='', rangeTxt='';
 const live=()=>db.tasks.filter(t=>!t.deleted);
 const find=id=>db.tasks.find(t=>t.id===id);
 function commit(){save(KEY,db);render();queueSync()}
-const F=['text','done','memo','cat','date','time','repeat','star','order','spawned','deleted'];
+const F=['text','done','memo','cat','date','time','repeat','star','order','spawned','deleted','state','end','tend','dord','gone'];
 function setF(t,p,ts){t.u=t.u||{};t.by=cfg.device;for(const k in p){if(JSON.stringify(t[k])===JSON.stringify(p[k]))continue;if(p[k]===undefined)delete t[k];else t[k]=p[k];t.u[k]=ts}t.updated=ts}
 function touch(t,p){setF(t,p,now());commit()}
 /* undo */
@@ -74,7 +80,7 @@ function finishDone2(t){
   popping.delete(t.id);const ts=now();
   snap('완료됨');const p={done:true};
   if(t.repeat&&!t.spawned){const id=uid();
-    db.tasks.push({id,text:t.text,done:false,memo:t.memo||'',cat:t.cat||'',date:nextDate(t.date||todayS(),t.repeat),time:t.time||'',repeat:t.repeat,star:t.star||false,order:t.order,created:ts,updated:ts});
+    const nd=nextDate(t.date||todayS(),t.repeat);db.tasks.push({id,text:t.text,done:false,memo:t.memo||'',cat:t.cat||'',date:nd,...(t.end&&t.date?{end:addDays(nd,dayDiff(t.date,t.end))}:{}),time:t.time||'',...(t.tend?{tend:t.tend}:{}),repeat:t.repeat,star:t.star||false,order:t.order,created:ts,updated:ts,by:cfg.device});
     p.spawned=id;undoBuf.label='완료됨 · 다음 반복 생성'}
   setF(t,p,ts);commit();toast();
 }
@@ -119,6 +125,10 @@ function evOn(s){const out=[];for(const e of evList()){
   if(e.date===s){out.push(e.name);continue}
   if(e.mode==='since'&&s>e.date){const k=Math.round((parse(s)-parse(e.date))/864e5)+1;if(k%100===0)out.push(`${e.name} ${k}일`)}
 }return out}
+const evPast=e=>e.mode==='once'&&parse(e.date).getTime()<parse(todayS()).getTime()-7*864e5;
 function ddStrip(){
-  return evList().map(e=>({e,c:evCalc(e)})).sort((a,b)=>a.c.key-b.c.key).map(({e,c})=>`<button class="dchip${c.label==='D-DAY'?' today':''}" data-ev="${e.id}"><span>${esc(e.name)}</span><b>${c.label}</b></button>`).join('')+'<button class="dchip new" data-ev=""><span>+ D-Day</span></button>';
+  const all=evList(), np=all.filter(evPast).length, vis=cfg.ddPast?all:all.filter(e=>!evPast(e));
+  return vis.map(e=>({e,c:evCalc(e)})).sort((a,b)=>a.c.key-b.c.key).map(({e,c})=>`<button class="dchip${c.label==='D-DAY'?' today':''}${evPast(e)?' old':''}" data-ev="${e.id}"><span>${esc(e.name)}</span><b>${c.label}</b></button>`).join('')
+    +(np?`<button class="dchip past" data-past="1"><span>${cfg.ddPast?'지난 디데이 접기':'지난 '+np}</span></button>`:'')
+    +'<button class="dchip new" data-ev=""><span>+ D-Day</span></button>';
 }

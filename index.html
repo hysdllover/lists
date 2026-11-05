@@ -25,6 +25,7 @@
     <nav>
       <button data-v="list" class="on" id="tabList">LIST</button>
       <button data-v="week" id="tabWeek">WEEK</button>
+      <button data-v="month" id="tabMonth">MONTH</button>
       <button data-v="focus" id="tabFocus">TODAY</button>
     </nav>
     <span class="sync" id="sync" role="button" tabindex="0"><span class="dot" id="dot"></span><span id="syncTxt">LOCAL</span></span>
@@ -55,10 +56,11 @@
       <span class="hint lbl" id="hint">Hold to move</span>
     </div>
     <ul id="open"></ul>
-    <button class="fold" id="fold"><i class="cv"></i><span class="lbl">Completed</span><span class="num" id="doneN"></span></button>
-    <ul id="done"></ul>
-    <button class="fold" id="foldA"><i class="cv"></i><span class="lbl">Archive</span><span class="num" id="archN"></span></button>
-    <ul id="arch" class="arch"></ul>
+    <div class="bin" id="bin">
+      <div class="bintabs" id="binTabs"></div>
+      <ul id="binList"></ul>
+      <div class="binact" id="binAct"></div>
+    </div>
   </section>
 
   <section class="view" id="vWeek">
@@ -73,6 +75,21 @@
         <div class="plan" id="plan" data-d="" hidden></div>
       </div>
       <div class="days" id="days"></div>
+    </div>
+  </section>
+
+  <section class="view" id="vMonth">
+    <div class="hero">
+      <div class="hl"><span class="lbl" id="mMon"></span><div class="big num" id="mBig"></div></div>
+      <div class="hr ctl"><button class="ibtn" id="mPrev" aria-label="이전 달"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5"/></svg></button><button class="tbtn" id="mNow">NOW</button><button class="ibtn" id="mNext" aria-label="다음 달"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5L10.5 8 6 12.5"/></svg></button><button class="ibtn" id="mMore" aria-label="더 보기"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r=".6"/><circle cx="8" cy="8" r=".6"/><circle cx="12.5" cy="8" r=".6"/></svg></button></div>
+    </div>
+    <div class="mwrap">
+      <div class="mcal"><div class="mhead" id="mHead"></div><div class="mgrid" id="mGrid"></div></div>
+      <div class="mpanel">
+        <div class="mph"><span class="lbl" id="mpDay"></span><b class="num" id="mpDate"></b><span id="mpHol"></span></div>
+        <div id="mpList"></div>
+        <div class="dadd"><textarea id="mAdd" rows="1" placeholder="+ 이 날에 추가"></textarea><button class="dbtn" id="mBtn">ADD</button></div>
+      </div>
     </div>
   </section>
 
@@ -116,8 +133,9 @@
       <button class="sh"><span class="lbl">Date</span><i class="cv"></i></button>
       <div class="field"><span>날짜 표기</span><div class="seg" data-k="dstyle"><button data-v="dot">11.04</button><button data-v="en">Nov 4</button><button data-v="ko">11월 4일</button></div></div>
       <div class="field"><span>요일 표기</span><div class="seg" data-k="dow"><button data-v="en">SUN</button><button data-v="ko">일</button><button data-v="both">둘 다</button></div></div>
+      <div class="field"><span>시간 표기</span><div class="seg" data-k="tfmt"><button data-v="24">14:30</button><button data-v="12">오후 2:30</button></div></div>
+      <div class="field"><span>앞자리 0</span><div class="seg" data-k="zero"><button data-v="1">11.05</button><button data-v="0">11.5</button></div></div>
       <div class="field"><span>주 번호</span><div class="seg" data-k="weekNo"><button data-v="1">켜기</button><button data-v="0">끄기</button></div></div>
-      <div class="field"><span>할 일 D-day</span><div class="seg" data-k="dday"><button data-v="1">켜기</button><button data-v="0">끄기</button></div></div>
       <div class="field"><span>공휴일</span><div class="seg" data-k="hol"><button data-v="1">켜기</button><button data-v="0">끄기</button></div></div>
       <div class="field"><span>휴일 추가</span><textarea id="holX" placeholder="2026-07-17 제헌절"></textarea></div>
       <p class="note">2026–2027년 한국 공휴일이 들어 있습니다. 그 밖의 날짜는 한 줄에 하나씩 “YYYY-MM-DD 이름”으로 추가하세요.</p>
@@ -130,6 +148,21 @@
       <div class="field"><span>지난 날</span><div class="seg" data-k="dimPast"><button data-v="1">흐리게</button><button data-v="0">그대로</button></div></div>
       <div class="field"><span>모서리 표시</span><div class="seg" data-k="corner"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
       <p class="note">화면 설정은 Gist로 기기 간 동기화됩니다. 글자 크기, 분할 화면, 업로드한 폰트는 기기마다 따로 저장됩니다.</p>
+    </div>
+    <div class="sec" data-sec="Items" data-grp="style">
+      <button class="sh"><span class="lbl">Items</span><i class="cv"></i></button>
+      <div class="field"><span>디데이 줄</span><div class="seg" data-k="ddPos"><button data-v="both">둘 다</button><button data-v="list">LIST</button><button data-v="today">TODAY</button><button data-v="none">숨김</button></div></div>
+      <div class="field"><span>리스트 숫자</span><div class="seg" data-k="lStat"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
+      <div class="field"><span>리스트 날짜</span><div class="seg" data-k="rDate"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
+      <div class="field"><span>리스트 D-day</span><div class="seg" data-k="dday"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
+      <div class="field"><span>리스트 반복</span><div class="seg" data-k="rRep"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
+      <div class="field"><span>리스트 메모</span><div class="seg" data-k="rMemo"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
+      <div class="field"><span>완료 수</span><div class="seg" data-k="hCnt"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
+      <div class="field"><span>공휴일 이름</span><div class="seg" data-k="hHol"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
+      <div class="field"><span>디데이 이름</span><div class="seg" data-k="hEv"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
+      <div class="field"><span>TODAY 지난 일</span><div class="seg" data-k="fLate"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
+      <div class="field"><span>TODAY 진행선</span><div class="seg" data-k="fBar"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
+      <p class="note">완료 수 · 공휴일 이름 · 디데이 이름은 주간 보기와 캘린더의 날짜 칸에 적용됩니다.</p>
     </div>
     <div class="sec" data-sec="Font" data-grp="style">
       <button class="sh"><span class="lbl">Font</span><i class="cv"></i></button>
@@ -166,8 +199,13 @@
         <label class="btn">JSON 가져오기<input type="file" id="imp" accept=".json,application/json" hidden></label>
         <button class="tbtn del" id="clr">완료 항목 삭제</button>
       </div>
+      <div class="scut"><span class="lbl">Shortcut</span>
+        <p class="note">iOS 단축어의 “URL 열기”에 아래 주소 뒤에 할 일을 붙이면 바로 추가돼요. 예) …?add=우유 사기&amp;date=내일&amp;time=15:00 · 화면 바로가기는 ?view=week / month / today</p>
+        <div class="field"><code id="scUrl"></code><button class="tbtn" id="scCopy">복사</button></div>
+        <p class="note">단축어로 열면 Safari에서 열립니다. Safari에서도 Gist 동기화를 한 번 연결해 두면 홈 화면 앱에 자동으로 반영돼요.</p>
+      </div>
     </div>
-    <p class="ver">VERSION 12</p>
+    <p class="ver">VERSION 13</p>
   </section>
 </main>
 
@@ -179,8 +217,10 @@
     <div class="field"><span>분류</span><input type="text" id="eCat" list="cats" placeholder="없음" autocapitalize="off"></div>
     <div class="cchips" id="eCats"></div>
     <div class="field"><span>날짜</span><input type="date" id="eDate"><button class="tbtn" id="eNoDate">해제</button></div>
-    <div class="field"><span>시간</span><input type="time" id="eTime"><button class="tbtn" id="eNoTime">해제</button></div>
+    <div class="field"><span>종료</span><input type="date" id="eEnd"><button class="tbtn" id="eNoEnd">해제</button></div>
+    <div class="field trow"><span>시간</span><input type="time" id="eTime"><span class="dash">–</span><input type="time" id="eTend"><button class="tbtn" id="eNoTime">해제</button></div>
     <div class="field"><span>반복</span><div class="seg" id="eRep"><button data-r="">없음</button><button data-r="daily">매일</button><button data-r="weekdays">평일</button><button data-r="weekly">매주</button><button data-r="monthly">매월</button></div></div>
+    <div class="field"><span>상태</span><div class="seg" id="eState"><button data-s="">할 일</button><button data-s="doing">진행 중</button><button data-s="hold">보류</button></div></div>
     <div class="row"><button class="tbtn del" id="eDel">삭제</button><button class="btn pri" id="eClose">완료</button></div>
     <p class="einfo num" id="eInfo"></p>
   </div>
