@@ -457,3 +457,4 @@ body.dimpast .mc.past:not(.sel) .md{opacity:.55}
   .mwrap{display:grid;grid-template-columns:minmax(0,1fr) 17rem;gap:var(--s5)}
   .mpanel{margin-top:0;border-top:0;border-left:1px solid var(--hair);padding:0 0 0 var(--s4)}
 }
+.wi .memo{font-size:var(--t-sub);margin-top:.05rem;line-height:1.5}

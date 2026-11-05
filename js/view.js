@@ -91,7 +91,7 @@ const weekSort=a=>a.sort((x,y)=>(on('doneBottom')?x.done-y.done:0)||(y.state==='
 function wiHTML(t,s){
   const span=t.end&&s?(s===t.date?' span-s':s===t.end?' span-e':' span-m'):'';
   const tm=t.time&&(!t.end||s===t.date)?`<span class="tm">${fmtT(t.time)}${t.tend?'–'+fmtT(t.tend):''}</span>`:'';
-  return `<div class="wi${t.done?' done':''}${t.state==='hold'?' hold':''}${span}${fresh(t)}" data-id="${t.id}">${chkHTML(t)}<div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${tm}${txHTML(t)}${t.repeat?` <span class="rep">↻</span>`:''}</span></div></div>`;
+  return `<div class="wi${t.done?' done':''}${t.state==='hold'?' hold':''}${span}${fresh(t)}" data-id="${t.id}">${chkHTML(t)}<div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${tm}${txHTML(t)}${t.repeat?` <span class="rep">↻</span>`:''}</span>${t.memo&&on('rMemo')?`<div class="memo">${md(on('memo')?t.memo:t.memo.split('\n')[0])}</div>`:''}</div></div>`;
 }
 const isDayAdd=el=>!!(el&&el.classList&&el.classList.contains('dayadd'));
 function dhHTML(d,s,ts,H){
