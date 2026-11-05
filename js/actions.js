@@ -49,7 +49,7 @@ $$('nav button').forEach(b=>b.addEventListener('click',()=>{view=b.dataset.v;cfg
 $('#prev').onclick=()=>{weekOff--;render()};$('#next').onclick=()=>{weekOff++;render()};$('#today').onclick=()=>{weekOff=0;render()};
 $('#setBtn').onclick=()=>{view='set';render();scrollTo(0,0)};
 addEventListener('beforeprint',renderPrint);
-addEventListener('resize',navOn);
+let wasSplit=isSplit();addEventListener('resize',()=>{if(isSplit()!==wasSplit){wasSplit=isSplit();render()}else navOn()});
 $('#fsr').addEventListener('input',e=>{cfg.fs=+e.target.value;applyUI();$('#fsv').textContent=cfg.fs+'PX'});
 $('#fsr').addEventListener('change',()=>save(CFG,cfg));
 $('#splitSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(b){cfg.split=+b.dataset.x;save(CFG,cfg);render()}});
@@ -90,7 +90,8 @@ function moveDrag(x,y){
   if(y<70)scrollBy(0,-10);else if(y>innerHeight-90)scrollBy(0,10);
   clearMarks();drag.target=null;
   const el=document.elementFromPoint(x,y);if(!el)return;
-  const w=el.closest('.day .wi'), day=el.closest('.day,.plan,.mc'), it=el.closest('#open .item');
+  const w=el.closest('.day .wi');let day=el.closest('.day,.plan,.mc');const it=el.closest('#open .item');
+  if(!day){const mr=el.closest('.mrin');if(mr){const r=mr.getBoundingClientRect();day=mr.querySelectorAll('.mc')[Math.max(0,Math.min(6,Math.floor((x-r.left)/(r.width/7))))]}}
   if(w&&w.dataset.id!==drag.id){const r=w.getBoundingClientRect(),after=y>r.top+r.height/2;w.classList.add(after?'drop-after':'drop-before');drag.target={day:w.closest('.day').dataset.d,rel:{id:w.dataset.id,after}}}
   else if(day){day.classList.add('drop');drag.target={day:day.dataset.d}}
   else if(it&&cfg.sort==='manual'&&drag.row.closest('#open')&&it.dataset.id!==drag.id){
@@ -118,14 +119,14 @@ function endDrag(cancel){
 /* ---------- editor ---------- */
 function openEdit(id){
   const t=find(id); editId=id;
-  $('#eTxt').value=t.text;$('#eMemo').value=t.memo||'';$('#eCat').value=t.cat||'';paintCats();$('#eInfo').textContent=`LAST EDIT · ${t.by||'—'} · ${fmtTs(t.updated||t.created)}`;$('#eDate').value=t.date||'';$('#eTime').value=t.time||'';$('#eEnd').value=t.end||'';$('#eTend').value=t.tend||'';eState=t.state||'';
+  $('#eTxt').value=t.text;$('#eMemo').value=t.memo||'';$('#eCat').value=t.cat||'';$('#ePlace').value=t.place||'';paintCats();$('#eInfo').textContent=`LAST EDIT · ${t.by||'—'} · ${fmtTs(t.updated||t.created)}`;$('#eDate').value=t.date||'';$('#eTime').value=t.time||'';$('#eEnd').value=t.end||'';$('#eTend').value=t.tend||'';eState=t.state||'';
   eRep=t.repeat||'';eStar=!!t.star;paintEdit();
   $('#back').classList.add('on');requestAnimationFrame(()=>grow($('#eTxt')));
 }
 function closeEdit(){
   const t=find(editId); editId=null; $('#back').classList.remove('on');
   if(!t)return;
-  const p={text:$('#eTxt').value.trim()||t.text,memo:$('#eMemo').value,cat:$('#eCat').value.trim(),date:$('#eDate').value||'',time:$('#eTime').value||'',repeat:eRep||undefined,star:eStar||undefined,state:eState||undefined};
+  const p={text:$('#eTxt').value.trim()||t.text,memo:$('#eMemo').value,cat:$('#eCat').value.trim(),date:$('#eDate').value||'',time:$('#eTime').value||'',repeat:eRep||undefined,star:eStar||undefined,state:eState||undefined,place:$('#ePlace').value.trim()||undefined};
   const en=$('#eEnd').value;p.end=en&&p.date&&en>p.date?en:undefined;const te=$('#eTend').value;p.tend=te&&p.time&&te>p.time?te:undefined;
   if(p.repeat&&!p.date)p.date=todayS();
   const nv=v=>v===false||v===undefined||v===''?'':JSON.stringify(v);
@@ -247,7 +248,8 @@ document.addEventListener('pointerdown',e=>{const c=e.target.closest('.chk[data-
 $('#mPrev').onclick=()=>{monOff--;mSel=null;renderMonth()};
 $('#mNext').onclick=()=>{monOff++;mSel=null;renderMonth()};
 $('#mNow').onclick=()=>{monOff=0;mSel=null;renderMonth()};
-$('#mGrid').addEventListener('click',e=>{const c=e.target.closest('.mc');if(!c)return;const s=c.dataset.d;
+$('#mGrid').addEventListener('click',e=>{const w=e.target.closest('.mwk');if(w){weekOff=Math.round((parse(w.dataset.w)-weekStart(0))/(7*864e5));view='week';cfg.lastView=view;save(CFG,cfg);render();scrollTo(0,0);return}
+  const c=e.target.closest('.mc');if(!c)return;const s=c.dataset.d;
   if(c.classList.contains('out'))monOff+=parse(s)<monthGrid(monOff).first?-1:1;mSel=s;renderMonth()});
 function submitMonth(){const a=$('#mAdd');if(!a.value.trim())return;addTask(a.value,a.dataset.d,'');a.value='';grow(a)}
 $('#mBtn').onclick=submitMonth;
@@ -255,3 +257,7 @@ $('#mAdd').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrl
 $('#mMore').onclick=e=>showPv(e.currentTarget,'<span class="lbl">Month</span><button class="mi" data-act="mimg">이미지 저장<small>PNG</small></button><button class="mi" data-act="mprint">A4 인쇄<small>PDF</small></button>');
 /* ---------- shortcut URL copy (K16) ---------- */
 $('#scCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('#scUrl').textContent);$('#scCopy').textContent='복사됨'}catch{$('#scCopy').textContent='길게 눌러 복사'}setTimeout(()=>$('#scCopy').textContent='복사',1500)};
+
+/* ---------- weekly memo preview (4) ---------- */
+$('#wNoteV').addEventListener('click',e=>{if(e.target.closest('a'))return;$('.dnote').classList.remove('reading');const n=$('#wNote');n.focus();grow(n)});
+$('#wNote').addEventListener('blur',e=>{const v=e.target.value;$('#wNoteV').innerHTML=md(v);$('.dnote').classList.toggle('reading',!!v.trim())});

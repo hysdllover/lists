@@ -458,3 +458,33 @@ body.dimpast .mc.past:not(.sel) .md{opacity:.55}
   .mpanel{margin-top:0;border-top:0;border-left:1px solid var(--hair);padding:0 0 0 var(--s4)}
 }
 .wi .memo{font-size:var(--t-sub);margin-top:.05rem;line-height:1.5}
+
+/* ===== v15 ===== */
+.plc{display:inline-flex;align-items:center;gap:.2rem;font-size:var(--t-lbl);color:var(--sub);text-decoration:none;letter-spacing:.02em}
+.plc .ic{width:.72rem;height:.72rem}
+.wi .plc{display:flex;margin-top:.05rem}
+.wnv{white-space:pre-wrap;cursor:text}
+.wnv b{font-weight:400}.wnv a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.dnote.reading #wNote{display:none}
+.dnote:not(.reading) #wNoteV{display:none}
+/* month rows + span bars + week numbers */
+.mgrid{display:block}
+.mrow{display:grid;grid-template-columns:minmax(0,1fr)}
+#vMonth.wn .mrow{grid-template-columns:2.1rem minmax(0,1fr)}
+#vMonth.wn .mhead{grid-template-columns:2.1rem repeat(7,minmax(0,1fr))}
+.mwk{align-self:start;text-align:left;padding:.5rem 0 0;font-family:var(--mono);font-size:var(--t-lbl);color:var(--faint);letter-spacing:.04em}
+.mrin{position:relative;min-width:0}
+.mcells{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.mbars{position:absolute;left:0;right:0;top:1.55rem;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:4px;row-gap:3px;pointer-events:none}
+.mbar{pointer-events:auto;background:var(--bc);margin:0 .2rem;min-width:0;overflow:hidden;cursor:pointer}
+.mbar .txt{display:none}
+.mbar.done{opacity:.3}
+.dots{margin-top:calc(var(--lanes,0)*7px + .3rem)}
+@media (min-width:768px){
+  .mcells .mc:first-child{border-left:0}
+  #vMonth.wn .mcells .mc:first-child{border-left:1px solid var(--hair)}
+  .mbars{top:2rem;grid-auto-rows:1.15rem;row-gap:.2rem}
+  .mbar{background:color-mix(in srgb,var(--bc) 20%,var(--bg));box-shadow:inset 2px 0 0 var(--bc);margin:0 .35rem;padding:0 .4rem;font-size:var(--t-lbl);line-height:1.15rem}
+  .mbar .txt{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mt{margin-top:calc(var(--lanes,0)*1.35rem + .3rem)}
+}

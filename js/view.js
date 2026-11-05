@@ -10,6 +10,7 @@ function metaHTML(t){
   if(on('rDate')&&(t.date||t.time))parts.push(`<span class="date${isLate(t)?' late':''}">${when(t)}</span>`);
   if(on('dday'))parts.push(ddHTML(t));
   if(on('rRep')&&t.repeat)parts.push(`<span class="rep">↻ ${REP[t.repeat]}</span>`);
+  parts.push(plcHTML(t));
   const h=parts.join('');return h?`<div class="meta">${h}</div>`:'';
 }
 const chkHTML=t=>`<button class="chk${t.done?' on':''}${t.state==='doing'&&!t.done?' doing':''}" data-a="chk" aria-label="완료"${ccStyle(t)}></button>`;
@@ -75,11 +76,14 @@ function renderList(){
   $('#vList .stat').hidden=!on('lStat');
   const n=new Date();$('#lDay').textContent=dowL(n,true);$('#lDate').textContent=bigD(n);
   $$('#sort button').forEach(b=>b.classList.toggle('on',b.dataset.s===cfg.sort));
-  const cats=[...new Set(L.map(t=>t.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko'));
-  $('#cats').innerHTML=cats.map(c=>`<option value="${esc(c)}">`).join('');
-  $('#catList').innerHTML=cats.length?cats.map(c=>`<div class="field"><span>${tagHTML(c)}</span><div class="sw">${[0,1,2,3,4,5,6,7].map(i=>`<button data-c="${esc(c)}" data-i="${i}" class="${catIdx(c)===i?'on':''}" style="background:var(--c${i})" aria-label="색 ${i+1}"></button>`).join('')}</div></div>`).join(''):'<p class="note">분류가 있는 할 일을 추가하면 여기에 표시됩니다.</p>';
+  renderMeta();
   $('#hint').style.visibility=cfg.sort==='manual'?'visible':'hidden';
   $('#ddList').innerHTML=['both','list'].includes(U('ddPos'))?ddStrip():'';
+}
+function renderMeta(){
+  const cats=[...new Set(live().map(t=>t.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko'));
+  $('#cats').innerHTML=cats.map(c=>`<option value="${esc(c)}">`).join('');
+  $('#catList').innerHTML=cats.length?cats.map(c=>`<div class="field"><span>${tagHTML(c)}</span><div class="sw">${[0,1,2,3,4,5,6,7].map(i=>`<button data-c="${esc(c)}" data-i="${i}" class="${catIdx(c)===i?'on':''}" style="background:var(--c${i})" aria-label="색 ${i+1}"></button>`).join('')}</div></div>`).join(''):'<p class="note">분류가 있는 할 일을 추가하면 여기에 표시됩니다.</p>';
 }
 
 /* ---------- week (Sunday start) ---------- */
@@ -91,7 +95,7 @@ const weekSort=a=>a.sort((x,y)=>(on('doneBottom')?x.done-y.done:0)||(y.state==='
 function wiHTML(t,s){
   const span=t.end&&s?(s===t.date?' span-s':s===t.end?' span-e':' span-m'):'';
   const tm=t.time&&(!t.end||s===t.date)?`<span class="tm">${fmtT(t.time)}${t.tend?'–'+fmtT(t.tend):''}</span>`:'';
-  return `<div class="wi${t.done?' done':''}${t.state==='hold'?' hold':''}${span}${fresh(t)}" data-id="${t.id}">${chkHTML(t)}<div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${tm}${txHTML(t)}${t.repeat?` <span class="rep">↻</span>`:''}</span>${t.memo&&on('rMemo')?`<div class="memo">${md(on('memo')?t.memo:t.memo.split('\n')[0])}</div>`:''}</div></div>`;
+  return `<div class="wi${t.done?' done':''}${t.state==='hold'?' hold':''}${span}${fresh(t)}" data-id="${t.id}">${chkHTML(t)}<div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${tm}${txHTML(t)}${t.repeat?` <span class="rep">↻</span>`:''}</span>${t.memo&&on('rMemo')?`<div class="memo">${md(on('memo')?t.memo:t.memo.split('\n')[0])}</div>`:''}${plcHTML(t)}</div></div>`;
 }
 const isDayAdd=el=>!!(el&&el.classList&&el.classList.contains('dayadd'));
 function dhHTML(d,s,ts,H){
@@ -107,7 +111,7 @@ function renderWeek(){
   rangeTxt=`${a.getFullYear()}.${pz(a.getMonth()+1)}.${pz(a.getDate())} – ${pz(b.getMonth()+1)}.${pz(b.getDate())}`;
   $('#wMon').textContent=`${MONU[a.getMonth()]}${a.getMonth()!==b.getMonth()?' – '+MONU[b.getMonth()]:''} ${b.getFullYear()}${on('weekNo')?' · W'+pad(isoWeek(a)):''}`;
   $('#rng').textContent=st==='en'?`${MONS[a.getMonth()]} ${a.getDate()} — ${a.getMonth()!==b.getMonth()?MONS[b.getMonth()]+' ':''}${b.getDate()}`:st==='ko'?`${a.getDate()}일 — ${b.getDate()}일`:`${pz(a.getDate())} — ${pz(b.getDate())}`;
-  const wk=ymd(a), n=$('#wNote'); n.dataset.w=wk; if(ae!==n){n.value=(db.notes[wk]||[''])[0];grow(n)}
+  const wk=ymd(a), n=$('#wNote'); n.dataset.w=wk; if(ae!==n){n.value=(db.notes[wk]||[''])[0];grow(n);$('#wNoteV').innerHTML=md(n.value);$('.dnote').classList.toggle('reading',!!n.value.trim())}
   if(ae!==$('#fxAdd'))renderFix();
   const un=sorted(L.filter(t=>!t.date&&!t.done&&t.state!=='hold'));
   $('#plan').hidden=!cfg.plan;$('#planBtn').classList.toggle('on',!!cfg.plan);$('#planBtn').textContent='PLAN'+(un.length?' '+un.length:'');
@@ -141,12 +145,24 @@ function renderMonth(){
   if(!mSel||!inMonth(mSel))mSel=inMonth(td)?td:ymd(first);
   $('#mMon').textContent=`${MONU[m]} ${first.getFullYear()}`;
   $('#mBig').textContent=st==='en'?MONS[m]:st==='ko'?`${m+1}월`:pz(m+1);
-  $('#mHead').innerHTML=[0,1,2,3,4,5,6].map(i=>`<span class="lbl${i===0?' red':''}">${U('dow')==='ko'?DOW[i]:DOWE[i]}</span>`).join('');
-  $('#mGrid').innerHTML=ds.map(d=>{
-    const s=ymd(d), ts=weekSort(tasksOn(L,s)), hol=H[s];
+  const wn=on('weekNo');$('#vMonth').classList.toggle('wn',wn);
+  $('#mHead').innerHTML=(wn?'<span></span>':'')+[0,1,2,3,4,5,6].map(i=>`<span class="lbl${i===0?' red':''}">${U('dow')==='ko'?DOW[i]:DOWE[i]}</span>`).join('');
+  const isSpan=t=>t.end&&t.end>t.date;
+  const cell=(d,lanes)=>{
+    const s=ymd(d), ts=weekSort(tasksOn(L,s)).filter(t=>!isSpan(t)), hol=H[s], room=Math.max(0,3-lanes);
     const cls=['mc',!inMonth(s)&&'out',s===td&&'today',s===mSel&&'sel',(d.getDay()===0||hol)&&'sun',s<td&&'past'].filter(Boolean).join(' ');
     const lab=[on('hHol')&&hol?`<span class="hn">${esc(hol)}</span>`:'',...(on('hEv')?evOn(s).map(x=>`<span class="hn ev">${esc(x)}</span>`):[])].join('');
-    return `<div class="${cls}" data-d="${s}"><span class="md num">${pz(d.getDate())}</span>${lab}<div class="mt">${ts.slice(0,3).map(t=>`<div class="wi mi${t.done?' done':''}${t.end?' span':''}" data-id="${t.id}"><span class="txt">${txHTML(t)}</span></div>`).join('')}${ts.length>3?`<span class="more">+${ts.length-3}</span>`:''}</div><div class="dots">${ts.slice(0,5).map(t=>`<i class="${t.done?'d':''}" style="background:${t.cat?catColor(t.cat):'var(--accent)'}"></i>`).join('')}</div></div>`}).join('');
+    return `<div class="${cls}" data-d="${s}" aria-label="${s}${hol?' '+esc(hol):''} 할 일 ${tasksOn(L,s).length}개"><span class="md num">${pz(d.getDate())}</span>${lab}<div class="mt">${ts.slice(0,room).map(t=>`<div class="wi mi${t.done?' done':''}" data-id="${t.id}"><span class="txt">${txHTML(t)}</span></div>`).join('')}${ts.length>room?`<span class="more">+${ts.length-room}</span>`:''}</div><div class="dots">${ts.slice(0,5).map(t=>`<i class="${t.done?'d':''}" style="background:${t.cat?catColor(t.cat):'var(--accent)'}"></i>`).join('')}</div></div>`;
+  };
+  let gh='';
+  for(let r=0;r<ds.length;r+=7){
+    const row=ds.slice(r,r+7), rs=ymd(row[0]), re=ymd(row[6]);
+    const spans=L.filter(t=>isSpan(t)&&t.date<=re&&t.end>=rs).sort((x,y)=>x.date.localeCompare(y.date)||y.end.localeCompare(x.end));
+    const lanes=[], bars=spans.map(t=>{const cs=t.date<rs?0:dayDiff(rs,t.date), ce=t.end>re?6:dayDiff(rs,t.end);let ln=lanes.findIndex(e=>e<cs);if(ln<0){ln=lanes.length;lanes.push(ce)}else lanes[ln]=ce;return {t,cs,ce,ln}}).filter(x=>x.ln<3);
+    const nl=Math.min(lanes.length,3);
+    gh+=`<div class="mrow" style="--lanes:${nl}">${wn?`<button class="mwk" data-w="${rs}" aria-label="${isoWeek(row[0])}주차 보기">W${pad(isoWeek(row[0]))}</button>`:''}<div class="mrin"><div class="mcells">${row.map(d=>cell(d,nl)).join('')}</div><div class="mbars">${bars.map(x=>`<div class="wi mbar${x.t.done?' done':''}" data-id="${x.t.id}" data-a="edit" style="grid-column:${x.cs+1}/${x.ce+2};grid-row:${x.ln+1};--bc:${x.t.cat?catColor(x.t.cat):'var(--accent)'}" aria-label="${esc(x.t.text.split('\n')[0])} ${x.t.date}부터 ${x.t.end}까지"><span class="txt">${esc(x.t.text.split('\n')[0])}</span></div>`).join('')}</div></div></div>`;
+  }
+  $('#mGrid').innerHTML=gh;
   const sd=parse(mSel), ts=weekSort(tasksOn(L,mSel));
   $('#mpDay').textContent=dowL(sd,true);$('#mpDate').textContent=bigD(sd);
   $('#mpHol').innerHTML=[H[mSel]?`<span class="hn">${esc(H[mSel])}</span>`:'',...evOn(mSel).map(x=>`<span class="hn ev">${esc(x)}</span>`)].join('');
@@ -170,9 +186,10 @@ function renderFocus(){
 
 /* ---------- print (A4) ---------- */
 let printMode='week';
-const piHTML=t=>`<div class="pi${t.done?' x':''}">${t.star?'★ ':''}${t.time?fmtT(t.time)+(t.tend?'–'+fmtT(t.tend):'')+' ':''}${esc(t.text).replace(/\n/g,'<br>')}${t.cat?` <small>· ${esc(t.cat)}</small>`:''}</div>`;
+const piHTML=t=>`<div class="pi${t.done?' x':''}">${t.star?'★ ':''}${t.time?fmtT(t.time)+(t.tend?'–'+fmtT(t.tend):'')+' ':''}${esc(t.text).replace(/\n/g,'<br>')}${t.place?` <small>@ ${esc(t.place)}</small>`:''}${t.cat?` <small>· ${esc(t.cat)}</small>`:''}</div>`;
 function renderPrint(){
   if(printMode==='month')return renderPrintMonth();
+  if(!$('#vWeek').classList.contains('on'))renderWeek();
   const days=weekDays(weekOff), L=live(), H=holidays(), und=L.filter(t=>!t.date&&!t.done), note=(db.notes[ymd(days[0])]||[''])[0].trim();
   $('#print').className=U('paperPrint')==='1'&&U('paper')!=='none'?'pp-'+U('paper'):'';
   $('#print').innerHTML=`<h1><span>WEEKLY${on('weekNo')?' · W'+pad(isoWeek(days[0])):''}</span><span>${rangeTxt}</span></h1>
@@ -229,7 +246,13 @@ function renderPreview(){
   $('#prevCard').innerHTML=`<div class="hero"><div class="hl"><span class="lbl">${dowL(n,true)}</span><div class="big num">${bigD(n)}</div></div>${on('lStat')?'<div class="hr stat num"><div><b>2</b><span class="lbl">Open</span></div><div><b>1</b><span class="lbl">Done</span></div></div>':''}</div><ul>${sm.map(itemHTML).join('')}</ul>`;
 }
 function render(){
-  applyUI();renderList();renderWeek();renderMonth();renderFocus();navOn();
+  applyUI();
+  const both=isSplit()&&(view==='list'||view==='week');
+  if(view==='list'||both)renderList();else renderMeta();
+  if(view==='week'||both)renderWeek();
+  if(view==='month')renderMonth();
+  if(view==='focus')renderFocus();
+  navOn();
   $('#main').classList.toggle('board',view==='list'||view==='week');
   $$('.view').forEach(v=>v.classList.remove('on'));
   $({list:'#vList',week:'#vWeek',month:'#vMonth',focus:'#vFocus',set:'#vSet'}[view]).classList.add('on');

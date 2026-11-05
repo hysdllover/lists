@@ -83,7 +83,9 @@ async function sync(){
     let g;
     try{g=await gh('GET',`/gists/${cfg.gist}`)}
     catch(e){if(e.status!==404)throw e;cfg.gist=await findGist();save(CFG,cfg);fillCfg();g=await gh('GET',`/gists/${cfg.gist}`)}
-    const remote=await readGist(g), merged=merge(db.tasks,remote.tasks), colors=mergeColors(db.colors,remote.colors), notes=mergeColors(db.notes,remote.notes);
+    const remote0=await readGist(g), conf=[], lm=new Map(db.tasks.map(t=>[t.id,t])), since=cfg.last||0;
+    for(const r of remote0.tasks){const l=lm.get(r.id);if(!l)continue;for(const f of F){if(f==='order'||f==='dord')continue;if(JSON.stringify(l[f])===JSON.stringify(r[f]))continue;const tl=ft(l,f),tr=ft(r,f);if(tl>since&&tr>since&&tr!==tl)conf.push({t:l,f,by:tr>tl?(r.by||'다른 기기'):cfg.device,vs:tr>tl?cfg.device:(r.by||'다른 기기')})}}
+    const remote=remote0, merged=merge(db.tasks,remote.tasks), colors=mergeColors(db.colors,remote.colors), notes=mergeColors(db.notes,remote.notes);
     const rNew=(remote.uiT||0)>db.uiT, ui=rNew?{...UID,...remote.ui}:db.ui, uiT=Math.max(remote.uiT||0,db.uiT);
     const events=mergeColors(db.events,remote.events), wprog=mergeColors(db.wprog,remote.wprog), wfixT=(remote.wfixT[1]||0)>(db.wfixT[1]||0)?remote.wfixT:db.wfixT;
     const kv2=o=>Object.keys(o).sort().map(k=>[k,o[k]]);
@@ -92,6 +94,9 @@ async function sync(){
     if(all!==sig(db.tasks,db.colors,db.notes,db.ui,db.uiT,db.wfixT,db.wprog,db.events)&&!drag){Object.assign(db,{tasks:merged,colors,notes,ui,uiT,wfixT,wprog,events});save(KEY,db);render()}
     if(remote.by)cfg.lastBy=`${remote.by} · ${fmtTs(remote.at||0)}`;
     if(all!==sig(remote.tasks,remote.colors,remote.notes,remote.ui,remote.uiT||0,remote.wfixT,remote.wprog,remote.events)){const at=now();await gh('PATCH',`/gists/${cfg.gist}`,{files:{[GFILE]:{content:JSON.stringify({tasks:merged,colors,notes,ui,uiT,wfixT,wprog,events,by:cfg.device,at},null,1)}}});cfg.lastBy=`${cfg.device} · ${fmtTs(at)}`}
+    if(conf.length){const FL={text:'내용',done:'완료',memo:'메모',cat:'분류',date:'날짜',time:'시간',repeat:'반복',star:'중요',deleted:'삭제',state:'상태',end:'종료일',tend:'종료 시간',place:'장소',spawned:'반복',gone:'휴지통'};
+      const c=conf[0],msg=conf.length===1?`충돌 · ‘${c.t.text.split('\n')[0].slice(0,14)}’ ${FL[c.f]||c.f} · ${c.vs}·${c.by} 동시 수정 → ${c.by} 기준으로 맞춤`:`충돌 ${conf.length}건 · 나중에 고친 쪽 기준으로 맞춤`;
+      notice(msg);cfg.lastConflict=`${fmtTs(now())} · ${msg}`}
     cfg.last=now();save(CFG,cfg);dirty=false;lastErr='';
     const d=new Date(cfg.last);setStatus('ok',`${pad(d.getHours())}:${pad(d.getMinutes())}`);
     $('#gLast').textContent=`LAST SYNC ${ymd(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -114,7 +119,7 @@ setInterval(()=>{if(document.visibilityState==='visible'&&ready())sync()},60000)
 function syncInfo(){
   const st=!ready()?'로컬 전용':syncing?'동기화 중':lastErr?'오류':dirty?'업로드 대기':'최신 상태';
   const row=(k,v)=>`<div class="pr"><span>${k}</span><b>${v}</b></div>`;
-  return row('상태',st)+row('마지막 동기화',cfg.last?fmtTs(cfg.last):'—')+row('마지막 업로드',esc(cfg.lastBy||'—'))+(lastErr?row('오류',esc(lastErr)):'')+row('이 기기',esc(cfg.device))+row('Gist',cfg.gist?esc(cfg.gist.slice(0,10))+'…':'—')+(ready()?'<button class="btn pri" id="pvSync">지금 동기화</button>':'');
+  return row('상태',st)+row('마지막 동기화',cfg.last?fmtTs(cfg.last):'—')+row('마지막 업로드',esc(cfg.lastBy||'—'))+(lastErr?row('오류',esc(lastErr)):'')+(cfg.lastConflict?row('마지막 충돌',esc(cfg.lastConflict)):'')+row('이 기기',esc(cfg.device))+row('Gist',cfg.gist?esc(cfg.gist.slice(0,10))+'…':'—')+(ready()?'<button class="btn pri" id="pvSync">지금 동기화</button>':'');
 }
 $('#gHist').onclick=async()=>{
   const box=$('#gHistList');

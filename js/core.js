@@ -27,7 +27,7 @@ const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
 let db=load(KEY,{tasks:[]}); db.colors=db.colors||{};
 let cfg=Object.assign({sort:'date',fold:true,fs:14,theme:'light',split:1,token:'',gist:'',last:0,start:'list',secs:{Quick:true},gfold:{},wz:1},load(CFG,{}));
 cfg.device=cfg.device||((/iPad/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1))?'iPad':/iPhone/.test(navigator.userAgent)?'iPhone':'Browser');
-const UID={theme:'light',accent:'bluegray',paper:'none',paperPrint:'0',line:'1',dens:'normal',ls:'-0.005',lh:'1.6',dstyle:'dot',dow:'en',weekNo:'1',dday:'1',hol:'1',holX:'',memo:'0',doneBottom:'1',collapse:'1',dimPast:'1',corner:'1',sound:'1',tfmt:'24',zero:'1',ddPos:'both',fLate:'1',fBar:'1',lStat:'1',hCnt:'1',hHol:'1',hEv:'1',rDate:'1',rRep:'1',rMemo:'1'};
+const UID={theme:'light',accent:'bluegray',paper:'none',paperPrint:'0',line:'1',dens:'normal',ls:'-0.005',lh:'1.6',dstyle:'dot',dow:'en',weekNo:'1',dday:'1',hol:'1',holX:'',memo:'0',doneBottom:'1',collapse:'1',dimPast:'1',corner:'1',sound:'1',tfmt:'24',zero:'1',ddPos:'both',fLate:'1',fBar:'1',lStat:'1',hCnt:'1',hHol:'1',hEv:'1',rDate:'1',rRep:'1',rMemo:'1',rPlace:'1'};
 db.notes=db.notes||{};db.events=db.events||{};db.wfixT=db.wfixT||[[],0];db.wprog=db.wprog||{};db.uiT=db.uiT||0;db.ui=Object.assign({},UID,!db.ui&&cfg.theme?{theme:cfg.theme}:{},db.ui||{});
 const HOL={'2026-01-01':'신정','2026-02-16':'설날','2026-02-17':'설날','2026-02-18':'설날','2026-03-01':'삼일절','2026-03-02':'대체공휴일','2026-05-05':'어린이날','2026-05-24':'부처님오신날','2026-05-25':'대체공휴일','2026-06-03':'지방선거','2026-06-06':'현충일','2026-08-15':'광복절','2026-08-17':'대체공휴일','2026-09-24':'추석','2026-09-25':'추석','2026-09-26':'추석','2026-10-03':'개천절','2026-10-05':'대체공휴일','2026-10-09':'한글날','2026-12-25':'성탄절',
 '2027-01-01':'신정','2027-02-06':'설날','2027-02-07':'설날','2027-02-08':'설날','2027-02-09':'대체공휴일','2027-03-01':'삼일절','2027-05-05':'어린이날','2027-05-13':'부처님오신날','2027-06-06':'현충일','2027-08-15':'광복절','2027-08-16':'대체공휴일','2027-09-14':'추석','2027-09-15':'추석','2027-09-16':'추석','2027-10-03':'개천절','2027-10-04':'대체공휴일','2027-10-09':'한글날','2027-10-11':'대체공휴일','2027-12-25':'성탄절','2027-12-27':'대체공휴일'};
@@ -39,13 +39,14 @@ let view='list', weekOff=0, editId=null, addDate='', addTime='', rangeTxt='';
 const live=()=>db.tasks.filter(t=>!t.deleted);
 const find=id=>db.tasks.find(t=>t.id===id);
 function commit(){save(KEY,db);render();queueSync()}
-const F=['text','done','memo','cat','date','time','repeat','star','order','spawned','deleted','state','end','tend','dord','gone'];
+const F=['text','done','memo','cat','date','time','repeat','star','order','spawned','deleted','state','end','tend','dord','gone','place'];
 function setF(t,p,ts){t.u=t.u||{};t.by=cfg.device;for(const k in p){if(JSON.stringify(t[k])===JSON.stringify(p[k]))continue;if(p[k]===undefined)delete t[k];else t[k]=p[k];t.u[k]=ts}t.updated=ts}
 function touch(t,p){setF(t,p,now());commit()}
 /* undo */
 let undoBuf=null,toastT=null;
 function snap(label){undoBuf={label,tasks:JSON.parse(JSON.stringify(db.tasks))}}
-function toast(){if(!undoBuf)return;$('#toastTxt').textContent=undoBuf.label;$('#toast').classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>{$('#toast').classList.remove('on');undoBuf=null},5000)}
+function notice(msg){undoBuf=null;$('#toastTxt').textContent=msg;$('#undoBtn').hidden=true;$('#toast').classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>{$('#toast').classList.remove('on');$('#undoBtn').hidden=false},4500)}
+function toast(){if(!undoBuf)return;$('#undoBtn').hidden=false;$('#toastTxt').textContent=undoBuf.label;$('#toast').classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>{$('#toast').classList.remove('on');undoBuf=null},5000)}
 function undo(){
   if(!undoBuf)return;const ts=now(),old=new Map(undoBuf.tasks.map(t=>[t.id,t]));
   for(const t of db.tasks){const o=old.get(t.id);
@@ -89,6 +90,7 @@ function finishDone2(t){
 function catIdx(c){if(db.colors[c])return db.colors[c][0];let h=0;for(const ch of c)h=(h*31+ch.charCodeAt(0))>>>0;return h%6}
 const catColor=c=>`var(--c${catIdx(c)})`;
 const ICON={cal:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10"/><path d="M2.5 6.5h11M5.5 1.5v3M10.5 1.5v3"/></svg>',clock:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.3"/></svg>',star:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.2l1.75 3.6 3.95.55-2.85 2.8.68 3.95L8 11.25 4.47 13.1l.68-3.95L2.3 6.35l3.95-.55z"/></svg>',set:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h12M2 11.5h12"/><rect x="9.5" y="3" width="2" height="3"/><rect x="4.5" y="10" width="2" height="3"/></svg>',more:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r=".6"/><circle cx="8" cy="8" r=".6"/><circle cx="12.5" cy="8" r=".6"/></svg>',l:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5"/></svg>',r:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5L10.5 8 6 12.5"/></svg>'};
+ICON.pin='<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14.2s4.5-4.3 4.5-7.7a4.5 4.5 0 0 0-9 0c0 3.4 4.5 7.7 4.5 7.7z"/><circle cx="8" cy="6.5" r="1.4"/></svg>';
 const STAR=ICON.star;
 const txHTML=t=>t.cat?`<span class="tx ul" style="--ul:${catColor(t.cat)}">${esc(t.text)}</span>`:`<span class="tx">${esc(t.text)}</span>`;
 const ddHTML=t=>{if(!t.date||t.done||U('dday')!=='1')return '';const n=Math.round((parse(t.date)-parse(todayS()))/864e5);return `<span class="dd${n===0?' now':''}">${n===0?'D-DAY':n>0?'D-'+n:'D+'+(-n)}</span>`};
@@ -132,3 +134,5 @@ function ddStrip(){
     +(np?`<button class="dchip past" data-past="1"><span>${cfg.ddPast?'지난 디데이 접기':'지난 '+np}</span></button>`:'')
     +'<button class="dchip new" data-ev=""><span>+ D-Day</span></button>';
 }
+
+const plcHTML=t=>t.place&&U('rPlace')==='1'?`<a class="plc" href="https://maps.apple.com/?q=${encodeURIComponent(t.place)}" target="_blank" rel="noopener">${ICON.pin}${esc(t.place)}</a>`:'';

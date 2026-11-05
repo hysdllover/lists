@@ -70,7 +70,7 @@
     </div>
     <div class="wbody">
       <div class="deck">
-        <div class="dnote"><span class="lbl dlb">Memo</span><textarea class="wnote" id="wNote" rows="1" placeholder="이번 주 메모"></textarea></div>
+        <div class="dnote"><span class="lbl dlb">Memo</span><textarea class="wnote" id="wNote" rows="1" placeholder="이번 주 메모"></textarea><div class="wnote wnv" id="wNoteV" role="button" tabindex="0" aria-label="주간 메모 편집"></div></div>
         <div class="wfix" id="wfix"></div>
         <div class="plan" id="plan" data-d="" hidden></div>
       </div>
@@ -156,6 +156,7 @@
       <div class="field"><span>리스트 날짜</span><div class="seg" data-k="rDate"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
       <div class="field"><span>리스트 D-day</span><div class="seg" data-k="dday"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
       <div class="field"><span>리스트 반복</span><div class="seg" data-k="rRep"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
+      <div class="field"><span>장소</span><div class="seg" data-k="rPlace"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
       <div class="field"><span>리스트 메모</span><div class="seg" data-k="rMemo"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
       <div class="field"><span>완료 수</span><div class="seg" data-k="hCnt"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
       <div class="field"><span>공휴일 이름</span><div class="seg" data-k="hHol"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
@@ -205,7 +206,7 @@
         <p class="note">단축어로 열면 Safari에서 열립니다. Safari에서도 Gist 동기화를 한 번 연결해 두면 홈 화면 앱에 자동으로 반영돼요.</p>
       </div>
     </div>
-    <p class="ver">VERSION 14</p>
+    <p class="ver">VERSION 15</p>
   </section>
 </main>
 
@@ -216,6 +217,7 @@
     <div class="field"><span>메모</span><textarea id="eMemo" placeholder="메모"></textarea></div>
     <div class="field"><span>분류</span><input type="text" id="eCat" list="cats" placeholder="없음" autocapitalize="off"></div>
     <div class="cchips" id="eCats"></div>
+    <div class="field"><span>장소</span><input type="text" id="ePlace" placeholder="없음" autocomplete="off"></div>
     <div class="field"><span>날짜</span><input type="date" id="eDate"><button class="tbtn" id="eNoDate">해제</button></div>
     <div class="field"><span>종료</span><input type="date" id="eEnd"><button class="tbtn" id="eNoEnd">해제</button></div>
     <div class="field trow"><span>시간</span><input type="time" id="eTime"><span class="dash">–</span><input type="time" id="eTend"><button class="tbtn" id="eNoTime">해제</button></div>
