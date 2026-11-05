@@ -22,7 +22,8 @@ async function weekImage(ratio='long'){
       const s=ymd(d), ts=weekSort(L.filter(t=>t.date===s)), top=y, red=d.getDay()===0||H[s];
       txt(dowL(d),P,top+42,font(400,16),red?C.red:C.sub,3);
       txt(pad(d.getDate()),P-2,top+98,font(200,54),s===td?C.acc:C.text,-1);
-      if(H[s])txt(H[s],P,top+126,font(400,15),C.red);
+      let hy=top+126;if(H[s]){txt(H[s],P,hy,font(400,15),C.red);hy+=20}
+      for(const ev of evOn(s)){txt(ev,P,hy,font(400,15),C.acc);hy+=20}
       let ty=top+30;
       for(const t of ts){
         const f=font(300,28), ls=wrap((t.star?'★ ':'')+(t.time?t.time+'  ':'')+t.text,f);
@@ -36,7 +37,7 @@ async function weekImage(ratio='long'){
             else if(t.cat){x.fillStyle=V('--c'+catIdx(t.cat));x.fillRect(TX,Y+9,w,2)}}});
         ty+=ls.length*42+14;
       }
-      y=Math.max(top+150,ty+20);hl(y,C.hair);
+      y=Math.max(top+150,ty+20,hy+10);hl(y,C.hair);
     }
     y+=46;txt('WEEKLY',P,y+14,font(400,15),C.faint,6);
     return y+P;

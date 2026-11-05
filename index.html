@@ -26,24 +26,25 @@
       <button data-v="list" class="on" id="tabList">LIST</button>
       <button data-v="week" id="tabWeek">WEEK</button>
       <button data-v="focus" id="tabFocus">TODAY</button>
-      <button data-v="set" id="tabSet">SETTING</button>
     </nav>
     <span class="sync" id="sync" role="button" tabindex="0"><span class="dot" id="dot"></span><span id="syncTxt">LOCAL</span></span>
+    <button class="ibtn" id="setBtn" aria-label="설정"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h12M2 11.5h12"/><rect x="9.5" y="3" width="2" height="3"/><rect x="4.5" y="10" width="2" height="3"/></svg></button>
   </div>
 </header>
 
 <main id="main" class="board">
   <section class="view on" id="vList">
     <div class="hero">
-      <div><span class="lbl" id="lDay"></span><div class="big num" id="lDate"></div></div>
-      <div class="stat num"><div><b id="sOpen">0</b><span class="lbl">Open</span></div><div><b id="sDone">0</b><span class="lbl">Done</span></div></div>
+      <div class="hl"><span class="lbl" id="lDay"></span><div class="big num" id="lDate"></div></div>
+      <div class="hr stat num"><div><b id="sOpen">0</b><span class="lbl">Open</span></div><div><b id="sDone">0</b><span class="lbl">Done</span></div></div>
     </div>
+    <div class="ddays" id="ddList"></div>
     <div class="add">
       <textarea id="addTxt" rows="1" placeholder="새로운 할 일  #분류" autocomplete="off"></textarea>
       <div class="addbar">
         <span class="pend" id="addPend"></span>
-        <label class="ico" id="addIco" title="날짜"><svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="11"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg><input type="date" id="addDate"></label>
-        <label class="ico" id="addTIco" title="시간"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg><input type="time" id="addTime"></label>
+        <label class="ico" id="addIco" title="날짜"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10"/><path d="M2.5 6.5h11M5.5 1.5v3M10.5 1.5v3"/></svg><input type="date" id="addDate"></label>
+        <label class="ico" id="addTIco" title="시간"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.3"/></svg><input type="time" id="addTime"></label>
         <button class="addbtn" id="addBtn">ADD</button>
       </div>
     </div>
@@ -54,16 +55,16 @@
       <span class="hint lbl" id="hint">Hold to move</span>
     </div>
     <ul id="open"></ul>
-    <button class="fold" id="fold"><i>›</i><span class="lbl">Completed</span><span class="num" id="doneN"></span></button>
+    <button class="fold" id="fold"><i class="cv"></i><span class="lbl">Completed</span><span class="num" id="doneN"></span></button>
     <ul id="done"></ul>
-    <button class="fold" id="foldA"><i>›</i><span class="lbl">Archive</span><span class="num" id="archN"></span></button>
+    <button class="fold" id="foldA"><i class="cv"></i><span class="lbl">Archive</span><span class="num" id="archN"></span></button>
     <ul id="arch" class="arch"></ul>
   </section>
 
   <section class="view" id="vWeek">
     <div class="hero">
-      <div><span class="lbl" id="wMon"></span><div class="big num" id="rng"></div></div>
-      <div class="ctl"><button class="arr" id="prev" aria-label="이전 주">‹</button><button id="today">NOW</button><button class="arr" id="next" aria-label="다음 주">›</button><button id="planBtn">PLAN</button><button id="imgBtn">IMAGE</button><button id="prt">PRINT</button><button id="wzBtn" hidden>100%</button></div>
+      <div class="hl"><span class="lbl" id="wMon"></span><div class="big num" id="rng"></div></div>
+      <div class="hr ctl"><button class="ibtn" id="prev" aria-label="이전 주"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5"/></svg></button><button class="tbtn" id="today">NOW</button><button class="ibtn" id="next" aria-label="다음 주"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5L10.5 8 6 12.5"/></svg></button><button class="tbtn" id="planBtn">PLAN</button><button class="tbtn" id="wzBtn" hidden>100%</button><button class="ibtn" id="moreBtn" aria-label="더 보기"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r=".6"/><circle cx="8" cy="8" r=".6"/><circle cx="12.5" cy="8" r=".6"/></svg></button></div>
     </div>
     <div class="wbody">
       <div class="deck">
@@ -76,52 +77,53 @@
   </section>
 
   <section class="view" id="vFocus">
-    <div class="fhero">
-      <span class="lbl" id="fDay"></span>
-      <div class="fbig num" id="fDate"></div>
-      <div class="fbar"><i id="fProg"></i></div>
-      <span class="lbl num" id="fCount"></span>
+    <div class="hero">
+      <div class="hl"><span class="lbl" id="fDay"></span><div class="big num" id="fDate"></div></div>
+      <div class="hr stat num"><div><b id="fDone">0</b><span class="lbl">Done</span></div><div><b id="fAll">0</b><span class="lbl">Today</span></div></div>
     </div>
+    <div class="fbar"><i id="fProg"></i></div>
+    <div class="fmeta"><span class="lbl num" id="fCount"></span><button class="tbtn" id="wakeBtn" hidden>KEEP AWAKE</button></div>
+    <div class="ddays" id="ddFocus"></div>
     <ul id="fList"></ul>
     <div class="add fadd"><textarea id="fAdd" rows="1" placeholder="오늘 할 일 추가"></textarea><button class="addbtn" id="fBtn">ADD</button></div>
   </section>
 
   <section class="view" id="vSet">
-    <div class="sec" data-sec="Quick">
-      <button class="sh"><span class="lbl">Quick</span><i>›</i></button>
+    <div class="hero">
+      <div class="hl"><span class="lbl">Preferences</span><div class="big">Settings</div></div>
+      <div class="hr seg" data-c="setTab"><button data-v="basic">기본</button><button data-v="style">꾸미기</button><button data-v="data">데이터</button></div>
+    </div>
+    <div class="prevcard" id="prevCard" data-grp="style"></div>
+    <div class="sec" data-sec="Quick" data-grp="basic">
+      <button class="sh"><span class="lbl">Quick</span><i class="cv"></i></button>
       <div class="field"><span>테마</span><div class="seg" data-k="theme"><button data-v="light">라이트</button><button data-v="dark">다크</button><button data-v="auto">시스템</button></div></div>
       <div class="field"><span>강조색</span><div class="seg sw" data-k="accent"><button data-v="bluegray" style="background:#7489a2" aria-label="블루그레이"></button><button data-v="steel" style="background:#6a88ad" aria-label="스틸"></button><button data-v="slate" style="background:#7b8692" aria-label="슬레이트"></button><button data-v="sage" style="background:#6f9095" aria-label="세이지"></button><button data-v="lavender" style="background:#8580a3" aria-label="라벤더"></button></div></div>
       <div class="field"><span>여백</span><div class="seg" data-k="dens"><button data-v="loose">넉넉하게</button><button data-v="normal">보통</button><button data-v="tight">촘촘하게</button></div></div>
       <div class="field"><span>첫 화면</span><div class="seg" data-c="start"><button data-v="list">LIST</button><button data-v="week">WEEK</button><button data-v="focus">TODAY</button><button data-v="last">마지막 화면</button></div></div>
       <div class="field"><span>완료 소리</span><div class="seg" data-k="sound"><button data-v="1">켜기</button><button data-v="0">끄기</button></div></div>
     </div>
-    <div class="sec" data-sec="Display">
-      <button class="sh"><span class="lbl">Display</span><i>›</i></button>
+    <div class="sec" data-sec="Display" data-grp="style">
+      <button class="sh"><span class="lbl">Display</span><i class="cv"></i></button>
       <div class="field"><span>글자 크기</span><div class="size"><span class="a1">A</span><input type="range" id="fsr" min="11" max="19" step="0.5"><span class="a2">A</span><span class="val" id="fsv"></span></div></div>
       <div class="field"><span>자간</span><div class="size"><input type="range" data-k="ls" min="-0.04" max="0.1" step="0.005"><span class="val" data-val="ls"></span></div></div>
       <div class="field"><span>줄 간격</span><div class="size"><input type="range" data-k="lh" min="1.3" max="2.1" step="0.05"><span class="val" data-val="lh"></span></div></div>
-      <div class="field"><span>여백</span><div class="seg" data-k="dens"><button data-v="loose">넉넉하게</button><button data-v="normal">보통</button><button data-v="tight">촘촘하게</button></div></div>
       <div class="field"><span>선</span><div class="seg" data-k="line"><button data-v="0">아주 옅게</button><button data-v="1">옅게</button><button data-v="2">보통</button><button data-v="3">진하게</button></div></div>
-      <div class="field"><span>테마</span><div class="seg" data-k="theme"><button data-v="light">라이트</button><button data-v="dark">다크</button><button data-v="auto">시스템</button></div></div>
-      <div class="field"><span>강조색</span><div class="seg sw" data-k="accent"><button data-v="bluegray" style="background:#7489a2" aria-label="블루그레이"></button><button data-v="steel" style="background:#6a88ad" aria-label="스틸"></button><button data-v="slate" style="background:#7b8692" aria-label="슬레이트"></button><button data-v="sage" style="background:#6f9095" aria-label="세이지"></button><button data-v="lavender" style="background:#8580a3" aria-label="라벤더"></button></div></div>
       <div class="field"><span>종이 배경</span><div class="seg" data-k="paper"><button data-v="none">없음</button><button data-v="grid">모눈</button><button data-v="lined">줄</button><button data-v="dot">점</button></div></div>
       <div class="field"><span>인쇄 배경</span><div class="seg" data-k="paperPrint"><button data-v="1">적용</button><button data-v="0">미적용</button></div></div>
-      <div class="field" id="splitRow"><span>분할 화면</span>
-        <div class="seg" id="splitSeg"><button data-x="1">켜기</button><button data-x="0">끄기</button></div>
-      </div>
+      <div class="field"><span>분할 화면</span><div class="seg" id="splitSeg"><button data-x="1">켜기</button><button data-x="0">끄기</button></div></div>
     </div>
-    <div class="sec" data-sec="Date">
-      <button class="sh"><span class="lbl">Date</span><i>›</i></button>
+    <div class="sec" data-sec="Date" data-grp="style">
+      <button class="sh"><span class="lbl">Date</span><i class="cv"></i></button>
       <div class="field"><span>날짜 표기</span><div class="seg" data-k="dstyle"><button data-v="dot">11.04</button><button data-v="en">Nov 4</button><button data-v="ko">11월 4일</button></div></div>
       <div class="field"><span>요일 표기</span><div class="seg" data-k="dow"><button data-v="en">SUN</button><button data-v="ko">일</button><button data-v="both">둘 다</button></div></div>
       <div class="field"><span>주 번호</span><div class="seg" data-k="weekNo"><button data-v="1">켜기</button><button data-v="0">끄기</button></div></div>
-      <div class="field"><span>D-day</span><div class="seg" data-k="dday"><button data-v="1">켜기</button><button data-v="0">끄기</button></div></div>
+      <div class="field"><span>할 일 D-day</span><div class="seg" data-k="dday"><button data-v="1">켜기</button><button data-v="0">끄기</button></div></div>
       <div class="field"><span>공휴일</span><div class="seg" data-k="hol"><button data-v="1">켜기</button><button data-v="0">끄기</button></div></div>
       <div class="field"><span>휴일 추가</span><textarea id="holX" placeholder="2026-07-17 제헌절"></textarea></div>
       <p class="note">2026–2027년 한국 공휴일이 들어 있습니다. 그 밖의 날짜는 한 줄에 하나씩 “YYYY-MM-DD 이름”으로 추가하세요.</p>
     </div>
-    <div class="sec" data-sec="Layout">
-      <button class="sh"><span class="lbl">Layout</span><i>›</i></button>
+    <div class="sec" data-sec="Layout" data-grp="style">
+      <button class="sh"><span class="lbl">Layout</span><i class="cv"></i></button>
       <div class="field"><span>메모</span><div class="seg" data-k="memo"><button data-v="0">첫 줄만</button><button data-v="1">모두 펼침</button></div></div>
       <div class="field"><span>완료 위치</span><div class="seg" data-k="doneBottom"><button data-v="1">아래로</button><button data-v="0">그대로</button></div></div>
       <div class="field"><span>빈 요일</span><div class="seg" data-k="collapse"><button data-v="1">접기</button><button data-v="0">펼치기</button></div></div>
@@ -129,18 +131,21 @@
       <div class="field"><span>모서리 표시</span><div class="seg" data-k="corner"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
       <p class="note">화면 설정은 Gist로 기기 간 동기화됩니다. 글자 크기, 분할 화면, 업로드한 폰트는 기기마다 따로 저장됩니다.</p>
     </div>
-    <div class="sec" data-sec="Font">
-      <button class="sh"><span class="lbl">Font</span><i>›</i></button>
+    <div class="sec" data-sec="Font" data-grp="style">
+      <button class="sh"><span class="lbl">Font</span><i class="cv"></i></button>
       <div class="field"><span>현재 폰트</span><span class="fontprev" id="fontName">기본</span></div>
-      <div class="preview">가나다라마바사 ABC 0123 — 오늘의 할 일을 정리합니다.</div>
       <div class="btns">
         <label class="btn">폰트 업로드<input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2,font/*" hidden></label>
-        <button class="btn" id="fontReset">기본으로</button>
+        <button class="tbtn" id="fontReset">기본으로</button>
       </div>
       <p class="note">.ttf · .otf · .woff 파일은 이 기기에만 저장되며 숫자와 날짜를 포함한 모든 글자에 적용됩니다.</p>
     </div>
-    <div class="sec" data-sec="Gist Sync">
-      <button class="sh"><span class="lbl">Gist Sync</span><i>›</i></button>
+    <div class="sec" data-sec="Category Color" data-grp="style">
+      <button class="sh"><span class="lbl">Category Color</span><i class="cv"></i></button>
+      <div id="catList"></div>
+    </div>
+    <div class="sec" data-sec="Gist Sync" data-grp="data">
+      <button class="sh"><span class="lbl">Gist Sync</span><i class="cv"></i></button>
       <div class="field"><span>토큰</span><input id="gToken" type="password" placeholder="ghp_…" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
       <div class="field"><span>Gist ID</span><input id="gId" placeholder="비우면 자동 검색 · 생성" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
       <div class="field"><span>기기 이름</span><input id="gDev" placeholder="iPhone" autocapitalize="off" spellcheck="false"></div>
@@ -148,39 +153,35 @@
         <button class="btn pri" id="gSave">저장 · 동기화</button>
         <button class="btn" id="gNow">지금 동기화</button>
         <button class="btn" id="gHist">버전 기록</button>
-        <button class="btn del" id="gOff">연결 해제</button>
+        <button class="tbtn del" id="gOff">연결 해제</button>
       </div>
       <p class="note">클래식 토큰(scope: gist)을 입력하세요. Gist ID를 비우면 내 Gist 중 weekly-todo.json을 찾아 쓰고, 없으면 비공개 Gist를 새로 만듭니다. 토큰은 기기에만 저장됩니다.</p>
       <p class="note num" id="gLast"></p>
       <div id="gHistList"></div>
     </div>
-    <div class="sec" data-sec="Category Color">
-      <button class="sh"><span class="lbl">Category Color</span><i>›</i></button>
-      <div id="catList"></div>
-    </div>
-    <div class="sec" data-sec="Data">
-      <button class="sh"><span class="lbl">Data</span><i>›</i></button>
+    <div class="sec" data-sec="Data" data-grp="data">
+      <button class="sh"><span class="lbl">Data</span><i class="cv"></i></button>
       <div class="btns">
         <button class="btn" id="exp">JSON 내보내기</button>
         <label class="btn">JSON 가져오기<input type="file" id="imp" accept=".json,application/json" hidden></label>
-        <button class="btn del" id="clr">완료 항목 삭제</button>
+        <button class="tbtn del" id="clr">완료 항목 삭제</button>
       </div>
     </div>
-    <p class="ver">VERSION 11</p>
+    <p class="ver">VERSION 12</p>
   </section>
 </main>
 
 <div class="back" id="back">
   <div class="sheet" id="sheet">
-    <div class="shead"><span class="lbl">Edit</span><button class="star" id="eStar" aria-label="중요"><svg viewBox="0 0 16 16"><path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></svg></button></div>
+    <div class="shead"><span class="lbl">Edit</span><button class="star" id="eStar" aria-label="중요"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.2l1.75 3.6 3.95.55-2.85 2.8.68 3.95L8 11.25 4.47 13.1l.68-3.95L2.3 6.35l3.95-.55z"/></svg></button></div>
     <div class="field"><span>내용</span><textarea id="eTxt" rows="1"></textarea></div>
     <div class="field"><span>메모</span><textarea id="eMemo" placeholder="메모"></textarea></div>
     <div class="field"><span>분류</span><input type="text" id="eCat" list="cats" placeholder="없음" autocapitalize="off"></div>
     <div class="cchips" id="eCats"></div>
-    <div class="field"><span>날짜</span><input type="date" id="eDate"><button class="btn sm" id="eNoDate">해제</button></div>
-    <div class="field"><span>시간</span><input type="time" id="eTime"><button class="btn sm" id="eNoTime">해제</button></div>
+    <div class="field"><span>날짜</span><input type="date" id="eDate"><button class="tbtn" id="eNoDate">해제</button></div>
+    <div class="field"><span>시간</span><input type="time" id="eTime"><button class="tbtn" id="eNoTime">해제</button></div>
     <div class="field"><span>반복</span><div class="seg" id="eRep"><button data-r="">없음</button><button data-r="daily">매일</button><button data-r="weekdays">평일</button><button data-r="weekly">매주</button><button data-r="monthly">매월</button></div></div>
-    <div class="row"><button class="btn del" id="eDel">삭제</button><button class="btn pri" id="eClose">완료</button></div>
+    <div class="row"><button class="tbtn del" id="eDel">삭제</button><button class="btn pri" id="eClose">완료</button></div>
     <p class="einfo num" id="eInfo"></p>
   </div>
 </div>

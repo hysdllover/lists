@@ -1,16 +1,15 @@
 /* ---------- list ---------- */
-const CAL='<svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="11"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg>';
+const CAL=ICON.cal;
 function itemHTML(t){
   const late=t.date&&!t.done&&t.date<todayS();
-  return `<li class="item${t.done?' done':''}${t.star&&!t.done?' starred':''}" data-id="${t.id}">
+  return `<li class="item${t.done?' done':''}${t.star&&!t.done?' starred':''}${fresh(t)}" data-id="${t.id}">
     <button class="chk${t.done?' on':''}" data-a="chk" aria-label="완료"${ccStyle(t)}></button>
     <div class="body" data-a="edit">
-      <div class="txt">${txHTML(t)}</div>
+      <div class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${txHTML(t)}</div>
       ${t.memo?`<div class="memo">${md(U('memo')==='1'?t.memo:t.memo.split('\n')[0])}</div>`:''}
       ${t.date||t.time||t.repeat||t.done?`<div class="meta">${t.done&&t.u&&t.u.done?`<span class="dn">✓ ${bigD(new Date(t.u.done))}</span>`:''}${t.date||t.time?`<span class="date${late?' late':''}">${when(t)}</span>`:''}${ddHTML(t)}${t.repeat?`<span class="rep">↻ ${REP[t.repeat]}</span>`:''}</div>`:''}
     </div>
-    <button class="star${t.star?' on':''}" data-a="star" aria-label="중요">${STAR}</button>
-    <label class="ico${t.date?' has':''}">${CAL}<input type="date" data-a="date" value="${t.date||''}"></label>
+    <div class="acts"><button class="star${t.star?' on':''}" data-a="star" aria-label="중요">${STAR}</button><label class="ico${t.date?' has':''}">${CAL}<input type="date" data-a="date" value="${t.date||''}"></label></div>
   </li>`;
 }
 function sorted(arr){
@@ -46,6 +45,7 @@ function renderList(){
   $('#cats').innerHTML=cats.map(c=>`<option value="${esc(c)}">`).join('');
   $('#catList').innerHTML=cats.length?cats.map(c=>`<div class="field"><span>${tagHTML(c)}</span><div class="sw">${[0,1,2,3,4,5,6,7].map(i=>`<button data-c="${esc(c)}" data-i="${i}" class="${catIdx(c)===i?'on':''}" style="background:var(--c${i})" aria-label="색 ${i+1}"></button>`).join('')}</div></div>`).join(''):'<p class="note">분류가 있는 할 일을 추가하면 여기에 표시됩니다.</p>';
   $('#hint').style.visibility=cfg.sort==='manual'?'visible':'hidden';
+  $('#ddList').innerHTML=ddStrip();
 }
 
 /* ---------- week (Sunday start) ---------- */
@@ -53,7 +53,7 @@ function weekStart(off){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDa
 function weekDays(off){const s=weekStart(off);return[...Array(7)].map((_,i)=>{const d=new Date(s);d.setDate(s.getDate()+i);return d})}
 let weekDirty=false, forceWeek=false;
 const weekSort=a=>a.sort((x,y)=>(U('doneBottom')==='1'?x.done-y.done:0)||!!y.star-!!x.star||(x.time||'99').localeCompare(y.time||'99')||x.created-y.created);
-const wiHTML=t=>`<div class="wi${t.done?' done':''}" data-id="${t.id}"><button class="chk${t.done?' on':''}" data-a="chk"${ccStyle(t)}></button><div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${t.time?`<span class="tm">${t.time}</span>`:''}${txHTML(t)}${t.repeat?` <span class="rep">↻</span>`:''}</span></div></div>`;
+const wiHTML=t=>`<div class="wi${t.done?' done':''}${fresh(t)}" data-id="${t.id}"><button class="chk${t.done?' on':''}" data-a="chk"${ccStyle(t)}></button><div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${t.time?`<span class="tm">${t.time}</span>`:''}${txHTML(t)}${t.repeat?` <span class="rep">↻</span>`:''}</span></div></div>`;
 const isDayAdd=el=>!!(el&&el.classList&&el.classList.contains('dayadd'));
 function renderWeek(){
   const ae=document.activeElement;
@@ -74,7 +74,7 @@ function renderWeek(){
     const s=ymd(d), ts=weekSort(L.filter(t=>t.date===s)), h=H[s];
     const cls=['day',s===td&&'today',s<td&&'past',(d.getDay()===0||h)&&'sun',!ts.length&&s!==td&&'empty'].filter(Boolean).join(' ');
     return `<div class="${cls}" data-d="${s}">
-      <div class="dh"><span class="lbl">${dowL(d)}</span><span class="d num">${pad(d.getDate())}</span>${h?`<span class="hn">${esc(h)}</span>`:''}<span class="n num">${ts.length?ts.filter(t=>t.done).length+'/'+ts.length:''}</span></div><div class="dl">
+      <div class="dh"><span class="lbl">${dowL(d)}</span><span class="d num">${pad(d.getDate())}</span>${h?`<span class="hn">${esc(h)}</span>`:''}${evOn(s).map(x=>`<span class="hn ev">${esc(x)}</span>`).join('')}<span class="n num">${ts.length?ts.filter(t=>t.done).length+'/'+ts.length:''}</span></div><div class="dl">
       ${ts.map(wiHTML).join('')}
       <div class="dadd"><textarea class="dayadd" rows="1" placeholder="+" data-d="${s}"></textarea><button class="dbtn" data-d="${s}">ADD</button></div>
     </div></div>`}).join('');
@@ -91,7 +91,10 @@ function renderFocus(){
   $('#fDate').textContent=bigD(n);
   const ts=weekSort(L.filter(t=>t.date===td)), late=sorted(L.filter(t=>t.date&&t.date<td&&!t.done)), dn=ts.filter(t=>t.done).length;
   $('#fProg').style.width=ts.length?dn/ts.length*100+'%':'0';
-  $('#fCount').textContent=`${dn} / ${ts.length} Done`;
+  $('#fDone').textContent=dn;$('#fAll').textContent=ts.length;
+  $('#fCount').textContent=ts.length?`${Math.round(dn/ts.length*100)}% Complete`:'No tasks today';
+  $('#wakeBtn').classList.toggle('on',!!cfg.wake);
+  $('#ddFocus').innerHTML=ddStrip();
   $('#fList').innerHTML=(ts.map(itemHTML).join('')||'<li class="empty">오늘 할 일이 없습니다</li>')+(late.length?`<li class="grp lbl">Overdue · ${late.length}</li>`+late.map(itemHTML).join(''):'');
 }
 
@@ -103,7 +106,7 @@ function renderPrint(){
   $('#print').innerHTML=`<h1><span>WEEKLY${U('weekNo')==='1'?' · W'+pad(isoWeek(days[0])):''}</span><span>${rangeTxt}</span></h1>
   ${note?`<div class="pnote">${esc(note)}</div>`:''}
   ${(db.wfixT[0]||[]).length?`<div class="pnote">${db.wfixT[0].map(it=>{const c=(db.wprog[ymd(days[0])+':'+it.id]||[0])[0];return esc(it.text)+' '+'■'.repeat(Math.min(c,it.goal))+'□'.repeat(Math.max(0,it.goal-c))}).join('　　')}</div>`:''}
-  <table>${days.map(d=>{const s=ymd(d);return `<tr><td class="h">${dowL(d)}<b>${pad(d.getMonth()+1)}.${pad(d.getDate())}</b>${H[s]?`<i>${esc(H[s])}</i>`:''}</td><td class="c">${weekSort(L.filter(t=>t.date===s)).map(pi).join('')}</td></tr>`}).join('')}</table>
+  <table>${days.map(d=>{const s=ymd(d);return `<tr><td class="h">${dowL(d)}<b>${pad(d.getMonth()+1)}.${pad(d.getDate())}</b>${H[s]?`<i>${esc(H[s])}</i>`:''}${evOn(s).map(x=>`<i class="ev">${esc(x)}</i>`).join('')}</td><td class="c">${weekSort(L.filter(t=>t.date===s)).map(pi).join('')}</td></tr>`}).join('')}</table>
   ${und.length?`<div class="und"><h2>날짜 없음</h2><div class="cols">${und.map(pi).join('')}</div></div>`:''}`;
 }
 
@@ -133,17 +136,30 @@ function paintSet(){
   $('#fsr').value=cfg.fs;$('#fsv').textContent=cfg.fs+'PX';
   $$('#splitSeg button').forEach(b=>b.classList.toggle('on',+b.dataset.x===cfg.split));
   $$('.seg[data-c]').forEach(g=>g.querySelectorAll('button').forEach(b=>b.classList.toggle('on',cfg[g.dataset.c]===b.dataset.v)));
-  $$('.sec[data-sec]').forEach(x=>x.classList.toggle('closed',!(cfg.secs||{})[x.dataset.sec]));
+  const tab=cfg.setTab||'basic';
+  $$('.sec[data-sec]').forEach(x=>{x.hidden=x.dataset.grp!==tab;x.classList.toggle('closed',(cfg.secs||{})[x.dataset.sec]===false)});
+  $('#prevCard').hidden=tab!=='style';
   if(document.activeElement!==$('#gDev'))$('#gDev').value=cfg.device;
 }
 const navOn=()=>$$('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===view||(view==='week'&&isSplit()&&b.dataset.v==='list')));
+let shownView=null;
+function renderPreview(){
+  const n=new Date(),s=todayS(),T=0,c=Object.keys(db.colors)[0]||'업무';
+  const sm=[{id:'pv1',text:'보고서 초안 정리',cat:c,date:s,time:'10:00',created:T},{id:'pv2',text:'장보기',date:s,star:true,created:T},{id:'pv3',text:'운동',date:s,done:true,created:T,cat:'건강'}];
+  $('#prevCard').innerHTML=`<div class="hero"><div class="hl"><span class="lbl">${dowL(n,true)}</span><div class="big num">${bigD(n)}</div></div><div class="hr stat num"><div><b>2</b><span class="lbl">Open</span></div><div><b>1</b><span class="lbl">Done</span></div></div></div><ul>${sm.map(itemHTML).join('')}</ul>`;
+}
 function render(){
   applyUI();renderList();renderWeek();renderFocus();navOn();
   $('#main').classList.toggle('board',view==='list'||view==='week');
   $$('.view').forEach(v=>v.classList.remove('on'));
   $({list:'#vList',week:'#vWeek',focus:'#vFocus',set:'#vSet'}[view]).classList.add('on');
+  if(shownView!==null&&shownView!==view)$$('.view.on').forEach(v=>{v.classList.remove('enter');void v.offsetWidth;v.classList.add('enter')});
+  shownView=view;
+  $('#setBtn').classList.toggle('on',view==='set');
   document.body.classList.toggle('split',!!cfg.split);
   paintSet();
+  if(view==='set'&&(cfg.setTab||'basic')==='style')renderPreview();
+  wakeSync();
 }
 function setUI(k,v,full=true){db.ui[k]=v;db.uiT=now();save(KEY,db);if(full)render();else{applyUI();paintSet()}queueSync()}
 const isSplit=()=>cfg.split&&innerWidth>=1100;

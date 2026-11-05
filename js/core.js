@@ -22,7 +22,7 @@ let db=load(KEY,{tasks:[]}); db.colors=db.colors||{};
 let cfg=Object.assign({sort:'date',fold:true,fs:14,theme:'light',split:1,token:'',gist:'',last:0,start:'list',secs:{Quick:true},gfold:{},wz:1},load(CFG,{}));
 cfg.device=cfg.device||((/iPad/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1))?'iPad':/iPhone/.test(navigator.userAgent)?'iPhone':'Browser');
 const UID={theme:'light',accent:'bluegray',paper:'none',paperPrint:'0',line:'1',dens:'normal',ls:'-0.005',lh:'1.6',dstyle:'dot',dow:'en',weekNo:'1',dday:'1',hol:'1',holX:'',memo:'0',doneBottom:'1',collapse:'1',dimPast:'1',corner:'1',sound:'1'};
-db.notes=db.notes||{};db.wfixT=db.wfixT||[[],0];db.wprog=db.wprog||{};db.uiT=db.uiT||0;db.ui=Object.assign({},UID,!db.ui&&cfg.theme?{theme:cfg.theme}:{},db.ui||{});
+db.notes=db.notes||{};db.events=db.events||{};db.wfixT=db.wfixT||[[],0];db.wprog=db.wprog||{};db.uiT=db.uiT||0;db.ui=Object.assign({},UID,!db.ui&&cfg.theme?{theme:cfg.theme}:{},db.ui||{});
 const HOL={'2026-01-01':'신정','2026-02-16':'설날','2026-02-17':'설날','2026-02-18':'설날','2026-03-01':'삼일절','2026-03-02':'대체공휴일','2026-05-05':'어린이날','2026-05-24':'부처님오신날','2026-05-25':'대체공휴일','2026-06-03':'지방선거','2026-06-06':'현충일','2026-08-15':'광복절','2026-08-17':'대체공휴일','2026-09-24':'추석','2026-09-25':'추석','2026-09-26':'추석','2026-10-03':'개천절','2026-10-05':'대체공휴일','2026-10-09':'한글날','2026-12-25':'성탄절',
 '2027-01-01':'신정','2027-02-06':'설날','2027-02-07':'설날','2027-02-08':'설날','2027-02-09':'대체공휴일','2027-03-01':'삼일절','2027-05-05':'어린이날','2027-05-13':'부처님오신날','2027-06-06':'현충일','2027-08-15':'광복절','2027-08-16':'대체공휴일','2027-09-14':'추석','2027-09-15':'추석','2027-09-16':'추석','2027-10-03':'개천절','2027-10-04':'대체공휴일','2027-10-09':'한글날','2027-10-11':'대체공휴일','2027-12-25':'성탄절','2027-12-27':'대체공휴일'};
 function holidays(){const m=U('hol')==='1'?{...HOL}:{};for(const l of (U('holX')||'').split('\n')){const r=l.trim().match(/^(\d{4}-\d{2}-\d{2})\s*(.*)$/);if(r)m[r[1]]=r[2]||'휴일'}return m}
@@ -63,7 +63,14 @@ function toggleDone(t){
   $$(`[data-id="${t.id}"]`).forEach(r=>r.classList.add('pop'));tick();
   setTimeout(()=>finishDone(t),430);
 }
-function finishDone(t){
+function collapse(rows,cb){
+  rows=rows.filter(r=>r.offsetParent);
+  if(!rows.length||matchMedia('(prefers-reduced-motion: reduce)').matches){cb();return}
+  rows.forEach(r=>{r.style.height=r.offsetHeight+'px'});void document.body.offsetHeight;
+  rows.forEach(r=>{r.classList.add('leaving');r.style.height='0px'});setTimeout(cb,230);
+}
+function finishDone(t){collapse($$(`#open [data-id="${t.id}"]`),()=>finishDone2(t))}
+function finishDone2(t){
   popping.delete(t.id);const ts=now();
   snap('완료됨');const p={done:true};
   if(t.repeat&&!t.spawned){const id=uid();
@@ -75,7 +82,8 @@ function finishDone(t){
 /* ---------- categories ---------- */
 function catIdx(c){if(db.colors[c])return db.colors[c][0];let h=0;for(const ch of c)h=(h*31+ch.charCodeAt(0))>>>0;return h%6}
 const catColor=c=>`var(--c${catIdx(c)})`;
-const STAR='<svg viewBox="0 0 16 16"><path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></svg>';
+const ICON={cal:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10"/><path d="M2.5 6.5h11M5.5 1.5v3M10.5 1.5v3"/></svg>',clock:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.3"/></svg>',star:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.2l1.75 3.6 3.95.55-2.85 2.8.68 3.95L8 11.25 4.47 13.1l.68-3.95L2.3 6.35l3.95-.55z"/></svg>',set:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h12M2 11.5h12"/><rect x="9.5" y="3" width="2" height="3"/><rect x="4.5" y="10" width="2" height="3"/></svg>',more:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r=".6"/><circle cx="8" cy="8" r=".6"/><circle cx="12.5" cy="8" r=".6"/></svg>',l:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5"/></svg>',r:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5L10.5 8 6 12.5"/></svg>'};
+const STAR=ICON.star;
 const txHTML=t=>t.cat?`<span class="tx ul" style="--ul:${catColor(t.cat)}">${esc(t.text)}</span>`:`<span class="tx">${esc(t.text)}</span>`;
 const ddHTML=t=>{if(!t.date||t.done||U('dday')!=='1')return '';const n=Math.round((parse(t.date)-parse(todayS()))/864e5);return `<span class="dd${n===0?' now':''}">${n===0?'D-DAY':n>0?'D-'+n:'D+'+(-n)}</span>`};
 const tagHTML=c=>c?`<span class="tag"><i style="background:${catColor(c)}"></i>${esc(c)}</span>`:'';
@@ -92,4 +100,25 @@ function tick(){
     o.type='sine';o.frequency.setValueAtTime(1046,t0);o.frequency.exponentialRampToValueAtTime(784,t0+.09);
     g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(.06,t0+.01);g.gain.exponentialRampToValueAtTime(.0001,t0+.16);
     o.connect(g).connect(c.destination);o.start(t0);o.stop(t0+.18)}catch{}
+}
+
+/* list motion (C26) */
+const seen=new Set();
+const fresh=t=>{if(seen.has(t.id))return '';seen.add(t.id);return now()-(t.created||0)<2500?' fresh':''};
+/* D-day events */
+const evList=()=>Object.entries(db.events).filter(([,v])=>v&&v[0]&&!v[0].del).map(([id,v])=>({id,...v[0]}));
+function evCalc(e){
+  const t0=parse(todayS()), base=parse(e.date);let d=base;
+  if(e.mode==='since'){const k=Math.round((t0-base)/864e5)+1;return k>=1?{key:1e5+k,label:`${k}일째`}:{key:1-k,label:`D-${1-k}`}}
+  if(e.mode==='yearly'){d=new Date(t0.getFullYear(),base.getMonth(),base.getDate());if(d<t0)d=new Date(t0.getFullYear()+1,base.getMonth(),base.getDate())}
+  const n=Math.round((d-t0)/864e5);
+  return {key:n>=0?n:2e5-n,label:n===0?'D-DAY':n>0?`D-${n}`:`D+${-n}`};
+}
+function evOn(s){const out=[];for(const e of evList()){
+  if(e.mode==='yearly'){if(e.date.slice(5)===s.slice(5)&&s>=e.date)out.push(e.name);continue}
+  if(e.date===s){out.push(e.name);continue}
+  if(e.mode==='since'&&s>e.date){const k=Math.round((parse(s)-parse(e.date))/864e5)+1;if(k%100===0)out.push(`${e.name} ${k}일`)}
+}return out}
+function ddStrip(){
+  return evList().map(e=>({e,c:evCalc(e)})).sort((a,b)=>a.c.key-b.c.key).map(({e,c})=>`<button class="dchip${c.label==='D-DAY'?' today':''}" data-ev="${e.id}"><span>${esc(e.name)}</span><b>${c.label}</b></button>`).join('')+'<button class="dchip new" data-ev=""><span>+ D-Day</span></button>';
 }
