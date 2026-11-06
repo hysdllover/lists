@@ -23,7 +23,7 @@ const fmtD=s=>{const d=parse(s),st=U('dstyle');return st==='en'?`${MONS[d.getMon
 const bigD=d=>{const st=U('dstyle');return st==='en'?`${MONS[d.getMonth()]} ${d.getDate()}`:st==='ko'?`${d.getMonth()+1}월 ${d.getDate()}일`:`${pz(d.getMonth()+1)}.${pz(d.getDate())}`};
 const load=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
 const save=(k,v)=>{if(k===KEY){saveDb();return}try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
-const APP_VER=24;
+const APP_VER=25;
 
 let db=load(KEY,{tasks:[]});
 let cfg=Object.assign({syncInt:'1',noteOpen:'',sort:'date',fold:true,fs:14,theme:'light',split:1,token:'',gist:'',last:0,start:'list',secs:{Quick:true},gfold:{},wz:1},load(CFG,{}));
@@ -161,6 +161,7 @@ addEventListener('pagehide',()=>flushDb());
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushDb()});
 /* changes (K9, K10) */
 const CHANGES={
+ 25:'날짜 없는 할 일 칩 크기 키움',
  24:'주간 항목 숨기기 설정',
  23:'데이터 불러오기 전 저장·동기화 차단(안전장치) · 날짜 없는 칸 다시 펼침',
  22:'날짜 없는 할 일을 WEEK·TODAY 맨 아래에 작은 칩으로 표시',

@@ -667,3 +667,9 @@ body[data-toast-pos=top] .toast.on{animation:tin3 .2s ease-out}
 .uc.more{padding:.16rem .4rem;font-size:var(--t-lbl);color:var(--sub);font-family:var(--mono)}
 .uadd{flex:1;min-width:7rem;font-size:var(--t-sub);padding:.16rem 0}
 #wfix[hidden],.deck[hidden]{display:none}
+/* v25: larger undated chips */
+.uchips{gap:.45rem}
+.uc.wi{padding:.32rem .75rem;font-size:calc(var(--t-body)*var(--tk,1));line-height:1.5}
+.uc.more{padding:.32rem .5rem;font-size:var(--t-sub)}
+.uadd{font-size:var(--t-body);padding:.32rem 0;min-width:9rem}
+#plan .ph .lbl,#fPlan .ph .lbl{font-size:var(--t-sub);letter-spacing:.16em}
