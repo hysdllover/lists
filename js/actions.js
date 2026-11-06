@@ -37,6 +37,7 @@ $('#days').addEventListener('keydown',e=>{const i=e.target.closest('.dayadd');if
 $('#vSet').addEventListener('click',e=>{
   const b=e.target.closest('.seg[data-k] button');if(b){setUI(b.parentElement.dataset.k,b.dataset.v);if(b.parentElement.dataset.k==='snd')tick();return}
   const mv=e.target.closest('[data-tmv]');if(mv){const o=tabOrder(),i=o.indexOf(mv.dataset.tmv),j=i+(+mv.dataset.dir);if(j<0||j>=o.length)return;[o[i],o[j]]=[o[j],o[i]];setUI('tabOrder',o.join(','));return}
+  const ehb=e.target.closest('[data-eh]');if(ehb){let h=(U('eHide')||'').split(',').filter(Boolean).filter(x=>x!==ehb.dataset.eh);if(ehb.dataset.h==='1')h.push(ehb.dataset.eh);setUI('eHide',h.join(','),false);return}
   const th=e.target.closest('[data-thd]');if(th){const k=th.dataset.thd;let h=tabHidden().filter(x=>x!==k);if(th.dataset.h==='1')h.push(k);if(h.length>=Object.keys(TABN).length){notice('탭은 최소 1개 보여야 해요');return}setUI('tabHide',h.join(','))}
 });
 $('#appName').addEventListener('change',e=>setUI('appName',e.target.value.trim()||'WEEKLY'));
@@ -130,6 +131,9 @@ function openEdit(id){
   const t=find(id); editId=id;
   $('#eTxt').value=t.text;$('#eMemo').value=t.memo||'';$('#eCat').value=t.cat||'';$('#ePlace').value=t.place||'';paintCats();$('#eInfo').textContent=`LAST EDIT · ${t.by||'—'} · ${fmtTs(t.updated||t.created)}`;setDP($('#eDate'),t.date);setTP($('#eTime'),t.time);setDP($('#eEnd'),t.end);setTP($('#eTend'),t.tend);eNoteV=t.note||'';paintENote();eState=t.state||'';
   eRep=t.repeat||'';eStar=!!t.star;paintEdit();
+  {const hid=(U('eHide')||'').split(','),has={memo:t.memo,cat:t.cat,end:t.end,time:t.time,repeat:t.repeat,state:t.state,place:t.place,note:t.note};
+   $$('#sheet [data-ef]').forEach(r=>{r.hidden=hid.includes(r.dataset.ef)&&!has[r.dataset.ef]});
+   $$('#sheet .eg').forEach(g=>{g.hidden=$$(`#sheet [data-g="${g.dataset.eg}"]`).every(r=>r.hidden)})}
   $('#back').classList.add('on');requestAnimationFrame(()=>grow($('#eTxt')));
 }
 function closeEdit(){
@@ -151,7 +155,7 @@ $('#eRep').addEventListener('click',e=>{const b=e.target.closest('button');if(b)
 $('#eStar').onclick=()=>{eStar=!eStar;paintEdit()};
 $('#eNoDate').onclick=()=>{setDP($('#eDate'),'');setDP($('#eEnd'),'')};$('#eNoTime').onclick=()=>{setTP($('#eTime'),'');setTP($('#eTend'),'')};$('#eNoEnd').onclick=()=>{setDP($('#eEnd'),'')};
 $('#eDel').onclick=()=>{const t=find(editId);editId=null;$('#back').classList.remove('on');if(t)collapse($$(`[data-id="${t.id}"]`),()=>{snap('삭제됨');touch(t,{deleted:true});toast()})};
-$('#undoBtn').onclick=undo;
+$('#undoBtn').onclick=()=>{if(noticeFn){const f=noticeFn;noticeFn=null;$('#toast').classList.remove('on');f()}else undo()};
 $('#catList').addEventListener('click',e=>{const b=e.target.closest('button[data-c]');if(b){db.colors[b.dataset.c]=[+b.dataset.i,now()];commit()}});
 
 
@@ -272,3 +276,19 @@ $('#scCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('#scUrl
 $('#wNoteV').addEventListener('click',e=>{if(e.target.closest('a'))return;$('.dnote').classList.remove('reading');const n=$('#wNote');n.focus();grow(n)});
 $('#wNote').addEventListener('blur',e=>{const v=e.target.value;$('#wNoteV').innerHTML=md(v);$('.dnote').classList.toggle('reading',!!v.trim())});
 document.addEventListener('change',e=>{const i=e.target.closest('input[data-cc]');if(i){db.colors[i.dataset.cc]=[i.value,now()];commit()}});
+
+/* ---------- info tab (K11, K12) ---------- */
+$('#chkUpd').onclick=async()=>{
+  if(!('serviceWorker' in navigator)||location.protocol!=='https:'){notice('웹 주소(https)에서 열었을 때만 확인할 수 있어요');return}
+  const r=await navigator.serviceWorker.getRegistration();if(!r){location.reload();return}
+  notice('새 버전을 확인하는 중…');try{await r.update()}catch{}
+  setTimeout(()=>{if(r.installing||r.waiting)notice('새 버전을 받는 중이에요. 곧 다시 열려요');else notice('최신 버전이에요 · VERSION '+APP_VER)},1500);
+};
+$('#hardReload').onclick=async()=>{
+  if(!confirm('앱 파일만 지우고 다시 받을까요?\n할 일·노트·설정은 그대로예요.'))return;
+  await flushDb();
+  try{if(window.caches)for(const k of await caches.keys())await caches.delete(k);if(navigator.serviceWorker)for(const r of await navigator.serviceWorker.getRegistrations())await r.unregister()}catch{}
+  location.reload();
+};
+/* ---------- collapsing header (K15) ---------- */
+addEventListener('scroll',()=>{const s=scrollY>110;if(s!==document.body.classList.contains('scrolled')){document.body.classList.toggle('scrolled',s);setMini()}},{passive:true});

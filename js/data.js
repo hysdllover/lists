@@ -20,7 +20,7 @@ $('#fontReset').onclick=async()=>{await kv('readwrite',s=>s.delete('font'));appl
 
 /* ---------- backup ---------- */
 $('#exp').onclick=()=>{
-  const b=new Blob([JSON.stringify({tasks:live(),colors:db.colors,notes:db.notes,ui:db.ui,uiT:db.uiT,wfixT:db.wfixT,wprog:db.wprog,events:db.events,notesP:db.notesP},null,1)],{type:'application/json'});
+  const b=new Blob([JSON.stringify({tasks:live(),colors:db.colors,notes:db.notes,ui:db.ui,uiT:db.uiT,wfixT:db.wfixT,wprog:db.wprog,events:db.events,notesP:db.notesP,devices:db.devices},null,1)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`weekly-${todayS()}.json`;a.click();
 };
 $('#imp').addEventListener('change',async e=>{
@@ -65,42 +65,64 @@ async function findGist(){
   const g=await gh('POST','/gists',{description:'Weekly to-do data',public:false,files:{[GFILE]:{content:JSON.stringify({tasks:[]})}}});
   return g.id;
 }
+const NFILE='weekly-notes.json';
+async function fileText(f){if(!f)return '';let c=f.content;if(f.truncated)c=await (await fetch(f.raw_url,{cache:'no-store'})).text();return c||''}
 async function readGist(g){
-  const f=g.files&&g.files[GFILE]; if(!f)return {tasks:[],colors:{},notes:{},wfixT:[[],0],wprog:{},events:{},notesP:{}};
-  let c=f.content;
-  if(f.truncated)c=await (await fetch(f.raw_url,{cache:'no-store'})).text();
-  try{const j=JSON.parse(c||'{}');return {tasks:j.tasks||[],colors:j.colors||{},notes:j.notes||{},ui:j.ui,uiT:j.uiT||0,wfixT:j.wfixT||[[],0],wprog:j.wprog||{},events:j.events||{},notesP:j.notesP||{},by:j.by,at:j.at}}catch{return {tasks:[],colors:{},notes:{},wfixT:[[],0],wprog:{},events:{},notesP:{}}}
+  const fs=(g&&g.files)||{};let j={},n={};
+  try{j=JSON.parse(await fileText(fs[GFILE])||'{}')}catch{}
+  try{n=JSON.parse(await fileText(fs[NFILE])||'{}')}catch{}
+  return {tasks:j.tasks||[],colors:j.colors||{},notes:j.notes||{},ui:j.ui,uiT:j.uiT||0,wfixT:j.wfixT||[[],0],wprog:j.wprog||{},events:j.events||{},devices:j.devices||{},
+    notesP:mergeColors(j.notesP||{},n.notesP||{}),hasN:!!fs[NFILE],by:j.by,at:j.at};
 }
 let syncing=false, again=false, timer=null;
-let lastErr='', dirty=false;
+let lastErr='', dirty=false, retryN=0, retryT=null, tokWarned=false;
 function queueSync(){if(!ready())return;dirty=true;if(cfg.syncInt==='0'){setStatus('busy','PENDING');return}clearTimeout(timer);timer=setTimeout(sync,1200)}
+function openSyncSettings(){view='set';cfg.setTab='data';cfg.secs=cfg.secs||{};cfg.secs['Gist Sync']=true;save(CFG,cfg);render();setTimeout(()=>{const s=$('[data-sec="Gist Sync"]');s&&s.scrollIntoView({block:'start'})},60)}
 async function sync(){
   if(!ready()){setStatus('','LOCAL');return}
   if(syncing){again=true;return}
-  syncing=true;setStatus('busy','SYNC');
+  syncing=true;setStatus('busy','SYNC');clearTimeout(retryT);
   try{
     if(!cfg.gist){cfg.gist=await findGist();save(CFG,cfg);fillCfg()}
     let g;
     try{g=await gh('GET',`/gists/${cfg.gist}`)}
     catch(e){if(e.status!==404)throw e;cfg.gist=await findGist();save(CFG,cfg);fillCfg();g=await gh('GET',`/gists/${cfg.gist}`)}
-    const remote0=await readGist(g), conf=[], lm=new Map(db.tasks.map(t=>[t.id,t])), since=cfg.last||0;
-    for(const r of remote0.tasks){const l=lm.get(r.id);if(!l)continue;for(const f of F){if(f==='order'||f==='dord')continue;if(JSON.stringify(l[f])===JSON.stringify(r[f]))continue;const tl=ft(l,f),tr=ft(r,f);if(tl>since&&tr>since&&tr!==tl)conf.push({t:l,f,by:tr>tl?(r.by||'다른 기기'):cfg.device,vs:tr>tl?cfg.device:(r.by||'다른 기기')})}}
-    const remote=remote0, merged=merge(db.tasks,remote.tasks), colors=mergeColors(db.colors,remote.colors), notes=mergeColors(db.notes,remote.notes);
-    const rNew=(remote.uiT||0)>db.uiT, ui=rNew?{...UID,...remote.ui}:db.ui, uiT=Math.max(remote.uiT||0,db.uiT);
+    const remote=await readGist(g), since=cfg.last||0, conf=[], lm=new Map(db.tasks.map(t=>[t.id,t]));
+    for(const r of remote.tasks){const l=lm.get(r.id);if(!l)continue;for(const f of F){if(f==='order'||f==='dord')continue;if(JSON.stringify(l[f])===JSON.stringify(r[f]))continue;const tl=ft(l,f),tr=ft(r,f);if(tl>since&&tr>since&&tr!==tl)conf.push({t:l,f,by:tr>tl?(r.by||'다른 기기'):cfg.device,vs:tr>tl?cfg.device:(r.by||'다른 기기')})}}
+    /* note conflict copies (K1) */
+    const copies=[];
+    for(const id in remote.notesP){const r=remote.notesP[id],l=db.notesP[id];if(!l||!r||l[0].del||r[0].del)continue;
+      if((l[0].body||'')===(r[0].body||''))continue;if(l[1]>since&&r[1]>since)copies.push({lose:l[1]>r[1]?r:l,by:l[1]>r[1]?(remote.by||'다른 기기'):cfg.device})}
+    const merged=merge(db.tasks,remote.tasks), colors=mergeColors(db.colors,remote.colors), notes=mergeColors(db.notes,remote.notes);
+    const ui=(remote.uiT||0)>db.uiT?{...UID,...remote.ui}:db.ui, uiT=Math.max(remote.uiT||0,db.uiT);
     const notesP=mergeColors(db.notesP,remote.notesP), events=mergeColors(db.events,remote.events), wprog=mergeColors(db.wprog,remote.wprog), wfixT=(remote.wfixT[1]||0)>(db.wfixT[1]||0)?remote.wfixT:db.wfixT;
-    const kv2=o=>Object.keys(o).sort().map(k=>[k,o[k]]);
-    const sig=(t,c,n,u,ut,wf,wp,ev,np)=>JSON.stringify([[...t].sort((p,q)=>p.id<q.id?-1:1),kv2(c),kv2(n),u?kv2(u):null,ut,wf,kv2(wp),kv2(ev||{}),kv2(np||{})]);
-    const all=sig(merged,colors,notes,ui,uiT,wfixT,wprog,events,notesP);
-    if(all!==sig(db.tasks,db.colors,db.notes,db.ui,db.uiT,db.wfixT,db.wprog,db.events,db.notesP)&&!drag){Object.assign(db,{tasks:merged,colors,notes,ui,uiT,wfixT,wprog,events,notesP});save(KEY,db);render()}
+    for(const c of copies){const ls=(c.lose[0].body||'').split('\n');ls[0]=`${(ls[0]||'제목 없음').replace(/^#+\s*/,'')} (충돌 사본 · ${c.by})`;notesP[uid()]=[{...c.lose[0],body:ls.join('\n'),pin:false},now()]}
+    const devices=mergeColors(db.devices,remote.devices);
+    const kv2=o=>Object.keys(o||{}).sort().map(k=>[k,o[k]]);
+    const sigM=(t,c,n,u,ut,wf,wp,ev,dv)=>JSON.stringify([[...t].sort((p,q)=>p.id<q.id?-1:1),kv2(c),kv2(n),u?kv2(u):null,ut,wf,kv2(wp),kv2(ev),kv2(dv)]);
+    let mainNew=sigM(merged,colors,notes,ui,uiT,wfixT,wprog,events,devices)!==sigM(remote.tasks,remote.colors,remote.notes,remote.ui,remote.uiT||0,remote.wfixT,remote.wprog,remote.events,remote.devices);
+    const notesNew=JSON.stringify(kv2(notesP))!==JSON.stringify(kv2(remote.notesP))||(!remote.hasN&&Object.keys(notesP).length>0);
+    if(mainNew||notesNew||!(devices[cfg.device]&&devices[cfg.device][1]>now()-6*36e5)){devices[cfg.device]=[now(),now()];mainNew=true}
+    if(sigM(merged,colors,notes,ui,uiT,wfixT,wprog,events,devices)+JSON.stringify(kv2(notesP))!==sigM(db.tasks,db.colors,db.notes,db.ui,db.uiT,db.wfixT,db.wprog,db.events,db.devices)+JSON.stringify(kv2(db.notesP))&&!drag){
+      Object.assign(db,{tasks:merged,colors,notes,ui,uiT,wfixT,wprog,events,notesP,devices});save(KEY,db);render()}
     if(remote.by)cfg.lastBy=`${remote.by} · ${fmtTs(remote.at||0)}`;
-    if(all!==sig(remote.tasks,remote.colors,remote.notes,remote.ui,remote.uiT||0,remote.wfixT,remote.wprog,remote.events,remote.notesP)){const at=now();await gh('PATCH',`/gists/${cfg.gist}`,{files:{[GFILE]:{content:JSON.stringify({tasks:merged,colors,notes,ui,uiT,wfixT,wprog,events,notesP,by:cfg.device,at},null,1)}}});cfg.lastBy=`${cfg.device} · ${fmtTs(at)}`}
-    if(conf.length){const FL={text:'내용',done:'완료',memo:'메모',cat:'분류',date:'날짜',time:'시간',repeat:'반복',star:'중요',deleted:'삭제',state:'상태',end:'종료일',tend:'종료 시간',place:'장소',spawned:'반복',gone:'휴지통'};
+    const files={}, at=now();
+    if(mainNew)files[GFILE]={content:JSON.stringify({tasks:merged,colors,notes,ui,uiT,wfixT,wprog,events,devices,by:cfg.device,at},null,1)};
+    if(notesNew)files[NFILE]={content:JSON.stringify({notesP},null,1)};
+    if(Object.keys(files).length){await gh('PATCH',`/gists/${cfg.gist}`,{files});cfg.lastBy=`${cfg.device} · ${fmtTs(at)}`}
+    if(conf.length){const FL={text:'내용',done:'완료',memo:'메모',cat:'분류',date:'날짜',time:'시간',repeat:'반복',star:'중요',deleted:'삭제',state:'상태',end:'종료일',tend:'종료 시간',place:'장소',spawned:'반복',gone:'휴지통',note:'노트'};
       const c=conf[0],msg=conf.length===1?`충돌 · ‘${c.t.text.split('\n')[0].slice(0,14)}’ ${FL[c.f]||c.f} · ${c.vs}·${c.by} 동시 수정 → ${c.by} 기준으로 맞춤`:`충돌 ${conf.length}건 · 나중에 고친 쪽 기준으로 맞춤`;
       notice(msg);cfg.lastConflict=`${fmtTs(now())} · ${msg}`}
-    cfg.last=now();save(CFG,cfg);dirty=false;lastErr='';
+    if(copies.length){const msg=`노트 동시 수정 ${copies.length}건 · 다른 쪽 내용을 충돌 사본으로 남겼어요`;notice(msg,'노트 보기',()=>{view='notes';cfg.noteOpen='';render()});cfg.lastConflict=`${fmtTs(now())} · ${msg}`}
+    cfg.last=now();save(CFG,cfg);dirty=false;lastErr='';retryN=0;tokWarned=false;
     const d=new Date(cfg.last);setStatus('ok',`${pad(d.getHours())}:${pad(d.getMinutes())}`);
     $('#gLast').textContent=`LAST SYNC ${ymd(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  }catch(e){lastErr=e.message==='Failed to fetch'||e.message==='Load failed'?'오프라인':e.message;setStatus('err',lastErr)}
+  }catch(e){
+    const net=e.message==='Failed to fetch'||e.message==='Load failed'||e.name==='TypeError'||(e.status>=500);
+    lastErr=net?'오프라인':e.message;setStatus('err',lastErr);
+    if(net&&cfg.syncInt!=='0'){const w=[3e4,12e4,3e5][Math.min(retryN,2)];retryN++;retryT=setTimeout(sync,w)}
+    if((e.status===401||e.status===403)&&!tokWarned){tokWarned=true;notice(e.status===401?'Gist 토큰이 만료됐거나 잘못됐어요':'토큰에 gist 권한이 없어요','설정 열기',openSyncSettings)}
+  }
   syncing=false;if(again){again=false;queueSync()}
 }
 function fillCfg(){$('#gToken').value=cfg.token;$('#gId').value=cfg.gist||''}
@@ -143,5 +165,6 @@ function restoreFrom(o){
   for(const k in o.colors)db.colors[k]=[o.colors[k][0],ts];
   for(const k in o.notes)db.notes[k]=[o.notes[k][0],ts];
   for(const k in (o.events||{}))db.events[k]=[o.events[k][0],ts];
+  for(const k in (o.notesP||{}))db.notesP[k]=[o.notesP[k][0],ts];
   commit();toast();
 }

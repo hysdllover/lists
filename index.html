@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Weekly">
 <meta name="theme-color" content="#f9fafb" id="themeColor">
-<script>try{var u=(JSON.parse(localStorage.getItem('weekly.v1'))||{}).ui,c=JSON.parse(localStorage.getItem('weekly.cfg'))||{};document.documentElement.dataset.theme=(u&&u.theme)||c.theme||'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
+<script>try{var u=JSON.parse(localStorage.getItem('weekly.ui'))||(JSON.parse(localStorage.getItem('weekly.v1'))||{}).ui,c=JSON.parse(localStorage.getItem('weekly.cfg'))||{};document.documentElement.dataset.theme=(u&&u.theme)||c.theme||'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-512.png">
@@ -21,7 +21,7 @@
 <body>
 <header>
   <div class="hrow">
-    <span class="brand">WEEKLY</span>
+    <span class="brand">WEEKLY</span><span class="mini num" id="mini"></span>
     <nav>
       <button data-v="list" class="on" id="tabList">LIST</button>
       <button data-v="week" id="tabWeek">WEEK</button>
@@ -126,7 +126,7 @@
   <section class="view" id="vSet">
     <div class="hero">
       <div class="hl"><span class="lbl">Preferences</span><div class="big">Settings</div></div>
-      <div class="hr seg" data-c="setTab"><button data-v="basic">기본</button><button data-v="style">꾸미기</button><button data-v="data">데이터</button></div>
+      <div class="hr seg" data-c="setTab"><button data-v="basic">기본</button><button data-v="style">꾸미기</button><button data-v="data">데이터</button><button data-v="info">정보</button></div>
     </div>
     <div class="prevcard" id="prevCard" data-grp="style"></div>
     <div class="sec" data-sec="Quick" data-grp="basic">
@@ -144,11 +144,24 @@
       <div id="tabCfg"></div>
       <p class="note">순서는 화살표로 바꾸고, 쓰지 않는 탭은 숨길 수 있어요. 탭은 최소 1개 보여야 해요.</p>
     </div>
+    <div class="sec" data-sec="Editor" data-grp="basic">
+      <button class="sh"><span class="lbl">Editor</span><i class="cv"></i></button>
+      <div class="field"><span>메모</span><div class="seg"><button data-eh="memo" data-h="0">표시</button><button data-eh="memo" data-h="1">숨김</button></div></div>
+      <div class="field"><span>분류</span><div class="seg"><button data-eh="cat" data-h="0">표시</button><button data-eh="cat" data-h="1">숨김</button></div></div>
+      <div class="field"><span>종료일</span><div class="seg"><button data-eh="end" data-h="0">표시</button><button data-eh="end" data-h="1">숨김</button></div></div>
+      <div class="field"><span>시간</span><div class="seg"><button data-eh="time" data-h="0">표시</button><button data-eh="time" data-h="1">숨김</button></div></div>
+      <div class="field"><span>반복</span><div class="seg"><button data-eh="repeat" data-h="0">표시</button><button data-eh="repeat" data-h="1">숨김</button></div></div>
+      <div class="field"><span>상태</span><div class="seg"><button data-eh="state" data-h="0">표시</button><button data-eh="state" data-h="1">숨김</button></div></div>
+      <div class="field"><span>장소</span><div class="seg"><button data-eh="place" data-h="0">표시</button><button data-eh="place" data-h="1">숨김</button></div></div>
+      <div class="field"><span>노트</span><div class="seg"><button data-eh="note" data-h="0">표시</button><button data-eh="note" data-h="1">숨김</button></div></div>
+      <p class="note">숨긴 칸은 값이 들어 있는 할 일에서만 나타나요.</p>
+    </div>
     <div class="sec" data-sec="Display" data-grp="style">
       <button class="sh"><span class="lbl">Display</span><i class="cv"></i></button>
       <div class="field"><span>글자 크기</span><div class="size"><span class="a1">A</span><input type="range" id="fsr" min="11" max="19" step="0.5"><span class="a2">A</span><span class="val" id="fsv"></span></div></div>
       <div class="field"><span>자간</span><div class="size"><input type="range" data-k="ls" min="-0.04" max="0.1" step="0.005"><span class="val" data-val="ls"></span></div></div>
       <div class="field"><span>줄 간격</span><div class="size"><input type="range" data-k="lh" min="1.3" max="2.1" step="0.05"><span class="val" data-val="lh"></span></div></div>
+      <div class="field"><span>큰 날짜</span><div class="seg" data-k="bigSz"><button data-v="s">작게</button><button data-v="m">보통</button><button data-v="l">크게</button></div></div>
       <div class="field"><span>선</span><div class="seg" data-k="line"><button data-v="0">아주 옅게</button><button data-v="1">옅게</button><button data-v="2">보통</button><button data-v="3">진하게</button></div></div>
       <div class="field"><span>종이 배경</span><div class="seg" data-k="paper"><button data-v="none">없음</button><button data-v="grid">모눈</button><button data-v="lined">줄</button><button data-v="dot">점</button></div></div>
       <div class="field"><span>인쇄 배경</span><div class="seg" data-k="paperPrint"><button data-v="1">적용</button><button data-v="0">미적용</button></div></div>
@@ -176,6 +189,8 @@
     </div>
     <div class="sec" data-sec="Items" data-grp="style">
       <button class="sh"><span class="lbl">Items</span><i class="cv"></i></button>
+      <div class="field"><span>분류 표시</span><div class="seg" data-k="catStyle"><button data-v="ul">밑줄</button><button data-v="bar">세로선</button><button data-v="dot">점</button></div></div>
+      <div class="field"><span>시간 열</span><div class="seg" data-k="tcol"><button data-v="1">왼쪽 정렬</button><button data-v="0">날짜 옆</button></div></div>
       <div class="field"><span>디데이 줄</span><div class="seg" data-k="ddPos"><button data-v="both">둘 다</button><button data-v="list">LIST</button><button data-v="today">TODAY</button><button data-v="none">숨김</button></div></div>
       <div class="field"><span>리스트 숫자</span><div class="seg" data-k="lStat"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
       <div class="field"><span>리스트 날짜</span><div class="seg" data-k="rDate"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
@@ -232,24 +247,53 @@
         <p class="note">단축어로 열면 Safari에서 열립니다. Safari에서도 Gist 동기화를 한 번 연결해 두면 홈 화면 앱에 자동으로 반영돼요.</p>
       </div>
     </div>
-    <p class="ver">VERSION 16</p>
+    <div class="sec" data-sec="Version" data-grp="info">
+      <button class="sh"><span class="lbl">Version</span><i class="cv"></i></button>
+      <div class="field"><span>현재 버전</span><b class="num verv" id="verNow"></b></div>
+      <div class="btns"><button class="btn" id="chkUpd">새 버전 확인</button><button class="tbtn" id="hardReload">앱 새로고침</button></div>
+      <p class="note">앱 새로고침은 저장된 앱 파일만 지우고 다시 받아요. 할 일·노트·설정은 그대로예요.</p>
+    </div>
+    <div class="sec" data-sec="Devices" data-grp="info">
+      <button class="sh"><span class="lbl">Devices</span><i class="cv"></i></button>
+      <div id="devList"></div>
+    </div>
+    <div class="sec" data-sec="Changes" data-grp="info">
+      <button class="sh"><span class="lbl">Changes</span><i class="cv"></i></button>
+      <div id="chgList"></div>
+    </div>
+    <div class="sec" data-sec="Help" data-grp="info">
+      <button class="sh"><span class="lbl">Help</span><i class="cv"></i></button>
+      <dl class="help">
+        <dt>할 일 입력</dt><dd>엔터는 줄바꿈, ADD로 추가. <code>#분류</code>를 붙이면 분류가 정해져요. 아이패드 키보드는 ⌘+Enter로 추가.</dd>
+        <dt>체크박스</dt><dd>누르면 완료, 길게 누르면 진행 중.</dd>
+        <dt>할 일 줄</dt><dd>누르면 편집, 길게 눌러 끌면 다른 날짜나 순서로 이동, 왼쪽으로 밀면 ☆ · 날짜 버튼.</dd>
+        <dt>주간 · 캘린더</dt><dd>요일 칸 안에서 끌어 순서 변경. 아이패드 보드는 두 손가락으로 확대·축소. 캘린더의 W45를 누르면 그 주로 이동.</dd>
+        <dt>노트</dt><dd>첫 줄이 제목. <code># 제목</code> · <code>- 목록</code> · <code>**굵게</code>** · <code>---</code> 구분선. 줄을 길게 누르면 할 일로 만들기.</dd>
+        <dt>주간 항목</dt><dd>“운동 3”처럼 쓰면 칸 3개가 생겨요.</dd>
+        <dt>단축어</dt><dd><code>?add=할 일&amp;date=내일&amp;time=15:00</code> · <code>?view=week</code> — 설정 → 데이터 → Shortcut에서 주소 복사.</dd>
+        <dt>되돌리기</dt><dd>완료 · 삭제 · 이동 · 수정 직후 아래에 5초 동안 떠요. 휴지통은 30일 보관.</dd>
+      </dl>
+    </div>
   </section>
 </main>
 
 <div class="back" id="back">
   <div class="sheet" id="sheet">
     <div class="shead"><span class="lbl">Edit</span><button class="star" id="eStar" aria-label="중요"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.2l1.75 3.6 3.95.55-2.85 2.8.68 3.95L8 11.25 4.47 13.1l.68-3.95L2.3 6.35l3.95-.55z"/></svg></button></div>
-    <div class="field"><span>내용</span><textarea id="eTxt" rows="1"></textarea></div>
-    <div class="field"><span>메모</span><textarea id="eMemo" placeholder="메모"></textarea></div>
-    <div class="field"><span>분류</span><input type="text" id="eCat" list="cats" placeholder="없음" autocapitalize="off"></div>
-    <div class="cchips" id="eCats"></div>
-    <div class="field"><span>노트</span><button class="tbtn nsel" id="eNote">연결</button></div>
-    <div class="field"><span>장소</span><input type="text" id="ePlace" placeholder="없음" autocomplete="off"></div>
-    <div class="field"><span>날짜</span><button class="dp" id="eDate" data-ph="없음"></button><button class="tbtn" id="eNoDate">해제</button></div>
-    <div class="field"><span>종료</span><button class="dp" id="eEnd" data-ph="없음" data-from="#eDate"></button><button class="tbtn" id="eNoEnd">해제</button></div>
-    <div class="field trow"><span>시간</span><button class="tp" id="eTime" data-ph="없음" data-pair="#eTend"></button><span class="dash">–</span><button class="tp" id="eTend" data-ph="끝" data-pair="#eTime" data-end="1"></button><button class="tbtn" id="eNoTime">해제</button></div>
-    <div class="field"><span>반복</span><div class="seg" id="eRep"><button data-r="">없음</button><button data-r="daily">매일</button><button data-r="weekdays">평일</button><button data-r="weekly">매주</button><button data-r="monthly">매월</button></div></div>
-    <div class="field"><span>상태</span><div class="seg" id="eState"><button data-s="">할 일</button><button data-s="doing">진행 중</button><button data-s="hold">보류</button></div></div>
+    <div class="eg lbl" data-eg="b">Basic</div>
+    <div data-g="b" class="field"><span>내용</span><textarea id="eTxt" rows="1"></textarea></div>
+    <div data-g="b" data-ef="memo" class="field"><span>메모</span><textarea id="eMemo" placeholder="메모"></textarea></div>
+    <div data-g="b" data-ef="cat" class="field"><span>분류</span><input type="text" id="eCat" list="cats" placeholder="없음" autocapitalize="off"></div>
+    <div data-g="b" data-ef="cat" class="cchips" id="eCats"></div>
+    <div class="eg lbl" data-eg="s">Schedule</div>
+    <div data-g="s" class="field"><span>날짜</span><button class="dp" id="eDate" data-ph="없음"></button><button class="tbtn" id="eNoDate">해제</button></div>
+    <div data-g="s" data-ef="end" class="field"><span>종료</span><button class="dp" id="eEnd" data-ph="없음" data-from="#eDate"></button><button class="tbtn" id="eNoEnd">해제</button></div>
+    <div data-g="s" data-ef="time" class="field trow"><span>시간</span><button class="tp" id="eTime" data-ph="없음" data-pair="#eTend"></button><span class="dash">–</span><button class="tp" id="eTend" data-ph="끝" data-pair="#eTime" data-end="1"></button><button class="tbtn" id="eNoTime">해제</button></div>
+    <div data-g="s" data-ef="repeat" class="field"><span>반복</span><div class="seg" id="eRep"><button data-r="">없음</button><button data-r="daily">매일</button><button data-r="weekdays">평일</button><button data-r="weekly">매주</button><button data-r="monthly">매월</button></div></div>
+    <div class="eg lbl" data-eg="m">More</div>
+    <div data-g="m" data-ef="state" class="field"><span>상태</span><div class="seg" id="eState"><button data-s="">할 일</button><button data-s="doing">진행 중</button><button data-s="hold">보류</button></div></div>
+    <div data-g="m" data-ef="place" class="field"><span>장소</span><input type="text" id="ePlace" placeholder="없음" autocomplete="off"></div>
+    <div data-g="m" data-ef="note" class="field"><span>노트</span><button class="tbtn nsel" id="eNote">연결</button></div>
     <div class="row"><button class="tbtn del" id="eDel">삭제</button><button class="btn pri" id="eClose">완료</button></div>
     <p class="einfo num" id="eInfo"></p>
   </div>
@@ -260,13 +304,6 @@
 <div class="toast" id="toast"><span id="toastTxt"></span><button id="undoBtn">되돌리기</button></div>
 <div id="print"></div>
 
-<script src="js/core.js"></script>
-<script src="js/view.js"></script>
-<script src="js/actions.js"></script>
-<script src="js/picker.js"></script>
-<script src="js/notes.js"></script>
-<script src="js/data.js"></script>
-<script src="js/image.js"></script>
-<script src="js/main.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

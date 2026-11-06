@@ -22,13 +22,15 @@ const dowL=(d,long)=>{const e=DOWE[d.getDay()],k=DOW[d.getDay()]+(long?'요일':
 const fmtD=s=>{const d=parse(s),st=U('dstyle');return st==='en'?`${MONS[d.getMonth()]} ${d.getDate()} ${dowS(d)}`:st==='ko'?`${d.getMonth()+1}월 ${d.getDate()}일 ${dowS(d)}`:`${pz(d.getMonth()+1)}.${pz(d.getDate())} ${dowS(d)}`};
 const bigD=d=>{const st=U('dstyle');return st==='en'?`${MONS[d.getMonth()]} ${d.getDate()}`:st==='ko'?`${d.getMonth()+1}월 ${d.getDate()}일`:`${pz(d.getMonth()+1)}.${pz(d.getDate())}`};
 const load=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
-const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+const save=(k,v)=>{if(k===KEY){saveDb();return}try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+const APP_VER=17;
 
-let db=load(KEY,{tasks:[]}); db.colors=db.colors||{};
+let db=load(KEY,{tasks:[]});
 let cfg=Object.assign({syncInt:'1',noteOpen:'',sort:'date',fold:true,fs:14,theme:'light',split:1,token:'',gist:'',last:0,start:'list',secs:{Quick:true},gfold:{},wz:1},load(CFG,{}));
 cfg.device=cfg.device||((/iPad/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1))?'iPad':/iPhone/.test(navigator.userAgent)?'iPhone':'Browser');
-const UID={theme:'light',accent:'bluegray',paper:'none',paperPrint:'0',line:'1',dens:'normal',ls:'-0.005',lh:'1.6',dstyle:'dot',dow:'en',weekNo:'1',dday:'1',hol:'1',holX:'',memo:'0',doneBottom:'1',collapse:'1',dimPast:'1',corner:'1',sound:'1',tfmt:'24',zero:'1',ddPos:'both',fLate:'1',fBar:'1',lStat:'1',hCnt:'1',hHol:'1',hEv:'1',rDate:'1',rRep:'1',rMemo:'1',rPlace:'1',snd:'clear',appName:'WEEKLY',tabOrder:'list,week,month,focus,notes',tabHide:'',accentC:'#7489a2'};
-db.notes=db.notes||{};db.notesP=db.notesP||{};db.events=db.events||{};db.wfixT=db.wfixT||[[],0];db.wprog=db.wprog||{};db.uiT=db.uiT||0;db.ui=Object.assign({},UID,!db.ui&&cfg.theme?{theme:cfg.theme}:{},db.ui||{});
+const UID={theme:'light',accent:'bluegray',paper:'none',paperPrint:'0',line:'1',dens:'normal',ls:'-0.005',lh:'1.6',dstyle:'dot',dow:'en',weekNo:'1',dday:'1',hol:'1',holX:'',memo:'0',doneBottom:'1',collapse:'1',dimPast:'1',corner:'1',sound:'1',tfmt:'24',zero:'1',ddPos:'both',fLate:'1',fBar:'1',lStat:'1',hCnt:'1',hHol:'1',hEv:'1',rDate:'1',rRep:'1',rMemo:'1',rPlace:'1',snd:'clear',appName:'WEEKLY',tabOrder:'list,week,month,focus,notes',tabHide:'',accentC:'#7489a2',eHide:'',catStyle:'ul',tcol:'1',bigSz:'m'};
+function initDb(){db.tasks=db.tasks||[];db.colors=db.colors||{};db.notes=db.notes||{};db.notesP=db.notesP||{};db.events=db.events||{};db.wfixT=db.wfixT||[[],0];db.wprog=db.wprog||{};db.devices=db.devices||{};db.uiT=db.uiT||0;db.ui=Object.assign({},UID,!db.ui&&cfg.theme?{theme:cfg.theme}:{},db.ui||{})}
+initDb();
 const HOL={'2026-01-01':'신정','2026-02-16':'설날','2026-02-17':'설날','2026-02-18':'설날','2026-03-01':'삼일절','2026-03-02':'대체공휴일','2026-05-05':'어린이날','2026-05-24':'부처님오신날','2026-05-25':'대체공휴일','2026-06-03':'지방선거','2026-06-06':'현충일','2026-08-15':'광복절','2026-08-17':'대체공휴일','2026-09-24':'추석','2026-09-25':'추석','2026-09-26':'추석','2026-10-03':'개천절','2026-10-05':'대체공휴일','2026-10-09':'한글날','2026-12-25':'성탄절',
 '2027-01-01':'신정','2027-02-06':'설날','2027-02-07':'설날','2027-02-08':'설날','2027-02-09':'대체공휴일','2027-03-01':'삼일절','2027-05-05':'어린이날','2027-05-13':'부처님오신날','2027-06-06':'현충일','2027-08-15':'광복절','2027-08-16':'대체공휴일','2027-09-14':'추석','2027-09-15':'추석','2027-09-16':'추석','2027-10-03':'개천절','2027-10-04':'대체공휴일','2027-10-09':'한글날','2027-10-11':'대체공휴일','2027-12-25':'성탄절','2027-12-27':'대체공휴일'};
 function holidays(){const m=U('hol')==='1'?{...HOL}:{};for(const l of (U('holX')||'').split('\n')){const r=l.trim().match(/^(\d{4}-\d{2}-\d{2})\s*(.*)$/);if(r)m[r[1]]=r[2]||'휴일'}return m}
@@ -45,8 +47,9 @@ function touch(t,p){setF(t,p,now());commit()}
 /* undo */
 let undoBuf=null,toastT=null;
 function snap(label){undoBuf={label,tasks:JSON.parse(JSON.stringify(db.tasks))}}
-function notice(msg){undoBuf=null;$('#toastTxt').textContent=msg;$('#undoBtn').hidden=true;$('#toast').classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>{$('#toast').classList.remove('on');$('#undoBtn').hidden=false},4500)}
-function toast(){if(!undoBuf)return;$('#undoBtn').hidden=false;$('#toastTxt').textContent=undoBuf.label;$('#toast').classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>{$('#toast').classList.remove('on');undoBuf=null},5000)}
+let noticeFn=null;
+function notice(msg,label,fn){undoBuf=null;noticeFn=fn||null;$('#toastTxt').textContent=msg;$('#undoBtn').textContent=label||'';$('#undoBtn').hidden=!label;$('#toast').classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>{$('#toast').classList.remove('on');$('#undoBtn').hidden=false},4500)}
+function toast(){if(!undoBuf)return;noticeFn=null;$('#undoBtn').textContent='되돌리기';$('#undoBtn').hidden=false;$('#toastTxt').textContent=undoBuf.label;$('#toast').classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>{$('#toast').classList.remove('on');undoBuf=null},5000)}
 function undo(){
   if(!undoBuf)return;const ts=now(),old=new Map(undoBuf.tasks.map(t=>[t.id,t]));
   for(const t of db.tasks){const o=old.get(t.id);
@@ -98,7 +101,10 @@ const ICON={cal:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x=
 ICON.pin='<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14.2s4.5-4.3 4.5-7.7a4.5 4.5 0 0 0-9 0c0 3.4 4.5 7.7 4.5 7.7z"/><circle cx="8" cy="6.5" r="1.4"/></svg>';
 ICON.note='<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2.5" width="10" height="11"/><path d="M5.5 6h5M5.5 8.5h5M5.5 11h3"/></svg>';
 const STAR=ICON.star;
-const txHTML=t=>t.cat?`<span class="tx ul" style="--ul:${catColor(t.cat)}">${esc(t.text)}</span>`:`<span class="tx">${esc(t.text)}</span>`;
+const txHTML=t=>{if(!t.cat)return `<span class="tx">${esc(t.text)}</span>`;const c=catColor(t.cat),s=U('catStyle');
+  if(s==='dot')return `<i class="cdot" style="background:${c}"></i><span class="tx">${esc(t.text)}</span>`;
+  if(s==='bar')return `<span class="tx cbar" style="--ul:${c}">${esc(t.text)}</span>`;
+  return `<span class="tx ul" style="--ul:${c}">${esc(t.text)}</span>`};
 const ddHTML=t=>{if(!t.date||t.done||U('dday')!=='1')return '';const n=Math.round((parse(t.date)-parse(todayS()))/864e5);return `<span class="dd${n===0?' now':''}">${n===0?'D-DAY':n>0?'D-'+n:'D+'+(-n)}</span>`};
 const tagHTML=c=>c?`<span class="tag"><i style="background:${catColor(c)}"></i>${esc(c)}</span>`:'';
 
@@ -145,3 +151,20 @@ function ddStrip(){
 }
 
 const plcHTML=t=>t.place&&U('rPlace')==='1'?`<a class="plc" href="https://maps.apple.com/?q=${encodeURIComponent(t.place)}" target="_blank" rel="noopener">${ICON.pin}${esc(t.place)}</a>`:'';
+
+/* storage: IndexedDB (K6) */
+let dbT=null, idbOk=true;
+function saveDb(){clearTimeout(dbT);dbT=setTimeout(flushDb,150);try{localStorage.setItem('weekly.ui',JSON.stringify({theme:db.ui.theme}))}catch{}}
+async function flushDb(){clearTimeout(dbT);if(idbOk){try{await kv('readwrite',s=>s.put(db,'db'));return}catch{idbOk=false}}try{localStorage.setItem(KEY,JSON.stringify(db))}catch{}}
+addEventListener('pagehide',()=>flushDb());
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushDb()});
+/* changes (K9, K10) */
+const CHANGES={
+ 17:'노트 충돌 사본 · 동기화 파일 분리 · 빠른 로딩 · 큰 저장소 · 자동 재시도 · 정보 탭 · 편집 창 항목 고르기 · 분류 표시 방식 · 시간 열 · 체크·취소선 애니메이션',
+ 16:'노트 · 앱 날짜·시간 선택기 · 탭 순서와 숨기기 · 앱 이름 · 동기화 주기 · 직접 고르는 색 · 완료 소리 종류',
+ 15:'보이는 화면만 갱신 · 동기화 충돌 알림 · 주간 메모 서식 · 캘린더 기간 막대와 주 번호 · 장소',
+ 14:'주간 보기 메모 표시',
+ 13:'월간 캘린더 · 진행 중·보류 · 휴지통 · 기간 일정 · 시간 범위 · 요일 칸 순서 · 단축어 주소',
+ 12:'디자인 체계 정리 · 3탭 구성 · 스와이프 · 디데이 · 화면 꺼짐 방지',
+ 11:'설정 묶음 · 수정 되돌리기 · 버전 기록 복원 · 주간 항목 · 확대·축소 · 기기 이름',
+ 10:'주간 메모 · 계획 모드 · TODAY · 보관함 · 표시 설정 · 공휴일 · 설정 동기화'};

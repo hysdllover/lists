@@ -7,17 +7,20 @@ function metaHTML(t){
   if(t.done&&t.u&&t.u.done)parts.push(`<span class="dn">✓ ${bigD(new Date(t.u.done))}</span>`);
   if(t.state==='doing'&&!t.done)parts.push('<span class="stt">진행 중</span>');
   if(t.state==='hold'&&!t.done)parts.push('<span class="stt">보류</span>');
-  if(on('rDate')&&(t.date||t.time))parts.push(`<span class="date${isLate(t)?' late':''}">${when(t)}</span>`);
+  if(on('rDate')&&(t.date||t.time)&&(!TC||t.date))parts.push(`<span class="date${isLate(t)?' late':''}">${TC?whenD(t):when(t)}</span>`);
   if(on('dday'))parts.push(ddHTML(t));
   if(on('rRep')&&t.repeat)parts.push(`<span class="rep">↻ ${REP[t.repeat]}</span>`);
   parts.push(plcHTML(t));
   const nn=t.note&&noteGet(t.note);if(nn)parts.push(`<button class="nlink" data-a="note">${ICON.note}${esc(noteTitle(nn))}</button>`);
   const h=parts.join('');return h?`<div class="meta">${h}</div>`:'';
 }
+let TC=false;
+const tcolHTML=t=>TC?`<span class="tcol num">${t.time?fmtT(t.time):''}${t.tend?`<i>${fmtT(t.tend)}</i>`:''}</span>`:'';
+const whenD=t=>t.date?fmtD(t.date)+(t.end&&t.end>t.date?' – '+fmtD(t.end):''):'';
 const chkHTML=t=>`<button class="chk${t.done?' on':''}${t.state==='doing'&&!t.done?' doing':''}" data-a="chk" aria-label="완료"${ccStyle(t)}></button>`;
 function itemHTML(t){
   return `<li class="item${t.done?' done':''}${t.star&&!t.done?' starred':''}${t.state==='hold'?' hold':''}${fresh(t)}" data-id="${t.id}">
-    ${chkHTML(t)}
+    ${chkHTML(t)}${tcolHTML(t)}
     <div class="body" data-a="edit">
       <div class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${txHTML(t)}</div>
       ${t.memo&&on('rMemo')?`<div class="memo">${md(on('memo')?t.memo:t.memo.split('\n')[0])}</div>`:''}
@@ -54,6 +57,7 @@ function renderList(){
   const gh=(k,l,n)=>`<li class="grp lbl${gf[k]?' closed':''}" data-g="${esc(k)}">${l}<span class="gn">${n}</span><i class="cv"></i></li>`;
   const sep=l=>`<li class="sep lbl">${l}</li>`;
   let h='';
+  TC=on('tcol')&&act.some(t=>t.time);
   if(doing.length)h+=sep('In progress')+doing.map(itemHTML).join('');
   if(pin.length&&(cat||doing.length))h+=cat?gh('★','Starred',pin.length):sep('Starred');
   if(!(cat&&gf['★']))h+=pin.map(itemHTML).join('');
@@ -64,7 +68,7 @@ function renderList(){
     if(bydate){const b=dateBucket(t,td,tm,we);if(b!==g){g=b;h+=sep(b)}}
     if(!(cat&&gf[t.cat||'']))h+=itemHTML(t);
   }
-  $('#open').innerHTML=h||'<li class="empty">할 일이 없습니다</li>';
+  $('#open').innerHTML=h||'<li class="empty">할 일이 없습니다</li>';TC=false;
   // bin (K2, K14, K15)
   const B={done:sorted(L.filter(t=>t.done&&!isArch(t))),hold:sorted(L.filter(t=>!t.done&&t.state==='hold')),arch:L.filter(isArch).sort((a,b)=>ft(b,'done')-ft(a,'done')),trash:db.tasks.filter(t=>t.deleted&&!t.gone).sort((a,b)=>ft(b,'deleted')-ft(a,'deleted'))};
   const NM={done:'Completed',hold:'Hold',arch:'Archive',trash:'Trash'};
@@ -182,7 +186,8 @@ function renderFocus(){
   $('#vFocus .fbar').hidden=!on('fBar');$('#fCount').hidden=!on('fBar');
   $('#wakeBtn').classList.toggle('on',!!cfg.wake);
   $('#ddFocus').innerHTML=['both','today'].includes(U('ddPos'))?ddStrip():'';
-  $('#fList').innerHTML=(ts.map(itemHTML).join('')||'<li class="empty">오늘 할 일이 없습니다</li>')+(on('fLate')&&late.length?`<li class="sep lbl">Overdue · ${late.length}</li>`+late.map(itemHTML).join(''):'');
+  TC=on('tcol')&&[...ts,...late].some(t=>t.time);
+  $('#fList').innerHTML=(ts.map(itemHTML).join('')||'<li class="empty">오늘 할 일이 없습니다</li>')+(on('fLate')&&late.length?`<li class="sep lbl">Overdue · ${late.length}</li>`+late.map(itemHTML).join(''):'');TC=false;
 }
 
 /* ---------- print (A4) ---------- */
@@ -220,6 +225,7 @@ function applyUI(){
   applyTabs();
   r.style.setProperty('--hair',HAIR[dk][li]);r.style.setProperty('--line',LINE[dk][li]);
   r.style.setProperty('--ls',U('ls')+'em');r.style.setProperty('--lh',U('lh'));
+  r.style.setProperty('--t-big',{s:'2.3rem',m:'2.9rem',l:'3.6rem'}[U('bigSz')]||'2.9rem');B.classList.toggle('t12',U('tfmt')==='12');
   r.style.setProperty('--dn',{loose:1.3,normal:1,tight:.7}[U('dens')]||1);
   B.dataset.paper=U('paper');
   B.classList.toggle('collapse',on('collapse'));B.classList.toggle('dimpast',on('dimPast'));
@@ -240,6 +246,13 @@ function paintSet(){
   $('#prevCard').hidden=tab!=='style';
   if(document.activeElement!==$('#gDev'))$('#gDev').value=cfg.device;
   $('#scUrl').textContent=location.origin+location.pathname+'?add=';
+  const eh=(U('eHide')||'').split(',');$$('[data-eh]').forEach(b=>b.classList.toggle('on',eh.includes(b.dataset.eh)===(b.dataset.h==='1')));
+  $('#verNow').textContent='VERSION '+APP_VER;
+  if(tab==='info'){
+    const dv=Object.entries(db.devices||{}).sort((a,b)=>b[1][1]-a[1][1]);
+    $('#devList').innerHTML=dv.length?dv.map(([n,v])=>`<div class="field"><span>${esc(n)}${n===cfg.device?' <small class="me">이 기기</small>':''}</span><b class="num verv">${fmtTs(v[1])}</b></div>`).join(''):'<p class="note">Gist 동기화를 연결하면 동기화에 참여한 기기가 여기에 표시돼요.</p>';
+    $('#chgList').innerHTML=Object.keys(CHANGES).sort((a,b)=>b-a).map(v=>`<div class="chg"><b class="num">${v}</b><span>${esc(CHANGES[v])}</span></div>`).join('');
+  }
   if(document.activeElement!==$('#appName'))$('#appName').value=U('appName')||'';
   $$('.accC').forEach(i=>{if(document.activeElement!==i)i.value=U('accentC');const l=i.parentElement,c=U('accent')==='custom';l.classList.toggle('on',c);l.style.background=c?toneAcc(U('accentC'),isDark()):''});
   const ord=tabOrder(),hid=tabHidden();
@@ -257,6 +270,7 @@ function renderPreview(){
   const sm=[{id:'pv1',text:'보고서 초안 정리',cat:c,date:s,time:'10:00',tend:'11:30',created:T},{id:'pv2',text:'장보기',date:s,star:true,created:T,state:'doing'},{id:'pv3',text:'운동',date:s,done:true,created:T,cat:'건강'}];
   $('#prevCard').innerHTML=`<div class="hero"><div class="hl"><span class="lbl">${dowL(n,true)}</span><div class="big num">${bigD(n)}</div></div>${on('lStat')?'<div class="hr stat num"><div><b>2</b><span class="lbl">Open</span></div><div><b>1</b><span class="lbl">Done</span></div></div>':''}</div><ul>${sm.map(itemHTML).join('')}</ul>`;
 }
+function setMini(){const v=$('.view.on');if(!v)return;const l=v.querySelector('.hero .lbl'),bg=v.querySelector('.hero .big');$('#mini').textContent=[bg&&bg.textContent,l&&l.textContent].filter(Boolean).join(' · ')}
 function render(){
   applyUI();
   const both=isSplit()&&(view==='list'||view==='week');
@@ -275,7 +289,7 @@ function render(){
   document.body.classList.toggle('split',!!cfg.split);
   paintSet();
   if(view==='set'&&(cfg.setTab||'basic')==='style')renderPreview();
-  wakeSync();
+  wakeSync();setMini();
 }
 function setUI(k,v,full=true){db.ui[k]=v;db.uiT=now();save(KEY,db);if(full)render();else{applyUI();paintSet()}queueSync()}
 const isSplit=()=>cfg.split&&innerWidth>=1100;

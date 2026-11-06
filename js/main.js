@@ -1,4 +1,7 @@
 /* ---------- init ---------- */
+(async()=>{
+const hadCfg=localStorage.getItem(CFG)!==null;
+try{if(localStorage.getItem(KEY)!==null){await kv('readwrite',s=>s.put(db,'db'));localStorage.removeItem(KEY)}else{const d=await kv('readonly',s=>s.get('db'));if(d){db=d;initDb()}}}catch(e){idbOk=false}
 view=cfg.start==='last'?(['list','week','month','focus','notes'].includes(cfg.lastView)?cfg.lastView:'list'):(cfg.start||'list');
 (function(){
   const q=new URLSearchParams(location.search);if(![...q.keys()].length)return;
@@ -13,8 +16,10 @@ view=cfg.start==='last'?(['list','week','month','focus','notes'].includes(cfg.la
 fillCfg();render();applyFont();if(cfg.syncInt!=='0')sync();else setStatus('',ready()?'MANUAL':'LOCAL');
 let curDay=todayS();
 setInterval(()=>{if(todayS()!==curDay){curDay=todayS();weekOff=0;render()}},30000);
+{const prev=cfg.seenVer||(hadCfg?16:0);if(prev&&prev<APP_VER)notice(`VERSION ${APP_VER} · ${CHANGES[APP_VER].split(' · ').slice(0,3).join(' · ')}`,'자세히',()=>{view='set';cfg.setTab='info';render()});cfg.seenVer=APP_VER;save(CFG,cfg)}
 if('serviceWorker' in navigator&&location.protocol==='https:'){
   const had=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{r.update();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')r.update()})});
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had)location.reload()});
 }
+})();

@@ -565,3 +565,41 @@ nav button[hidden]{display:none}
   #nBack{display:none}
 }
 .pinm{font-family:var(--mono);font-size:var(--t-lbl);color:var(--accent);letter-spacing:.1em;margin-left:.4rem}
+
+/* ===== v17 ===== */
+/* collapsing header (K15) */
+.mini{display:none;font-size:var(--t-sub);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+body.scrolled .mini{display:block;animation:vin .18s ease-out}
+body.scrolled .brand{display:none}
+/* alignment (K19) */
+.big{margin-left:-.05em}
+.add::before{content:"+";flex:none;align-self:center;width:calc(1rem + var(--s3));color:var(--faint);font-weight:200;font-size:1.15rem;line-height:1}
+.fadd::before{width:calc(1.08rem + var(--s3))}
+/* category styles (K17) */
+.tx.cbar{border-left:2px solid var(--ul);padding-left:.4rem;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.cdot{display:inline-block;width:.42rem;height:.42rem;margin-right:.45rem;vertical-align:.12em}
+.done .cdot{opacity:.35}
+/* time column (K18) */
+.tcol{flex:none;width:3.2em;font-family:var(--mono);font-size:var(--t-sub);color:var(--accent);padding-top:.12rem;line-height:1.3}
+.tcol i{display:block;font-style:normal;color:var(--faint);font-size:var(--t-lbl)}
+body.t12 .tcol{width:4.9em}
+.done .tcol{color:var(--faint)}
+/* check draw + strike draw (K20, 6) */
+.pop .chk::after{animation:chkdraw .26s ease-out both}
+@keyframes chkdraw{from{clip-path:inset(0 0 0 100%)}to{clip-path:inset(0 0 0 0)}}
+.pop .tx,.pop .tx.ul,.pop .tx.cbar{text-decoration:none;color:var(--faint);background:linear-gradient(var(--faint),var(--faint)) no-repeat 0 58%/0% 1px;-webkit-box-decoration-break:clone;box-decoration-break:clone;animation:strike .34s .14s ease-out forwards}
+@keyframes strike{to{background-size:100% 1px}}
+/* editor groups (K4, K5) */
+.eg{display:block;margin:var(--s3) 0 0;padding-top:var(--s2)}
+.eg[data-eg=b]{margin-top:var(--s1)}
+#sheet [hidden]{display:none}
+.sheet{max-height:calc(100vh - 2rem - var(--top));overflow:auto}
+/* info tab */
+.verv{font-weight:300;font-size:var(--t-sub);font-family:var(--mono)}
+.field small.me{font-family:var(--mono);font-size:var(--t-lbl);color:var(--accent);margin-left:.3rem}
+.chg{display:grid;grid-template-columns:2.4rem 1fr;gap:var(--s2);padding:var(--s2) 0;border-bottom:1px solid var(--hair);font-size:var(--t-sub)}
+.chg b{font-weight:300;font-family:var(--mono);color:var(--accent)}
+.help{font-size:var(--t-sub);line-height:1.65}
+.help dt{color:var(--text);margin-top:var(--s3);font-weight:400}
+.help dd{color:var(--sub)}
+.help code{font-family:var(--mono);font-size:var(--t-lbl);color:var(--text);background:var(--tint);padding:0 .25rem}
