@@ -25,10 +25,10 @@ const load=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{retur
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
 
 let db=load(KEY,{tasks:[]}); db.colors=db.colors||{};
-let cfg=Object.assign({sort:'date',fold:true,fs:14,theme:'light',split:1,token:'',gist:'',last:0,start:'list',secs:{Quick:true},gfold:{},wz:1},load(CFG,{}));
+let cfg=Object.assign({syncInt:'1',noteOpen:'',sort:'date',fold:true,fs:14,theme:'light',split:1,token:'',gist:'',last:0,start:'list',secs:{Quick:true},gfold:{},wz:1},load(CFG,{}));
 cfg.device=cfg.device||((/iPad/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1))?'iPad':/iPhone/.test(navigator.userAgent)?'iPhone':'Browser');
-const UID={theme:'light',accent:'bluegray',paper:'none',paperPrint:'0',line:'1',dens:'normal',ls:'-0.005',lh:'1.6',dstyle:'dot',dow:'en',weekNo:'1',dday:'1',hol:'1',holX:'',memo:'0',doneBottom:'1',collapse:'1',dimPast:'1',corner:'1',sound:'1',tfmt:'24',zero:'1',ddPos:'both',fLate:'1',fBar:'1',lStat:'1',hCnt:'1',hHol:'1',hEv:'1',rDate:'1',rRep:'1',rMemo:'1',rPlace:'1'};
-db.notes=db.notes||{};db.events=db.events||{};db.wfixT=db.wfixT||[[],0];db.wprog=db.wprog||{};db.uiT=db.uiT||0;db.ui=Object.assign({},UID,!db.ui&&cfg.theme?{theme:cfg.theme}:{},db.ui||{});
+const UID={theme:'light',accent:'bluegray',paper:'none',paperPrint:'0',line:'1',dens:'normal',ls:'-0.005',lh:'1.6',dstyle:'dot',dow:'en',weekNo:'1',dday:'1',hol:'1',holX:'',memo:'0',doneBottom:'1',collapse:'1',dimPast:'1',corner:'1',sound:'1',tfmt:'24',zero:'1',ddPos:'both',fLate:'1',fBar:'1',lStat:'1',hCnt:'1',hHol:'1',hEv:'1',rDate:'1',rRep:'1',rMemo:'1',rPlace:'1',snd:'clear',appName:'WEEKLY',tabOrder:'list,week,month,focus,notes',tabHide:'',accentC:'#7489a2'};
+db.notes=db.notes||{};db.notesP=db.notesP||{};db.events=db.events||{};db.wfixT=db.wfixT||[[],0];db.wprog=db.wprog||{};db.uiT=db.uiT||0;db.ui=Object.assign({},UID,!db.ui&&cfg.theme?{theme:cfg.theme}:{},db.ui||{});
 const HOL={'2026-01-01':'신정','2026-02-16':'설날','2026-02-17':'설날','2026-02-18':'설날','2026-03-01':'삼일절','2026-03-02':'대체공휴일','2026-05-05':'어린이날','2026-05-24':'부처님오신날','2026-05-25':'대체공휴일','2026-06-03':'지방선거','2026-06-06':'현충일','2026-08-15':'광복절','2026-08-17':'대체공휴일','2026-09-24':'추석','2026-09-25':'추석','2026-09-26':'추석','2026-10-03':'개천절','2026-10-05':'대체공휴일','2026-10-09':'한글날','2026-12-25':'성탄절',
 '2027-01-01':'신정','2027-02-06':'설날','2027-02-07':'설날','2027-02-08':'설날','2027-02-09':'대체공휴일','2027-03-01':'삼일절','2027-05-05':'어린이날','2027-05-13':'부처님오신날','2027-06-06':'현충일','2027-08-15':'광복절','2027-08-16':'대체공휴일','2027-09-14':'추석','2027-09-15':'추석','2027-09-16':'추석','2027-10-03':'개천절','2027-10-04':'대체공휴일','2027-10-09':'한글날','2027-10-11':'대체공휴일','2027-12-25':'성탄절','2027-12-27':'대체공휴일'};
 function holidays(){const m=U('hol')==='1'?{...HOL}:{};for(const l of (U('holX')||'').split('\n')){const r=l.trim().match(/^(\d{4}-\d{2}-\d{2})\s*(.*)$/);if(r)m[r[1]]=r[2]||'휴일'}return m}
@@ -39,7 +39,7 @@ let view='list', weekOff=0, editId=null, addDate='', addTime='', rangeTxt='';
 const live=()=>db.tasks.filter(t=>!t.deleted);
 const find=id=>db.tasks.find(t=>t.id===id);
 function commit(){save(KEY,db);render();queueSync()}
-const F=['text','done','memo','cat','date','time','repeat','star','order','spawned','deleted','state','end','tend','dord','gone','place'];
+const F=['text','done','memo','cat','date','time','repeat','star','order','spawned','deleted','state','end','tend','dord','gone','place','note'];
 function setF(t,p,ts){t.u=t.u||{};t.by=cfg.device;for(const k in p){if(JSON.stringify(t[k])===JSON.stringify(p[k]))continue;if(p[k]===undefined)delete t[k];else t[k]=p[k];t.u[k]=ts}t.updated=ts}
 function touch(t,p){setF(t,p,now());commit()}
 /* undo */
@@ -87,10 +87,16 @@ function finishDone2(t){
 }
 
 /* ---------- categories ---------- */
-function catIdx(c){if(db.colors[c])return db.colors[c][0];let h=0;for(const ch of c)h=(h*31+ch.charCodeAt(0))>>>0;return h%6}
-const catColor=c=>`var(--c${catIdx(c)})`;
+const isDark=()=>U('theme')==='dark'||(U('theme')==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches);
+function hexHsl(hex){let r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h=0,s=0,l=(mx+mn)/2;
+  if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;h*=60}return [Math.round(h),Math.round(s*100),Math.round(l*100)]}
+const toneAcc=(hex,dk)=>{const[h,s,l]=hexHsl(hex||'#7489a2');return `hsl(${h}, ${Math.min(s,34)}%, ${dk?Math.max(62,Math.min(74,l+18)):Math.max(44,Math.min(56,l))}%)`};
+const toneCat=(hex,dk)=>{const[h,s]=hexHsl(hex);return `hsl(${h}, ${Math.min(s,30)}%, ${dk?50:76}%)`};
+function catIdx(c){const v=db.colors[c];if(v&&typeof v[0]==='string')return -1;if(v)return v[0];let h=0;for(const ch of c)h=(h*31+ch.charCodeAt(0))>>>0;return h%6}
+const catColor=c=>{const v=db.colors[c];return v&&typeof v[0]==='string'?toneCat(v[0],isDark()):`var(--c${catIdx(c)})`};
 const ICON={cal:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10"/><path d="M2.5 6.5h11M5.5 1.5v3M10.5 1.5v3"/></svg>',clock:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.3"/></svg>',star:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.2l1.75 3.6 3.95.55-2.85 2.8.68 3.95L8 11.25 4.47 13.1l.68-3.95L2.3 6.35l3.95-.55z"/></svg>',set:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h12M2 11.5h12"/><rect x="9.5" y="3" width="2" height="3"/><rect x="4.5" y="10" width="2" height="3"/></svg>',more:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r=".6"/><circle cx="8" cy="8" r=".6"/><circle cx="12.5" cy="8" r=".6"/></svg>',l:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5"/></svg>',r:'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5L10.5 8 6 12.5"/></svg>'};
 ICON.pin='<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14.2s4.5-4.3 4.5-7.7a4.5 4.5 0 0 0-9 0c0 3.4 4.5 7.7 4.5 7.7z"/><circle cx="8" cy="6.5" r="1.4"/></svg>';
+ICON.note='<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2.5" width="10" height="11"/><path d="M5.5 6h5M5.5 8.5h5M5.5 11h3"/></svg>';
 const STAR=ICON.star;
 const txHTML=t=>t.cat?`<span class="tx ul" style="--ul:${catColor(t.cat)}">${esc(t.text)}</span>`:`<span class="tx">${esc(t.text)}</span>`;
 const ddHTML=t=>{if(!t.date||t.done||U('dday')!=='1')return '';const n=Math.round((parse(t.date)-parse(todayS()))/864e5);return `<span class="dd${n===0?' now':''}">${n===0?'D-DAY':n>0?'D-'+n:'D+'+(-n)}</span>`};
@@ -102,12 +108,15 @@ const fmtTs=ts=>{const d=new Date(ts);return `${ymd(d)} ${pad(d.getHours())}:${p
 const md=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>').replace(/^[-*] /gm,'• ');
 const ccStyle=t=>t.cat?` style="--cc:${catColor(t.cat)}"`:'';
 let actx=null;
-function tick(){
+function tick(kind){
   if(U('sound')!=='1')return;
-  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();const c=actx,o=c.createOscillator(),g=c.createGain(),t0=c.currentTime;
-    o.type='sine';o.frequency.setValueAtTime(1046,t0);o.frequency.exponentialRampToValueAtTime(784,t0+.09);
-    g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(.06,t0+.01);g.gain.exponentialRampToValueAtTime(.0001,t0+.16);
-    o.connect(g).connect(c.destination);o.start(t0);o.stop(t0+.18)}catch{}
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();const c=actx,t0=c.currentTime,s=kind||U('snd');
+    if(s==='paper'){const n=Math.floor(c.sampleRate*.06),buf=c.createBuffer(1,n,c.sampleRate),d=buf.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,4);
+      const src=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();src.buffer=buf;f.type='bandpass';f.frequency.value=2600;f.Q.value=.8;g.gain.value=.5;src.connect(f).connect(g).connect(c.destination);src.start(t0);return}
+    const [f1,f2,v]=s==='low'?[587,440,.08]:[1046,784,.06];
+    const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.setValueAtTime(f1,t0);o.frequency.exponentialRampToValueAtTime(f2,t0+.1);
+    g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(v,t0+.01);g.gain.exponentialRampToValueAtTime(.0001,t0+(s==='low'?.22:.16));
+    o.connect(g).connect(c.destination);o.start(t0);o.stop(t0+.25)}catch{}
 }
 
 /* list motion (C26) */

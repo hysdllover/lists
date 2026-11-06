@@ -1,4 +1,4 @@
-const C='weekly-v15',A=['./','index.html','css/app.css','js/core.js','js/view.js','js/actions.js','js/data.js','js/image.js','js/main.js','manifest.webmanifest','icon-180.png','icon-512.png'];
+const C='weekly-v16',A=['./','index.html','css/app.css','js/core.js','js/view.js','js/actions.js','js/picker.js','js/notes.js','js/data.js','js/image.js','js/main.js','manifest.webmanifest','icon-180.png','icon-512.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(A.map(u=>new Request(u,{cache:'reload'})))));self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{

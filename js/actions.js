@@ -1,10 +1,10 @@
 /* ---------- actions ---------- */
-function addTask(raw,date,time){
+function addTask(raw,date,time,extra={}){
   let text=raw.trim(), cat='';
   const m=text.match(/(?:^|\s)#(\S+)/); if(m){cat=m[1];text=text.replace(m[0],'').trim()}
   if(!text)return;
   const t=now();
-  db.tasks.push({id:uid(),text,done:false,memo:'',cat,date:date||'',time:time||'',created:t,updated:t,by:cfg.device});
+  db.tasks.push({id:uid(),text,done:false,memo:'',cat,date:date||'',time:time||'',...extra,created:t,updated:t,by:cfg.device});
   commit();
 }
 function onAction(e){
@@ -15,6 +15,8 @@ function onAction(e){
   else if(el.dataset.a==='star'&&e.type==='click')touch(t,{star:!t.star});
   else if(el.dataset.a==='edit'&&e.type==='click')openEdit(t.id);
   else if(el.dataset.a==='date'&&e.type==='change'){snap('날짜 변경됨');const p={date:el.value||''};if(t.end&&t.date&&p.date)p.end=addDays(p.date,dayDiff(t.date,t.end));if(!p.date)p.end=undefined;touch(t,p);toast()}
+  else if(el.dataset.a==='pickdate'&&e.type==='click')openDate(el,t.date,v=>{snap('날짜 변경됨');const p={date:v||''};if(t.end&&t.date&&p.date)p.end=addDays(p.date,dayDiff(t.date,t.end));if(!p.date)p.end=undefined;touch(t,p);toast()});
+  else if(el.dataset.a==='note'&&e.type==='click'&&t.note)openNote(t.note);
   else if(el.dataset.a==='restore'&&e.type==='click'){snap('복원됨');touch(t,{deleted:undefined,gone:undefined});toast()}
 }
 ['click','change'].forEach(ev=>['#vList','#vWeek','#vMonth','#vFocus'].forEach(v=>$(v).addEventListener(ev,onAction)));
@@ -25,14 +27,21 @@ document.addEventListener('input',e=>{if(e.target.matches('textarea'))grow(e.tar
 function submitAdd(){const a=$('#addTxt');if(!a.value.trim())return;addTask(a.value,addDate,addTime);a.value='';grow(a);setAdd('','')}
 $('#addBtn').addEventListener('click',submitAdd);
 $('#addTxt').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&!e.isComposing){e.preventDefault();submitAdd()}});
-function setAdd(d,t){addDate=d;addTime=t;$('#addDate').value=d;$('#addTime').value=t;$('#addPend').textContent=when({date:d,time:t});$('#addIco').classList.toggle('has',!!d);$('#addTIco').classList.toggle('has',!!t)}
-$('#addDate').addEventListener('change',e=>setAdd(e.target.value,addTime));
-$('#addTime').addEventListener('change',e=>setAdd(addDate,e.target.value));
+function setAdd(d,t){addDate=d;addTime=t;$('#addPend').textContent=when({date:d,time:t});$('#addIco').classList.toggle('has',!!d);$('#addTIco').classList.toggle('has',!!t)}
+$('#addIco').onclick=e=>openDate(e.currentTarget,addDate,v=>setAdd(v,addTime));
+$('#addTIco').onclick=e=>openTime(e.currentTarget,addTime,'',r=>setAdd(addDate,r.start));
 $('#addPend').addEventListener('click',()=>setAdd('',''));
 function submitDay(d){const i=$(`.dayadd[data-d="${d}"]`);if(!i||!i.value.trim())return;const v=i.value;i.value='';forceWeek=true;addTask(v,d);const n=$(`.dayadd[data-d="${d}"]`);n&&n.focus()}
 $('#days').addEventListener('click',e=>{const b=e.target.closest('.dbtn');if(b)submitDay(b.dataset.d)});
 $('#days').addEventListener('keydown',e=>{const i=e.target.closest('.dayadd');if(i&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&!e.isComposing){e.preventDefault();submitDay(i.dataset.d)}});
-$('#vSet').addEventListener('click',e=>{const b=e.target.closest('.seg[data-k] button');if(b)setUI(b.parentElement.dataset.k,b.dataset.v)});
+$('#vSet').addEventListener('click',e=>{
+  const b=e.target.closest('.seg[data-k] button');if(b){setUI(b.parentElement.dataset.k,b.dataset.v);if(b.parentElement.dataset.k==='snd')tick();return}
+  const mv=e.target.closest('[data-tmv]');if(mv){const o=tabOrder(),i=o.indexOf(mv.dataset.tmv),j=i+(+mv.dataset.dir);if(j<0||j>=o.length)return;[o[i],o[j]]=[o[j],o[i]];setUI('tabOrder',o.join(','));return}
+  const th=e.target.closest('[data-thd]');if(th){const k=th.dataset.thd;let h=tabHidden().filter(x=>x!==k);if(th.dataset.h==='1')h.push(k);if(h.length>=Object.keys(TABN).length){notice('탭은 최소 1개 보여야 해요');return}setUI('tabHide',h.join(','))}
+});
+$('#appName').addEventListener('change',e=>setUI('appName',e.target.value.trim()||'WEEKLY'));
+document.addEventListener('change',e=>{if(e.target.classList.contains('accC')){db.ui.accentC=e.target.value;setUI('accent','custom')}});
+document.addEventListener('input',e=>{if(e.target.classList.contains('accC')){db.ui.accentC=e.target.value;db.ui.accent='custom';applyUI()}});
 $$('input[data-k]').forEach(i=>{i.addEventListener('input',()=>{db.ui[i.dataset.k]=i.value;applyUI();paintSet()});i.addEventListener('change',()=>setUI(i.dataset.k,i.value,false))});
 $('#holX').addEventListener('change',e=>setUI('holX',e.target.value));
 mq.addEventListener&&mq.addEventListener('change',()=>render());
@@ -119,15 +128,15 @@ function endDrag(cancel){
 /* ---------- editor ---------- */
 function openEdit(id){
   const t=find(id); editId=id;
-  $('#eTxt').value=t.text;$('#eMemo').value=t.memo||'';$('#eCat').value=t.cat||'';$('#ePlace').value=t.place||'';paintCats();$('#eInfo').textContent=`LAST EDIT · ${t.by||'—'} · ${fmtTs(t.updated||t.created)}`;$('#eDate').value=t.date||'';$('#eTime').value=t.time||'';$('#eEnd').value=t.end||'';$('#eTend').value=t.tend||'';eState=t.state||'';
+  $('#eTxt').value=t.text;$('#eMemo').value=t.memo||'';$('#eCat').value=t.cat||'';$('#ePlace').value=t.place||'';paintCats();$('#eInfo').textContent=`LAST EDIT · ${t.by||'—'} · ${fmtTs(t.updated||t.created)}`;setDP($('#eDate'),t.date);setTP($('#eTime'),t.time);setDP($('#eEnd'),t.end);setTP($('#eTend'),t.tend);eNoteV=t.note||'';paintENote();eState=t.state||'';
   eRep=t.repeat||'';eStar=!!t.star;paintEdit();
   $('#back').classList.add('on');requestAnimationFrame(()=>grow($('#eTxt')));
 }
 function closeEdit(){
   const t=find(editId); editId=null; $('#back').classList.remove('on');
   if(!t)return;
-  const p={text:$('#eTxt').value.trim()||t.text,memo:$('#eMemo').value,cat:$('#eCat').value.trim(),date:$('#eDate').value||'',time:$('#eTime').value||'',repeat:eRep||undefined,star:eStar||undefined,state:eState||undefined,place:$('#ePlace').value.trim()||undefined};
-  const en=$('#eEnd').value;p.end=en&&p.date&&en>p.date?en:undefined;const te=$('#eTend').value;p.tend=te&&p.time&&te>p.time?te:undefined;
+  const p={text:$('#eTxt').value.trim()||t.text,memo:$('#eMemo').value,cat:$('#eCat').value.trim(),date:getV('#eDate'),time:getV('#eTime'),repeat:eRep||undefined,star:eStar||undefined,state:eState||undefined,place:$('#ePlace').value.trim()||undefined,note:noteGet(eNoteV)?eNoteV:undefined};
+  const en=getV('#eEnd');p.end=en&&p.date&&en>p.date?en:undefined;const te=getV('#eTend');p.tend=te&&p.time&&te>p.time?te:undefined;
   if(p.repeat&&!p.date)p.date=todayS();
   const nv=v=>v===false||v===undefined||v===''?'':JSON.stringify(v);
   if(!Object.keys(p).some(k=>nv(p[k])!==nv(t[k])))return;
@@ -140,7 +149,7 @@ $('#eState').addEventListener('click',e=>{const b=e.target.closest('button');if(
 function paintEdit(){$$('#eState button').forEach(b=>b.classList.toggle('on',b.dataset.s===eState));$$('#eRep button').forEach(b=>b.classList.toggle('on',b.dataset.r===eRep));$('#eStar').classList.toggle('on',eStar)}
 $('#eRep').addEventListener('click',e=>{const b=e.target.closest('button');if(b){eRep=b.dataset.r;paintEdit()}});
 $('#eStar').onclick=()=>{eStar=!eStar;paintEdit()};
-$('#eNoDate').onclick=()=>{$('#eDate').value='';$('#eEnd').value=''};$('#eNoTime').onclick=()=>{$('#eTime').value='';$('#eTend').value=''};$('#eNoEnd').onclick=()=>{$('#eEnd').value=''};
+$('#eNoDate').onclick=()=>{setDP($('#eDate'),'');setDP($('#eEnd'),'')};$('#eNoTime').onclick=()=>{setTP($('#eTime'),'');setTP($('#eTend'),'')};$('#eNoEnd').onclick=()=>{setDP($('#eEnd'),'')};
 $('#eDel').onclick=()=>{const t=find(editId);editId=null;$('#back').classList.remove('on');if(t)collapse($$(`[data-id="${t.id}"]`),()=>{snap('삭제됨');touch(t,{deleted:true});toast()})};
 $('#undoBtn').onclick=undo;
 $('#catList').addEventListener('click',e=>{const b=e.target.closest('button[data-c]');if(b){db.colors[b.dataset.c]=[+b.dataset.i,now()];commit()}});
@@ -179,14 +188,15 @@ function showPv(anchor,html){
   p.style.top=(r.bottom+8)+'px';p.style.left=Math.max(12,Math.min(innerWidth-w-12,r.right-w))+'px';
 }
 const hidePv=()=>{$('#pv').hidden=true};
-document.addEventListener('click',e=>{if(!$('#pv').hidden&&!e.target.closest('#pv')&&!e.target.closest('#sync,#moreBtn,#mMore,.dchip'))hidePv()},true);
+let pvHold=0;
+document.addEventListener('click',e=>{if(now()-pvHold<700)return;if(!$('#pv').hidden&&!e.target.closest('#pv')&&!e.target.closest('#sync,#moreBtn,#mMore,.dchip,#pk,#eNote,.dp,.tp'))hidePv()},true);
 $('#pv').addEventListener('click',e=>{
   const m=e.target.closest('[data-img]');if(m){hidePv();weekImage(m.dataset.img);return}
   if(e.target.closest('[data-act=print]')){hidePv();printMode='week';renderPrint();print();return}
   if(e.target.closest('[data-act=mprint]')){hidePv();printMode='month';renderPrint();print();printMode='week';return}
   if(e.target.closest('[data-act=mimg]')){hidePv();monthImage();return}
   const mb=e.target.closest('#evMode button');if(mb){$$('#evMode button').forEach(b=>b.classList.toggle('on',b===mb));return}
-  if(e.target.closest('#evSave')){const f=$('.evf'),name=$('#evName').value.trim(),date=$('#evDate').value,mode=($('#evMode .on')||{}).dataset?.m||'once';
+  if(e.target.closest('#evSave')){const f=$('.evf'),name=$('#evName').value.trim(),date=getV('#evDate'),mode=($('#evMode .on')||{}).dataset?.m||'once';
     if(!name||!date){$('#evName').focus();return}
     db.events[f.dataset.id||uid()]=[{name,date,mode},now()];save(KEY,db);hidePv();render();queueSync();return}
   if(e.target.closest('#evDel')){const id=$('.evf').dataset.id,ev=db.events[id];if(ev&&confirm(`"${ev[0].name}" D-day를 삭제할까요?`)){db.events[id]=[{...ev[0],del:1},now()];save(KEY,db);hidePv();render();queueSync()}return}
@@ -207,7 +217,7 @@ function evForm(id){
   const e=id&&db.events[id]?db.events[id][0]:{name:'',date:todayS(),mode:'once'};
   return `<div class="evf" data-id="${id||''}"><span class="lbl">${id?'Edit D-Day':'New D-Day'}</span>
     <input id="evName" placeholder="이름  예) 시험, 여행, 만난 날" value="${esc(e.name)}" autocomplete="off">
-    <input type="date" id="evDate" value="${e.date}">
+    <button class="dp evd has" id="evDate" data-v="${e.date}">${fmtD(e.date)}</button>
     <div class="seg" id="evMode">${[['once','남은 날 D-'],['yearly','매년 반복'],['since','지난 날 일째']].map(([m,l])=>`<button data-m="${m}" class="${m===e.mode?'on':''}">${l}</button>`).join('')}</div>
     <p class="note">지난 날 모드는 시작일을 1일째로 세고, 100일마다 주간 보기에 표시합니다.</p>
     <div class="row">${id?'<button class="tbtn del" id="evDel">삭제</button>':'<span></span>'}<button class="btn pri sm" id="evSave">저장</button></div></div>`;
@@ -261,3 +271,4 @@ $('#scCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('#scUrl
 /* ---------- weekly memo preview (4) ---------- */
 $('#wNoteV').addEventListener('click',e=>{if(e.target.closest('a'))return;$('.dnote').classList.remove('reading');const n=$('#wNote');n.focus();grow(n)});
 $('#wNote').addEventListener('blur',e=>{const v=e.target.value;$('#wNoteV').innerHTML=md(v);$('.dnote').classList.toggle('reading',!!v.trim())});
+document.addEventListener('change',e=>{const i=e.target.closest('input[data-cc]');if(i){db.colors[i.dataset.cc]=[i.value,now()];commit()}});

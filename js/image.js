@@ -34,12 +34,12 @@ async function weekImage(ratio='long'){
         ls.forEach((l,i)=>{const Y=ty+26+i*42;txt(l,TX,Y,f,t.done?C.faint:C.text);
           if(draw&&l){x.font=f;sp(0);const w=x.measureText(l).width;
             if(t.done){x.fillStyle=C.faint;x.fillRect(TX,Y-9,w,1.5)}
-            else if(t.cat){x.fillStyle=V('--c'+catIdx(t.cat));x.fillRect(TX,Y+9,w,2)}}});
+            else if(t.cat){x.fillStyle=(c=>c.startsWith('var')?V(c.slice(4,-1)):c)(catColor(t.cat));x.fillRect(TX,Y+9,w,2)}}});
         ty+=ls.length*42+14;
       }
       y=Math.max(top+150,ty+20,hy+10);hl(y,C.hair);
     }
-    y+=46;txt('WEEKLY',P,y+14,font(400,15),C.faint,6);
+    y+=46;txt(U('appName')||'WEEKLY',P,y+14,font(400,15),C.faint,6);
     return y+P;
   };
   const h=pass(false), RT={long:0,'45':1.25,'11':1,wall:2796/1290}[ratio]||0;
@@ -87,9 +87,9 @@ async function monthImage(){
     const labs=[...(H[s]?[[H[s],C.red]]:[]),...evOn(s).map(n=>[n,C.acc])];
     for(const [n,c] of labs.slice(0,1)){txt(fit(n,font(400,13),CW-16),X+8,ty,font(400,13),out?C.faint:c);ty+=20}
     ts.slice(0,3).forEach(t=>{const f=font(300,16),l=fit(t.text.split('\n')[0],f,CW-16);txt(l,X+8,ty+4,f,t.done||out?C.faint:C.text);
-      if(t.cat&&!t.done){x.font=f;sp(0);x.fillStyle=V('--c'+catIdx(t.cat));x.fillRect(X+8,ty+9,x.measureText(l).width,1.5)}ty+=25});
+      if(t.cat&&!t.done){x.font=f;sp(0);x.fillStyle=(c=>c.startsWith('var')?V(c.slice(4,-1)):c)(catColor(t.cat));x.fillRect(X+8,ty+9,x.measureText(l).width,1.5)}ty+=25});
     if(ts.length>3)txt(`+${ts.length-3}`,X+8,ty+4,font(400,13),C.faint);
   });
-  txt('WEEKLY',P,Hh-P+30,font(400,15),C.faint,6);
+  txt(U('appName')||'WEEKLY',P,Hh-P+30,font(400,15),C.faint,6);
   shareCanvas(cv,`weekly-${first.getFullYear()}-${pz(m+1)}.png`);
 }

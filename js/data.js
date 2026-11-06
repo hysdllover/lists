@@ -20,12 +20,12 @@ $('#fontReset').onclick=async()=>{await kv('readwrite',s=>s.delete('font'));appl
 
 /* ---------- backup ---------- */
 $('#exp').onclick=()=>{
-  const b=new Blob([JSON.stringify({tasks:live(),colors:db.colors,notes:db.notes,ui:db.ui,uiT:db.uiT,wfixT:db.wfixT,wprog:db.wprog,events:db.events},null,1)],{type:'application/json'});
+  const b=new Blob([JSON.stringify({tasks:live(),colors:db.colors,notes:db.notes,ui:db.ui,uiT:db.uiT,wfixT:db.wfixT,wprog:db.wprog,events:db.events,notesP:db.notesP},null,1)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`weekly-${todayS()}.json`;a.click();
 };
 $('#imp').addEventListener('change',async e=>{
   const f=e.target.files[0];if(!f)return;
-  try{const d=JSON.parse(await f.text());db.tasks=merge(db.tasks,(d.tasks||[]).map(t=>({...t,updated:t.updated||now()})));db.colors=mergeColors(db.colors,d.colors||{});db.notes=mergeColors(db.notes,d.notes||{});db.wprog=mergeColors(db.wprog,d.wprog||{});db.events=mergeColors(db.events,d.events||{});if(d.wfixT&&d.wfixT[1]>db.wfixT[1])db.wfixT=d.wfixT;if((d.uiT||0)>db.uiT){db.ui={...UID,...d.ui};db.uiT=d.uiT}commit()}catch{alert('JSON 형식이 올바르지 않습니다.')}
+  try{const d=JSON.parse(await f.text());db.tasks=merge(db.tasks,(d.tasks||[]).map(t=>({...t,updated:t.updated||now()})));db.colors=mergeColors(db.colors,d.colors||{});db.notes=mergeColors(db.notes,d.notes||{});db.wprog=mergeColors(db.wprog,d.wprog||{});db.events=mergeColors(db.events,d.events||{});db.notesP=mergeColors(db.notesP,d.notesP||{});if(d.wfixT&&d.wfixT[1]>db.wfixT[1])db.wfixT=d.wfixT;if((d.uiT||0)>db.uiT){db.ui={...UID,...d.ui};db.uiT=d.uiT}commit()}catch{alert('JSON 형식이 올바르지 않습니다.')}
   e.target.value='';
 });
 $('#clr').onclick=()=>{const d=live().filter(t=>t.done);if(d.length){snap(`완료 항목 ${d.length}개 삭제됨`);const t=now();d.forEach(x=>setF(x,{deleted:true},t));commit();toast()}};
@@ -66,14 +66,14 @@ async function findGist(){
   return g.id;
 }
 async function readGist(g){
-  const f=g.files&&g.files[GFILE]; if(!f)return {tasks:[],colors:{},notes:{},wfixT:[[],0],wprog:{},events:{}};
+  const f=g.files&&g.files[GFILE]; if(!f)return {tasks:[],colors:{},notes:{},wfixT:[[],0],wprog:{},events:{},notesP:{}};
   let c=f.content;
   if(f.truncated)c=await (await fetch(f.raw_url,{cache:'no-store'})).text();
-  try{const j=JSON.parse(c||'{}');return {tasks:j.tasks||[],colors:j.colors||{},notes:j.notes||{},ui:j.ui,uiT:j.uiT||0,wfixT:j.wfixT||[[],0],wprog:j.wprog||{},events:j.events||{},by:j.by,at:j.at}}catch{return {tasks:[],colors:{},notes:{},wfixT:[[],0],wprog:{},events:{}}}
+  try{const j=JSON.parse(c||'{}');return {tasks:j.tasks||[],colors:j.colors||{},notes:j.notes||{},ui:j.ui,uiT:j.uiT||0,wfixT:j.wfixT||[[],0],wprog:j.wprog||{},events:j.events||{},notesP:j.notesP||{},by:j.by,at:j.at}}catch{return {tasks:[],colors:{},notes:{},wfixT:[[],0],wprog:{},events:{},notesP:{}}}
 }
 let syncing=false, again=false, timer=null;
 let lastErr='', dirty=false;
-function queueSync(){if(!ready())return;dirty=true;clearTimeout(timer);timer=setTimeout(sync,1200)}
+function queueSync(){if(!ready())return;dirty=true;if(cfg.syncInt==='0'){setStatus('busy','PENDING');return}clearTimeout(timer);timer=setTimeout(sync,1200)}
 async function sync(){
   if(!ready()){setStatus('','LOCAL');return}
   if(syncing){again=true;return}
@@ -87,13 +87,13 @@ async function sync(){
     for(const r of remote0.tasks){const l=lm.get(r.id);if(!l)continue;for(const f of F){if(f==='order'||f==='dord')continue;if(JSON.stringify(l[f])===JSON.stringify(r[f]))continue;const tl=ft(l,f),tr=ft(r,f);if(tl>since&&tr>since&&tr!==tl)conf.push({t:l,f,by:tr>tl?(r.by||'다른 기기'):cfg.device,vs:tr>tl?cfg.device:(r.by||'다른 기기')})}}
     const remote=remote0, merged=merge(db.tasks,remote.tasks), colors=mergeColors(db.colors,remote.colors), notes=mergeColors(db.notes,remote.notes);
     const rNew=(remote.uiT||0)>db.uiT, ui=rNew?{...UID,...remote.ui}:db.ui, uiT=Math.max(remote.uiT||0,db.uiT);
-    const events=mergeColors(db.events,remote.events), wprog=mergeColors(db.wprog,remote.wprog), wfixT=(remote.wfixT[1]||0)>(db.wfixT[1]||0)?remote.wfixT:db.wfixT;
+    const notesP=mergeColors(db.notesP,remote.notesP), events=mergeColors(db.events,remote.events), wprog=mergeColors(db.wprog,remote.wprog), wfixT=(remote.wfixT[1]||0)>(db.wfixT[1]||0)?remote.wfixT:db.wfixT;
     const kv2=o=>Object.keys(o).sort().map(k=>[k,o[k]]);
-    const sig=(t,c,n,u,ut,wf,wp,ev)=>JSON.stringify([[...t].sort((p,q)=>p.id<q.id?-1:1),kv2(c),kv2(n),u?kv2(u):null,ut,wf,kv2(wp),kv2(ev||{})]);
-    const all=sig(merged,colors,notes,ui,uiT,wfixT,wprog,events);
-    if(all!==sig(db.tasks,db.colors,db.notes,db.ui,db.uiT,db.wfixT,db.wprog,db.events)&&!drag){Object.assign(db,{tasks:merged,colors,notes,ui,uiT,wfixT,wprog,events});save(KEY,db);render()}
+    const sig=(t,c,n,u,ut,wf,wp,ev,np)=>JSON.stringify([[...t].sort((p,q)=>p.id<q.id?-1:1),kv2(c),kv2(n),u?kv2(u):null,ut,wf,kv2(wp),kv2(ev||{}),kv2(np||{})]);
+    const all=sig(merged,colors,notes,ui,uiT,wfixT,wprog,events,notesP);
+    if(all!==sig(db.tasks,db.colors,db.notes,db.ui,db.uiT,db.wfixT,db.wprog,db.events,db.notesP)&&!drag){Object.assign(db,{tasks:merged,colors,notes,ui,uiT,wfixT,wprog,events,notesP});save(KEY,db);render()}
     if(remote.by)cfg.lastBy=`${remote.by} · ${fmtTs(remote.at||0)}`;
-    if(all!==sig(remote.tasks,remote.colors,remote.notes,remote.ui,remote.uiT||0,remote.wfixT,remote.wprog,remote.events)){const at=now();await gh('PATCH',`/gists/${cfg.gist}`,{files:{[GFILE]:{content:JSON.stringify({tasks:merged,colors,notes,ui,uiT,wfixT,wprog,events,by:cfg.device,at},null,1)}}});cfg.lastBy=`${cfg.device} · ${fmtTs(at)}`}
+    if(all!==sig(remote.tasks,remote.colors,remote.notes,remote.ui,remote.uiT||0,remote.wfixT,remote.wprog,remote.events,remote.notesP)){const at=now();await gh('PATCH',`/gists/${cfg.gist}`,{files:{[GFILE]:{content:JSON.stringify({tasks:merged,colors,notes,ui,uiT,wfixT,wprog,events,notesP,by:cfg.device,at},null,1)}}});cfg.lastBy=`${cfg.device} · ${fmtTs(at)}`}
     if(conf.length){const FL={text:'내용',done:'완료',memo:'메모',cat:'분류',date:'날짜',time:'시간',repeat:'반복',star:'중요',deleted:'삭제',state:'상태',end:'종료일',tend:'종료 시간',place:'장소',spawned:'반복',gone:'휴지통'};
       const c=conf[0],msg=conf.length===1?`충돌 · ‘${c.t.text.split('\n')[0].slice(0,14)}’ ${FL[c.f]||c.f} · ${c.vs}·${c.by} 동시 수정 → ${c.by} 기준으로 맞춤`:`충돌 ${conf.length}건 · 나중에 고친 쪽 기준으로 맞춤`;
       notice(msg);cfg.lastConflict=`${fmtTs(now())} · ${msg}`}
@@ -111,13 +111,13 @@ $('#gSave').onclick=()=>{
 };
 $('#gNow').onclick=()=>sync();
 $('#gOff').onclick=()=>{if(confirm('동기화 설정을 이 기기에서 삭제할까요? (할 일 데이터는 유지됩니다)')){cfg.token='';cfg.gist='';save(CFG,cfg);fillCfg();setStatus('','LOCAL')}};
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();sync()}});
-setInterval(()=>{if(document.visibilityState==='visible'&&ready())sync()},60000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();if(cfg.syncInt!=='0')sync()}});
+let lastAuto=now();setInterval(()=>{const m=+(cfg.syncInt??1);if(!m||document.visibilityState!=='visible'||!ready())return;if(now()-lastAuto>=m*6e4){lastAuto=now();sync()}},15000);
 
 
 /* ---------- sync info / history (82, 68) ---------- */
 function syncInfo(){
-  const st=!ready()?'로컬 전용':syncing?'동기화 중':lastErr?'오류':dirty?'업로드 대기':'최신 상태';
+  const st=!ready()?'로컬 전용':cfg.syncInt==='0'&&dirty?'업로드 대기 (수동)':syncing?'동기화 중':lastErr?'오류':dirty?'업로드 대기':'최신 상태';
   const row=(k,v)=>`<div class="pr"><span>${k}</span><b>${v}</b></div>`;
   return row('상태',st)+row('마지막 동기화',cfg.last?fmtTs(cfg.last):'—')+row('마지막 업로드',esc(cfg.lastBy||'—'))+(lastErr?row('오류',esc(lastErr)):'')+(cfg.lastConflict?row('마지막 충돌',esc(cfg.lastConflict)):'')+row('이 기기',esc(cfg.device))+row('Gist',cfg.gist?esc(cfg.gist.slice(0,10))+'…':'—')+(ready()?'<button class="btn pri" id="pvSync">지금 동기화</button>':'');
 }

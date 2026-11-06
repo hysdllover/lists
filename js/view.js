@@ -11,6 +11,7 @@ function metaHTML(t){
   if(on('dday'))parts.push(ddHTML(t));
   if(on('rRep')&&t.repeat)parts.push(`<span class="rep">↻ ${REP[t.repeat]}</span>`);
   parts.push(plcHTML(t));
+  const nn=t.note&&noteGet(t.note);if(nn)parts.push(`<button class="nlink" data-a="note">${ICON.note}${esc(noteTitle(nn))}</button>`);
   const h=parts.join('');return h?`<div class="meta">${h}</div>`:'';
 }
 const chkHTML=t=>`<button class="chk${t.done?' on':''}${t.state==='doing'&&!t.done?' doing':''}" data-a="chk" aria-label="완료"${ccStyle(t)}></button>`;
@@ -22,7 +23,7 @@ function itemHTML(t){
       ${t.memo&&on('rMemo')?`<div class="memo">${md(on('memo')?t.memo:t.memo.split('\n')[0])}</div>`:''}
       ${metaHTML(t)}
     </div>
-    <div class="acts"><button class="star${t.star?' on':''}" data-a="star" aria-label="중요">${STAR}</button><label class="ico${t.date?' has':''}">${CAL}<input type="date" data-a="date" value="${t.date||''}"></label></div>
+    <div class="acts"><button class="star${t.star?' on':''}" data-a="star" aria-label="중요">${STAR}</button><button class="ico${t.date?' has':''}" data-a="pickdate" aria-label="날짜">${CAL}</button></div>
   </li>`;
 }
 function trashHTML(t){
@@ -83,7 +84,7 @@ function renderList(){
 function renderMeta(){
   const cats=[...new Set(live().map(t=>t.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko'));
   $('#cats').innerHTML=cats.map(c=>`<option value="${esc(c)}">`).join('');
-  $('#catList').innerHTML=cats.length?cats.map(c=>`<div class="field"><span>${tagHTML(c)}</span><div class="sw">${[0,1,2,3,4,5,6,7].map(i=>`<button data-c="${esc(c)}" data-i="${i}" class="${catIdx(c)===i?'on':''}" style="background:var(--c${i})" aria-label="색 ${i+1}"></button>`).join('')}</div></div>`).join(''):'<p class="note">분류가 있는 할 일을 추가하면 여기에 표시됩니다.</p>';
+  $('#catList').innerHTML=cats.length?cats.map(c=>`<div class="field"><span>${tagHTML(c)}</span><div class="sw">${[0,1,2,3,4,5,6,7].map(i=>`<button data-c="${esc(c)}" data-i="${i}" class="${catIdx(c)===i?'on':''}" style="background:var(--c${i})" aria-label="색 ${i+1}"></button>`).join('')}<label class="swc${catIdx(c)<0?' on':''}" style="${catIdx(c)<0?'background:'+catColor(c):''}" aria-label="직접 지정"><input type="color" data-cc="${esc(c)}" value="${catIdx(c)<0?db.colors[c][0]:'#a9b8c9'}"></label></div></div>`).join(''):'<p class="note">분류가 있는 할 일을 추가하면 여기에 표시됩니다.</p>';
 }
 
 /* ---------- week (Sunday start) ---------- */
@@ -95,12 +96,12 @@ const weekSort=a=>a.sort((x,y)=>(on('doneBottom')?x.done-y.done:0)||(y.state==='
 function wiHTML(t,s){
   const span=t.end&&s?(s===t.date?' span-s':s===t.end?' span-e':' span-m'):'';
   const tm=t.time&&(!t.end||s===t.date)?`<span class="tm">${fmtT(t.time)}${t.tend?'–'+fmtT(t.tend):''}</span>`:'';
-  return `<div class="wi${t.done?' done':''}${t.state==='hold'?' hold':''}${span}${fresh(t)}" data-id="${t.id}">${chkHTML(t)}<div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${tm}${txHTML(t)}${t.repeat?` <span class="rep">↻</span>`:''}</span>${t.memo&&on('rMemo')?`<div class="memo">${md(on('memo')?t.memo:t.memo.split('\n')[0])}</div>`:''}${plcHTML(t)}</div></div>`;
+  return `<div class="wi${t.done?' done':''}${t.state==='hold'?' hold':''}${span}${fresh(t)}" data-id="${t.id}">${chkHTML(t)}<div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${tm}${txHTML(t)}${t.repeat?` <span class="rep">↻</span>`:''}</span>${t.memo&&on('rMemo')?`<div class="memo">${md(on('memo')?t.memo:t.memo.split('\n')[0])}</div>`:''}${plcHTML(t)}${t.note&&noteGet(t.note)?`<button class="nlink" data-a="note">${ICON.note}${esc(noteTitle(noteGet(t.note)))}</button>`:''}</div></div>`;
 }
 const isDayAdd=el=>!!(el&&el.classList&&el.classList.contains('dayadd'));
 function dhHTML(d,s,ts,H){
   const h=on('hHol')&&H[s];
-  return `<div class="dh"><span class="lbl">${dowL(d)}</span><span class="d num">${pz(d.getDate())}</span>${h?`<span class="hn">${esc(H[s])}</span>`:''}${on('hEv')?evOn(s).map(x=>`<span class="hn ev">${esc(x)}</span>`).join(''):''}${on('hCnt')?`<span class="n num">${ts.length?ts.filter(t=>t.done).length+'/'+ts.length:''}</span>`:''}</div>`;
+  return `<div class="dh"><span class="lbl">${dowL(d)}</span><span class="d num">${pz(d.getDate())}</span>${h?`<span class="hn">${esc(H[s])}</span>`:''}${on('hEv')?evOn(s).map(x=>`<span class="hn ev">${esc(x)}</span>`).join(''):''}${notesOn(s).map(noteTag).join('')}${on('hCnt')?`<span class="n num">${ts.length?ts.filter(t=>t.done).length+'/'+ts.length:''}</span>`:''}</div>`;
 }
 function renderWeek(){
   const ae=document.activeElement;
@@ -151,7 +152,7 @@ function renderMonth(){
   const cell=(d,lanes)=>{
     const s=ymd(d), ts=weekSort(tasksOn(L,s)).filter(t=>!isSpan(t)), hol=H[s], room=Math.max(0,3-lanes);
     const cls=['mc',!inMonth(s)&&'out',s===td&&'today',s===mSel&&'sel',(d.getDay()===0||hol)&&'sun',s<td&&'past'].filter(Boolean).join(' ');
-    const lab=[on('hHol')&&hol?`<span class="hn">${esc(hol)}</span>`:'',...(on('hEv')?evOn(s).map(x=>`<span class="hn ev">${esc(x)}</span>`):[])].join('');
+    const lab=[on('hHol')&&hol?`<span class="hn">${esc(hol)}</span>`:'',...(on('hEv')?evOn(s).map(x=>`<span class="hn ev">${esc(x)}</span>`):[]),...notesOn(s).map(noteTag)].join('');
     return `<div class="${cls}" data-d="${s}" aria-label="${s}${hol?' '+esc(hol):''} 할 일 ${tasksOn(L,s).length}개"><span class="md num">${pz(d.getDate())}</span>${lab}<div class="mt">${ts.slice(0,room).map(t=>`<div class="wi mi${t.done?' done':''}" data-id="${t.id}"><span class="txt">${txHTML(t)}</span></div>`).join('')}${ts.length>room?`<span class="more">+${ts.length-room}</span>`:''}</div><div class="dots">${ts.slice(0,5).map(t=>`<i class="${t.done?'d':''}" style="background:${t.cat?catColor(t.cat):'var(--accent)'}"></i>`).join('')}</div></div>`;
   };
   let gh='';
@@ -192,7 +193,7 @@ function renderPrint(){
   if(!$('#vWeek').classList.contains('on'))renderWeek();
   const days=weekDays(weekOff), L=live(), H=holidays(), und=L.filter(t=>!t.date&&!t.done), note=(db.notes[ymd(days[0])]||[''])[0].trim();
   $('#print').className=U('paperPrint')==='1'&&U('paper')!=='none'?'pp-'+U('paper'):'';
-  $('#print').innerHTML=`<h1><span>WEEKLY${on('weekNo')?' · W'+pad(isoWeek(days[0])):''}</span><span>${rangeTxt}</span></h1>
+  $('#print').innerHTML=`<h1><span>${esc(U('appName')||'WEEKLY')}${on('weekNo')?' · W'+pad(isoWeek(days[0])):''}</span><span>${rangeTxt}</span></h1>
   ${note?`<div class="pnote">${esc(note)}</div>`:''}
   ${(db.wfixT[0]||[]).length?`<div class="pnote">${db.wfixT[0].map(it=>{const c=(db.wprog[ymd(days[0])+':'+it.id]||[0])[0];return esc(it.text)+' '+'■'.repeat(Math.min(c,it.goal))+'□'.repeat(Math.max(0,it.goal-c))}).join('　　')}</div>`:''}
   <table>${days.map(d=>{const s=ymd(d);return `<tr><td class="h">${dowL(d)}<b>${pz(d.getMonth()+1)}.${pz(d.getDate())}</b>${H[s]?`<i>${esc(H[s])}</i>`:''}${evOn(s).map(x=>`<i class="ev">${esc(x)}</i>`).join('')}</td><td class="c">${weekSort(tasksOn(L,s)).map(piHTML).join('')}</td></tr>`}).join('')}</table>
@@ -202,7 +203,7 @@ function renderPrintMonth(){
   const {first,ds}=monthGrid(monOff), m=first.getMonth(), L=live(), H=holidays(), rows=[];
   for(let i=0;i<ds.length;i+=7)rows.push(ds.slice(i,i+7));
   $('#print').className='pm';
-  $('#print').innerHTML=`<h1><span>MONTHLY</span><span>${first.getFullYear()}.${pz(m+1)}</span></h1>
+  $('#print').innerHTML=`<h1><span>${esc(U('appName')||'WEEKLY')} · MONTH</span><span>${first.getFullYear()}.${pz(m+1)}</span></h1>
   <table class="mtab"><tr>${DOWE.map((x,i)=>`<th${i===0?' class="r"':''}>${x}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map(d=>{const s=ymd(d);return `<td class="${d.getMonth()!==m?'o':''}"><b class="${d.getDay()===0||H[s]?'r':''}">${d.getDate()}</b>${H[s]?`<i>${esc(H[s])}</i>`:''}${evOn(s).map(x=>`<i class="ev">${esc(x)}</i>`).join('')}${weekSort(tasksOn(L,s)).map(piHTML).join('')}</td>`}).join('')}</tr>`).join('')}</table>`;
 }
 
@@ -214,7 +215,9 @@ function applyUI(){
   const r=document.documentElement, B=document.body, dk=U('theme')==='dark'||(U('theme')==='auto'&&mq.matches)?1:0, li=+U('line')||0;
   r.dataset.theme=U('theme');
   r.style.setProperty('--fs',cfg.fs+'px');
-  r.style.setProperty('--accent',(ACC[U('accent')]||ACC.bluegray)[dk]);
+  r.style.setProperty('--accent',U('accent')==='custom'?toneAcc(U('accentC'),dk):(ACC[U('accent')]||ACC.bluegray)[dk]);
+  $('.brand').textContent=U('appName')||'WEEKLY';document.title=U('appName')||'Weekly';
+  applyTabs();
   r.style.setProperty('--hair',HAIR[dk][li]);r.style.setProperty('--line',LINE[dk][li]);
   r.style.setProperty('--ls',U('ls')+'em');r.style.setProperty('--lh',U('lh'));
   r.style.setProperty('--dn',{loose:1.3,normal:1,tight:.7}[U('dens')]||1);
@@ -237,7 +240,16 @@ function paintSet(){
   $('#prevCard').hidden=tab!=='style';
   if(document.activeElement!==$('#gDev'))$('#gDev').value=cfg.device;
   $('#scUrl').textContent=location.origin+location.pathname+'?add=';
+  if(document.activeElement!==$('#appName'))$('#appName').value=U('appName')||'';
+  $$('.accC').forEach(i=>{if(document.activeElement!==i)i.value=U('accentC');const l=i.parentElement,c=U('accent')==='custom';l.classList.toggle('on',c);l.style.background=c?toneAcc(U('accentC'),isDark()):''});
+  const ord=tabOrder(),hid=tabHidden();
+  $('#tabCfg').innerHTML=ord.map((k,i)=>`<div class="field tabrow"><span>${TABN[k]}</span><button class="tbtn" data-tmv="${k}" data-dir="-1"${i===0?' disabled':''} aria-label="위로">↑</button><button class="tbtn" data-tmv="${k}" data-dir="1"${i===ord.length-1?' disabled':''} aria-label="아래로">↓</button><div class="seg"><button class="${hid.includes(k)?'':'on'}" data-thd="${k}" data-h="0">표시</button><button class="${hid.includes(k)?'on':''}" data-thd="${k}" data-h="1">숨김</button></div></div>`).join('');
 }
+const TABN={list:'LIST',week:'WEEK',month:'MONTH',focus:'TODAY',notes:'NOTE'};
+const tabOrder=()=>{const o=(U('tabOrder')||'').split(',').filter(k=>TABN[k]);for(const k in TABN)if(!o.includes(k))o.push(k);return o};
+const tabHidden=()=>(U('tabHide')||'').split(',').filter(k=>TABN[k]);
+function applyTabs(){const nav=$('nav'),hid=tabHidden();tabOrder().forEach(k=>{const b=nav.querySelector(`[data-v="${k}"]`);if(b){nav.appendChild(b);b.hidden=hid.includes(k)}});
+  if(TABN[view]&&hid.includes(view))view=tabOrder().find(k=>!hid.includes(k))||'list'}
 const navOn=()=>$$('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===view||(view==='week'&&isSplit()&&b.dataset.v==='list')));
 let shownView=null;
 function renderPreview(){
@@ -252,10 +264,11 @@ function render(){
   if(view==='week'||both)renderWeek();
   if(view==='month')renderMonth();
   if(view==='focus')renderFocus();
+  if(view==='notes')renderNotes();
   navOn();
   $('#main').classList.toggle('board',view==='list'||view==='week');
   $$('.view').forEach(v=>v.classList.remove('on'));
-  $({list:'#vList',week:'#vWeek',month:'#vMonth',focus:'#vFocus',set:'#vSet'}[view]).classList.add('on');
+  $({list:'#vList',week:'#vWeek',month:'#vMonth',focus:'#vFocus',notes:'#vNotes',set:'#vSet'}[view]).classList.add('on');
   if(shownView!==null&&shownView!==view)$$('.view.on').forEach(v=>{v.classList.remove('enter');void v.offsetWidth;v.classList.add('enter')});
   shownView=view;
   $('#setBtn').classList.toggle('on',view==='set');
