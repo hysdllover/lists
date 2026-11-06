@@ -2,6 +2,8 @@
 (async()=>{
 const hadCfg=localStorage.getItem(CFG)!==null;
 try{if(localStorage.getItem(KEY)!==null){await kv('readwrite',s=>s.put(db,'db'));localStorage.removeItem(KEY)}else{const d=await kv('readonly',s=>s.get('db'));if(d){db=d;initDb()}}}catch(e){idbOk=false}
+dbReady=true;
+if((cfg.seenVer||0)<23){cfg.planFold=false;cfg.planAll=false}
 view=cfg.start==='last'?(['list','week','month','focus','notes'].includes(cfg.lastView)?cfg.lastView:'list'):(cfg.start||'list');
 (function(){
   const q=new URLSearchParams(location.search);if(![...q.keys()].length)return;

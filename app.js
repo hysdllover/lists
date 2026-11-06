@@ -26,7 +26,7 @@ const fmtD=s=>{const d=parse(s),st=U('dstyle');return st==='en'?`${MONS[d.getMon
 const bigD=d=>{const st=U('dstyle');return st==='en'?`${MONS[d.getMonth()]} ${d.getDate()}`:st==='ko'?`${d.getMonth()+1}월 ${d.getDate()}일`:`${pz(d.getMonth()+1)}.${pz(d.getDate())}`};
 const load=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
 const save=(k,v)=>{if(k===KEY){saveDb();return}try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
-const APP_VER=22;
+const APP_VER=23;
 
 let db=load(KEY,{tasks:[]});
 let cfg=Object.assign({syncInt:'1',noteOpen:'',sort:'date',fold:true,fs:14,theme:'light',split:1,token:'',gist:'',last:0,start:'list',secs:{Quick:true},gfold:{},wz:1},load(CFG,{}));
@@ -157,13 +157,14 @@ function ddStrip(){
 const plcHTML=t=>t.place&&U('rPlace')==='1'?`<a class="plc" href="https://maps.apple.com/?q=${encodeURIComponent(t.place)}" target="_blank" rel="noopener">${ICON.pin}${esc(t.place)}</a>`:'';
 
 /* storage: IndexedDB (K6) */
-let dbT=null, idbOk=true;
-function saveDb(){clearTimeout(dbT);dbT=setTimeout(flushDb,150);try{localStorage.setItem('weekly.ui',JSON.stringify({theme:db.ui.theme}))}catch{}}
-async function flushDb(){clearTimeout(dbT);if(idbOk){try{await kv('readwrite',s=>s.put(db,'db'));return}catch{idbOk=false}}try{localStorage.setItem(KEY,JSON.stringify(db))}catch{}}
+let dbT=null, idbOk=true, dbReady=false;
+function saveDb(){if(!dbReady)return;clearTimeout(dbT);dbT=setTimeout(flushDb,150);try{localStorage.setItem('weekly.ui',JSON.stringify({theme:db.ui.theme}))}catch{}}
+async function flushDb(){if(!dbReady)return;clearTimeout(dbT);if(idbOk){try{await kv('readwrite',s=>s.put(db,'db'));return}catch{idbOk=false}}try{localStorage.setItem(KEY,JSON.stringify(db))}catch{}}
 addEventListener('pagehide',()=>flushDb());
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushDb()});
 /* changes (K9, K10) */
 const CHANGES={
+ 23:'데이터 불러오기 전 저장·동기화 차단(안전장치) · 날짜 없는 칸 다시 펼침',
  22:'날짜 없는 할 일을 WEEK·TODAY 맨 아래에 작은 칩으로 표시',
  21:'날짜 없는 할 일 요일 칩 · 날짜 없는 칸 접기 · 하루 크게 보기 · 진행률 · 테마 묶음 · 할 일 글자 크기 · 체크·지난 일 색 · 하단 탭 크기 · 알림 위치·시간 · 상단 문구 정리',
  20:'날짜 없는 할 일 칸이 스크롤을 따라오지 않도록 변경',
@@ -317,7 +318,7 @@ function renderPlan(el){
   const un=sorted(live().filter(t=>!t.date&&!t.done&&t.state!=='hold')), fold=!!cfg.planFold, max=cfg.planAll?1e9:8, vis=un.slice(0,max);
   const old=el.querySelector('.uadd'), keep=old?old.value:'', focus=old&&document.activeElement===old;
   el.classList.toggle('folded',fold);
-  el.innerHTML=`<button class="ph planHead"><span class="lbl">No date · ${un.length}</span><i class="cv"></i></button><div class="uchips">${vis.map(t=>`<span class="wi uc${t.star?' ustar':''}" data-id="${t.id}" data-a="edit"${t.cat?` style="--ul:${catColor(t.cat)}"`:''}>${esc(t.text.split('\n')[0])}</span>`).join('')}${un.length>max?`<button class="uc more" data-umore="1">+${un.length-max}</button>`:''}${cfg.planAll&&un.length>8?'<button class="uc more" data-umore="1">접기</button>':''}<input class="uadd" placeholder="+ 날짜 없이 추가" enterkeyhint="done" autocomplete="off"></div>`;
+  el.innerHTML=`<button class="ph planHead"><span class="lbl">No date · ${un.length}</span>${fold?'<span class="hint lbl">펼치기</span>':''}<i class="cv"></i></button><div class="uchips">${vis.map(t=>`<span class="wi uc${t.star?' ustar':''}" data-id="${t.id}" data-a="edit"${t.cat?` style="--ul:${catColor(t.cat)}"`:''}>${esc(t.text.split('\n')[0])}</span>`).join('')}${un.length>max?`<button class="uc more" data-umore="1">+${un.length-max}</button>`:''}${cfg.planAll&&un.length>8?'<button class="uc more" data-umore="1">접기</button>':''}<input class="uadd" placeholder="+ 날짜 없이 추가" enterkeyhint="done" autocomplete="off"></div>`;
   if(keep||focus){const n=el.querySelector('.uadd');n.value=keep;if(focus)n.focus()}
 }
 function renderFix(){
@@ -1089,6 +1090,7 @@ function syncOk(){cfg.last=now();save(CFG,cfg);dirty=false;lastErr='';retryN=0;t
   const d=new Date(cfg.last);setStatus('ok',`${pad(d.getHours())}:${pad(d.getMinutes())}`);$('#gLast').textContent=`LAST SYNC ${ymd(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`}
 function openSyncSettings(){view='set';cfg.setTab='data';cfg.secs=cfg.secs||{};cfg.secs['Gist Sync']=true;save(CFG,cfg);render();setTimeout(()=>{const s=$('[data-sec="Gist Sync"]');s&&s.scrollIntoView({block:'start'})},60)}
 async function sync(){
+  if(!dbReady)return;
   if(!ready()){setStatus('','LOCAL');return}
   if(syncing){again=true;return}
   syncing=true;setStatus('busy','SYNC');clearTimeout(retryT);
@@ -1097,6 +1099,7 @@ async function sync(){
     let res;
     try{res=await ghx('GET',`/gists/${cfg.gist}`,null,cfg.etag&&cfg.sigM?cfg.etag:'')}
     catch(e){if(e.status!==404)throw e;cfg.gist=await findGist();cfg.etag='';save(CFG,cfg);fillCfg();res=await ghx('GET',`/gists/${cfg.gist}`)}
+    if(res.status===304&&!db.tasks.length){cfg.etag='';res=await ghx('GET',`/gists/${cfg.gist}`)}
     if(res.status===304){
       /* nothing changed on GitHub since our last sync: upload only our own changes, without downloading */
       const hm=h32(sigMainOf(db)), hn=h32(sigNotesOf(db)), stale=!(db.devices[cfg.device]&&db.devices[cfg.device][1]>now()-6*36e5), files={}, at=now();
@@ -1289,6 +1292,8 @@ async function monthImage(){
 (async()=>{
 const hadCfg=localStorage.getItem(CFG)!==null;
 try{if(localStorage.getItem(KEY)!==null){await kv('readwrite',s=>s.put(db,'db'));localStorage.removeItem(KEY)}else{const d=await kv('readonly',s=>s.get('db'));if(d){db=d;initDb()}}}catch(e){idbOk=false}
+dbReady=true;
+if((cfg.seenVer||0)<23){cfg.planFold=false;cfg.planAll=false}
 view=cfg.start==='last'?(['list','week','month','focus','notes'].includes(cfg.lastView)?cfg.lastView:'list'):(cfg.start||'list');
 (function(){
   const q=new URLSearchParams(location.search);if(![...q.keys()].length)return;

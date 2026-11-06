@@ -23,7 +23,7 @@ const fmtD=s=>{const d=parse(s),st=U('dstyle');return st==='en'?`${MONS[d.getMon
 const bigD=d=>{const st=U('dstyle');return st==='en'?`${MONS[d.getMonth()]} ${d.getDate()}`:st==='ko'?`${d.getMonth()+1}월 ${d.getDate()}일`:`${pz(d.getMonth()+1)}.${pz(d.getDate())}`};
 const load=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
 const save=(k,v)=>{if(k===KEY){saveDb();return}try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
-const APP_VER=22;
+const APP_VER=23;
 
 let db=load(KEY,{tasks:[]});
 let cfg=Object.assign({syncInt:'1',noteOpen:'',sort:'date',fold:true,fs:14,theme:'light',split:1,token:'',gist:'',last:0,start:'list',secs:{Quick:true},gfold:{},wz:1},load(CFG,{}));
@@ -154,13 +154,14 @@ function ddStrip(){
 const plcHTML=t=>t.place&&U('rPlace')==='1'?`<a class="plc" href="https://maps.apple.com/?q=${encodeURIComponent(t.place)}" target="_blank" rel="noopener">${ICON.pin}${esc(t.place)}</a>`:'';
 
 /* storage: IndexedDB (K6) */
-let dbT=null, idbOk=true;
-function saveDb(){clearTimeout(dbT);dbT=setTimeout(flushDb,150);try{localStorage.setItem('weekly.ui',JSON.stringify({theme:db.ui.theme}))}catch{}}
-async function flushDb(){clearTimeout(dbT);if(idbOk){try{await kv('readwrite',s=>s.put(db,'db'));return}catch{idbOk=false}}try{localStorage.setItem(KEY,JSON.stringify(db))}catch{}}
+let dbT=null, idbOk=true, dbReady=false;
+function saveDb(){if(!dbReady)return;clearTimeout(dbT);dbT=setTimeout(flushDb,150);try{localStorage.setItem('weekly.ui',JSON.stringify({theme:db.ui.theme}))}catch{}}
+async function flushDb(){if(!dbReady)return;clearTimeout(dbT);if(idbOk){try{await kv('readwrite',s=>s.put(db,'db'));return}catch{idbOk=false}}try{localStorage.setItem(KEY,JSON.stringify(db))}catch{}}
 addEventListener('pagehide',()=>flushDb());
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushDb()});
 /* changes (K9, K10) */
 const CHANGES={
+ 23:'데이터 불러오기 전 저장·동기화 차단(안전장치) · 날짜 없는 칸 다시 펼침',
  22:'날짜 없는 할 일을 WEEK·TODAY 맨 아래에 작은 칩으로 표시',
  21:'날짜 없는 할 일 요일 칩 · 날짜 없는 칸 접기 · 하루 크게 보기 · 진행률 · 테마 묶음 · 할 일 글자 크기 · 체크·지난 일 색 · 하단 탭 크기 · 알림 위치·시간 · 상단 문구 정리',
  20:'날짜 없는 할 일 칸이 스크롤을 따라오지 않도록 변경',

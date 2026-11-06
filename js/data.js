@@ -92,6 +92,7 @@ function syncOk(){cfg.last=now();save(CFG,cfg);dirty=false;lastErr='';retryN=0;t
   const d=new Date(cfg.last);setStatus('ok',`${pad(d.getHours())}:${pad(d.getMinutes())}`);$('#gLast').textContent=`LAST SYNC ${ymd(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`}
 function openSyncSettings(){view='set';cfg.setTab='data';cfg.secs=cfg.secs||{};cfg.secs['Gist Sync']=true;save(CFG,cfg);render();setTimeout(()=>{const s=$('[data-sec="Gist Sync"]');s&&s.scrollIntoView({block:'start'})},60)}
 async function sync(){
+  if(!dbReady)return;
   if(!ready()){setStatus('','LOCAL');return}
   if(syncing){again=true;return}
   syncing=true;setStatus('busy','SYNC');clearTimeout(retryT);
@@ -100,6 +101,7 @@ async function sync(){
     let res;
     try{res=await ghx('GET',`/gists/${cfg.gist}`,null,cfg.etag&&cfg.sigM?cfg.etag:'')}
     catch(e){if(e.status!==404)throw e;cfg.gist=await findGist();cfg.etag='';save(CFG,cfg);fillCfg();res=await ghx('GET',`/gists/${cfg.gist}`)}
+    if(res.status===304&&!db.tasks.length){cfg.etag='';res=await ghx('GET',`/gists/${cfg.gist}`)}
     if(res.status===304){
       /* nothing changed on GitHub since our last sync: upload only our own changes, without downloading */
       const hm=h32(sigMainOf(db)), hn=h32(sigNotesOf(db)), stale=!(db.devices[cfg.device]&&db.devices[cfg.device][1]>now()-6*36e5), files={}, at=now();

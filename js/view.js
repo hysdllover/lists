@@ -136,7 +136,7 @@ function renderPlan(el){
   const un=sorted(live().filter(t=>!t.date&&!t.done&&t.state!=='hold')), fold=!!cfg.planFold, max=cfg.planAll?1e9:8, vis=un.slice(0,max);
   const old=el.querySelector('.uadd'), keep=old?old.value:'', focus=old&&document.activeElement===old;
   el.classList.toggle('folded',fold);
-  el.innerHTML=`<button class="ph planHead"><span class="lbl">No date · ${un.length}</span><i class="cv"></i></button><div class="uchips">${vis.map(t=>`<span class="wi uc${t.star?' ustar':''}" data-id="${t.id}" data-a="edit"${t.cat?` style="--ul:${catColor(t.cat)}"`:''}>${esc(t.text.split('\n')[0])}</span>`).join('')}${un.length>max?`<button class="uc more" data-umore="1">+${un.length-max}</button>`:''}${cfg.planAll&&un.length>8?'<button class="uc more" data-umore="1">접기</button>':''}<input class="uadd" placeholder="+ 날짜 없이 추가" enterkeyhint="done" autocomplete="off"></div>`;
+  el.innerHTML=`<button class="ph planHead"><span class="lbl">No date · ${un.length}</span>${fold?'<span class="hint lbl">펼치기</span>':''}<i class="cv"></i></button><div class="uchips">${vis.map(t=>`<span class="wi uc${t.star?' ustar':''}" data-id="${t.id}" data-a="edit"${t.cat?` style="--ul:${catColor(t.cat)}"`:''}>${esc(t.text.split('\n')[0])}</span>`).join('')}${un.length>max?`<button class="uc more" data-umore="1">+${un.length-max}</button>`:''}${cfg.planAll&&un.length>8?'<button class="uc more" data-umore="1">접기</button>':''}<input class="uadd" placeholder="+ 날짜 없이 추가" enterkeyhint="done" autocomplete="off"></div>`;
   if(keep||focus){const n=el.querySelector('.uadd');n.value=keep;if(focus)n.focus()}
 }
 function renderFix(){
