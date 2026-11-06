@@ -603,3 +603,14 @@ body.t12 .tcol{width:4.9em}
 .help dt{color:var(--text);margin-top:var(--s3);font-weight:400}
 .help dd{color:var(--sub)}
 .help code{font-family:var(--mono);font-size:var(--t-lbl);color:var(--text);background:var(--tint);padding:0 .25rem}
+
+/* ===== v19: undated box at top of WEEK ===== */
+.plan{display:block}
+.plan .dadd{margin-top:var(--s1)}
+.plan .pl:empty{display:none}
+.dnote[hidden]{display:none}
+@media (min-width:768px) and (orientation:landscape){
+  #plan{position:static;max-height:none;overflow:visible}
+  .deck{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .deck:not(:has(.dnote:not([hidden]))){grid-template-columns:minmax(0,1fr)}
+}

@@ -119,8 +119,8 @@ function renderWeek(){
   const wk=ymd(a), n=$('#wNote'); n.dataset.w=wk; if(ae!==n){n.value=(db.notes[wk]||[''])[0];grow(n);$('#wNoteV').innerHTML=md(n.value);$('.dnote').classList.toggle('reading',!!n.value.trim())}
   if(ae!==$('#fxAdd'))renderFix();
   const un=sorted(L.filter(t=>!t.date&&!t.done&&t.state!=='hold'));
-  $('#plan').hidden=!cfg.plan;$('#planBtn').classList.toggle('on',!!cfg.plan);$('#planBtn').textContent='PLAN'+(un.length?' '+un.length:'');
-  $('#plan').innerHTML=`<div class="ph"><span class="lbl">Unscheduled · ${un.length}</span><span class="hint lbl">Hold &amp; drag to a day</span></div><div class="pl">${un.map(t=>wiHTML(t)).join('')||'<span class="empty2">날짜 없는 할 일이 없습니다</span>'}</div>`;
+  $('.dnote').hidden=!on('wNoteShow');
+  $('#plan').innerHTML=`<div class="ph"><span class="lbl">No date · ${un.length}</span>${un.length?'<span class="hint lbl">Hold &amp; drag to a day</span>':''}</div><div class="pl">${un.map(t=>wiHTML(t)).join('')}</div><div class="dadd"><textarea class="dayadd" rows="1" placeholder="+ 날짜 없이 추가" data-d=""></textarea><button class="dbtn" data-d="">ADD</button></div>`;
   $('#days').innerHTML=days.map(d=>{
     const s=ymd(d), ts=weekSort(tasksOn(L,s)), h=H[s];
     const cls=['day',s===td&&'today',s<td&&'past',(d.getDay()===0||h)&&'sun',!ts.length&&s!==td&&'empty'].filter(Boolean).join(' ');

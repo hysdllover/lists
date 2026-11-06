@@ -67,13 +67,13 @@
   <section class="view" id="vWeek">
     <div class="hero">
       <div class="hl"><span class="lbl" id="wMon"></span><div class="big num" id="rng"></div></div>
-      <div class="hr ctl"><button class="ibtn" id="prev" aria-label="이전 주"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5"/></svg></button><button class="tbtn" id="today">NOW</button><button class="ibtn" id="next" aria-label="다음 주"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5L10.5 8 6 12.5"/></svg></button><button class="tbtn" id="planBtn">PLAN</button><button class="tbtn" id="wzBtn" hidden>100%</button><button class="ibtn" id="moreBtn" aria-label="더 보기"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r=".6"/><circle cx="8" cy="8" r=".6"/><circle cx="12.5" cy="8" r=".6"/></svg></button></div>
+      <div class="hr ctl"><button class="ibtn" id="prev" aria-label="이전 주"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5"/></svg></button><button class="tbtn" id="today">NOW</button><button class="ibtn" id="next" aria-label="다음 주"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5L10.5 8 6 12.5"/></svg></button><button class="tbtn" id="wzBtn" hidden>100%</button><button class="ibtn" id="moreBtn" aria-label="더 보기"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r=".6"/><circle cx="8" cy="8" r=".6"/><circle cx="12.5" cy="8" r=".6"/></svg></button></div>
     </div>
+    <div class="plan" id="plan" data-d=""></div>
     <div class="wbody">
       <div class="deck">
         <div class="dnote"><span class="lbl dlb">Memo</span><textarea class="wnote" id="wNote" rows="1" placeholder="이번 주 메모"></textarea><div class="wnote wnv" id="wNoteV" role="button" tabindex="0" aria-label="주간 메모 편집"></div></div>
         <div class="wfix" id="wfix"></div>
-        <div class="plan" id="plan" data-d="" hidden></div>
       </div>
       <div class="days" id="days"></div>
     </div>
@@ -180,6 +180,7 @@
     </div>
     <div class="sec" data-sec="Layout" data-grp="style">
       <button class="sh"><span class="lbl">Layout</span><i class="cv"></i></button>
+      <div class="field"><span>주간 메모</span><div class="seg" data-k="wNoteShow"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
       <div class="field"><span>메모</span><div class="seg" data-k="memo"><button data-v="0">첫 줄만</button><button data-v="1">모두 펼침</button></div></div>
       <div class="field"><span>완료 위치</span><div class="seg" data-k="doneBottom"><button data-v="1">아래로</button><button data-v="0">그대로</button></div></div>
       <div class="field"><span>빈 요일</span><div class="seg" data-k="collapse"><button data-v="1">접기</button><button data-v="0">펼치기</button></div></div>

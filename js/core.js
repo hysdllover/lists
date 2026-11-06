@@ -23,12 +23,12 @@ const fmtD=s=>{const d=parse(s),st=U('dstyle');return st==='en'?`${MONS[d.getMon
 const bigD=d=>{const st=U('dstyle');return st==='en'?`${MONS[d.getMonth()]} ${d.getDate()}`:st==='ko'?`${d.getMonth()+1}월 ${d.getDate()}일`:`${pz(d.getMonth()+1)}.${pz(d.getDate())}`};
 const load=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
 const save=(k,v)=>{if(k===KEY){saveDb();return}try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
-const APP_VER=18;
+const APP_VER=19;
 
 let db=load(KEY,{tasks:[]});
 let cfg=Object.assign({syncInt:'1',noteOpen:'',sort:'date',fold:true,fs:14,theme:'light',split:1,token:'',gist:'',last:0,start:'list',secs:{Quick:true},gfold:{},wz:1},load(CFG,{}));
 cfg.device=cfg.device||((/iPad/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1))?'iPad':/iPhone/.test(navigator.userAgent)?'iPhone':'Browser');
-const UID={theme:'light',accent:'bluegray',paper:'none',paperPrint:'0',line:'1',dens:'normal',ls:'-0.005',lh:'1.6',dstyle:'dot',dow:'en',weekNo:'1',dday:'1',hol:'1',holX:'',memo:'0',doneBottom:'1',collapse:'1',dimPast:'1',corner:'1',sound:'1',tfmt:'24',zero:'1',ddPos:'both',fLate:'1',fBar:'1',lStat:'1',hCnt:'1',hHol:'1',hEv:'1',rDate:'1',rRep:'1',rMemo:'1',rPlace:'1',snd:'clear',appName:'WEEKLY',tabOrder:'list,week,month,focus,notes',tabHide:'',accentC:'#7489a2',eHide:'',catStyle:'ul',tcol:'1',bigSz:'m'};
+const UID={theme:'light',accent:'bluegray',paper:'none',paperPrint:'0',line:'1',dens:'normal',ls:'-0.005',lh:'1.6',dstyle:'dot',dow:'en',weekNo:'1',dday:'1',hol:'1',holX:'',memo:'0',doneBottom:'1',collapse:'1',dimPast:'1',corner:'1',sound:'1',tfmt:'24',zero:'1',ddPos:'both',fLate:'1',fBar:'1',lStat:'1',hCnt:'1',hHol:'1',hEv:'1',rDate:'1',rRep:'1',rMemo:'1',rPlace:'1',snd:'clear',appName:'WEEKLY',tabOrder:'list,week,month,focus,notes',tabHide:'',accentC:'#7489a2',eHide:'',catStyle:'ul',tcol:'1',bigSz:'m',wNoteShow:'0'};
 function initDb(){db.tasks=db.tasks||[];db.colors=db.colors||{};db.notes=db.notes||{};db.notesP=db.notesP||{};db.events=db.events||{};db.wfixT=db.wfixT||[[],0];db.wprog=db.wprog||{};db.devices=db.devices||{};db.uiT=db.uiT||0;db.ui=Object.assign({},UID,!db.ui&&cfg.theme?{theme:cfg.theme}:{},db.ui||{})}
 initDb();
 const HOL={'2026-01-01':'신정','2026-02-16':'설날','2026-02-17':'설날','2026-02-18':'설날','2026-03-01':'삼일절','2026-03-02':'대체공휴일','2026-05-05':'어린이날','2026-05-24':'부처님오신날','2026-05-25':'대체공휴일','2026-06-03':'지방선거','2026-06-06':'현충일','2026-08-15':'광복절','2026-08-17':'대체공휴일','2026-09-24':'추석','2026-09-25':'추석','2026-09-26':'추석','2026-10-03':'개천절','2026-10-05':'대체공휴일','2026-10-09':'한글날','2026-12-25':'성탄절',
@@ -160,6 +160,7 @@ addEventListener('pagehide',()=>flushDb());
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushDb()});
 /* changes (K9, K10) */
 const CHANGES={
+ 19:'주간 화면 맨 위에 날짜 없는 할 일 칸 · 칸에서 바로 추가 · 주간 메모는 설정에서 표시',
  18:'동기화 호출 절약 · 바뀐 것만 확인 · 바뀐 파일만 올리기 · 남은 API 호출 표시',
  17:'노트 충돌 사본 · 동기화 파일 분리 · 빠른 로딩 · 큰 저장소 · 자동 재시도 · 정보 탭 · 편집 창 항목 고르기 · 분류 표시 방식 · 시간 열 · 체크·취소선 애니메이션',
  16:'노트 · 앱 날짜·시간 선택기 · 탭 순서와 숨기기 · 앱 이름 · 동기화 주기 · 직접 고르는 색 · 완료 소리 종류',

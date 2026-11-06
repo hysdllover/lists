@@ -32,8 +32,8 @@ $('#addIco').onclick=e=>openDate(e.currentTarget,addDate,v=>setAdd(v,addTime));
 $('#addTIco').onclick=e=>openTime(e.currentTarget,addTime,'',r=>setAdd(addDate,r.start));
 $('#addPend').addEventListener('click',()=>setAdd('',''));
 function submitDay(d){const i=$(`.dayadd[data-d="${d}"]`);if(!i||!i.value.trim())return;const v=i.value;i.value='';forceWeek=true;addTask(v,d);const n=$(`.dayadd[data-d="${d}"]`);n&&n.focus()}
-$('#days').addEventListener('click',e=>{const b=e.target.closest('.dbtn');if(b)submitDay(b.dataset.d)});
-$('#days').addEventListener('keydown',e=>{const i=e.target.closest('.dayadd');if(i&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&!e.isComposing){e.preventDefault();submitDay(i.dataset.d)}});
+['#days','#plan'].forEach(s=>{$(s).addEventListener('click',e=>{const b=e.target.closest('.dbtn');if(b)submitDay(b.dataset.d)});
+$(s).addEventListener('keydown',e=>{const i=e.target.closest('.dayadd');if(i&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&!e.isComposing){e.preventDefault();submitDay(i.dataset.d)}})});
 $('#vSet').addEventListener('click',e=>{
   const b=e.target.closest('.seg[data-k] button');if(b){setUI(b.parentElement.dataset.k,b.dataset.v);if(b.parentElement.dataset.k==='snd')tick();return}
   const mv=e.target.closest('[data-tmv]');if(mv){const o=tabOrder(),i=o.indexOf(mv.dataset.tmv),j=i+(+mv.dataset.dir);if(j<0||j>=o.length)return;[o[i],o[j]]=[o[j],o[i]];setUI('tabOrder',o.join(','));return}
@@ -52,7 +52,6 @@ $('#wNote').addEventListener('input',e=>{const n=e.target,w=n.dataset.w;clearTim
 function submitFocus(){const a=$('#fAdd');if(!a.value.trim())return;addTask(a.value,todayS(),'');a.value='';grow(a)}
 $('#fBtn').onclick=submitFocus;
 $('#fAdd').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&!e.isComposing){e.preventDefault();submitFocus()}});
-$('#planBtn').onclick=()=>{cfg.plan=!cfg.plan;save(CFG,cfg);forceWeek=true;renderWeek()};
 $('#moreBtn').onclick=e=>showPv(e.currentTarget,'<span class="lbl">Save image</span>'+['long','45','11','wall'].map(r=>`<button class="mi" data-img="${r}">${{long:'전체 길이',45:'세로 4:5',11:'정사각형 1:1',wall:'아이폰 배경화면'}[r]}<small>${{long:'AUTO',45:'1080×1350',11:'1080×1080',wall:'9:19.5'}[r]}</small></button>`).join('')+'<span class="lbl mh">Print</span><button class="mi" data-act="print">A4 인쇄<small>PDF</small></button>');
 $('#sort').addEventListener('click',e=>{const b=e.target.closest('button');if(b){cfg.sort=b.dataset.s;save(CFG,cfg);render()}});
 $$('nav button').forEach(b=>b.addEventListener('click',()=>{view=b.dataset.v;cfg.lastView=view;save(CFG,cfg);render();scrollTo(0,0)}));

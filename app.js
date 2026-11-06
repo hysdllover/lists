@@ -26,12 +26,12 @@ const fmtD=s=>{const d=parse(s),st=U('dstyle');return st==='en'?`${MONS[d.getMon
 const bigD=d=>{const st=U('dstyle');return st==='en'?`${MONS[d.getMonth()]} ${d.getDate()}`:st==='ko'?`${d.getMonth()+1}월 ${d.getDate()}일`:`${pz(d.getMonth()+1)}.${pz(d.getDate())}`};
 const load=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
 const save=(k,v)=>{if(k===KEY){saveDb();return}try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
-const APP_VER=18;
+const APP_VER=19;
 
 let db=load(KEY,{tasks:[]});
 let cfg=Object.assign({syncInt:'1',noteOpen:'',sort:'date',fold:true,fs:14,theme:'light',split:1,token:'',gist:'',last:0,start:'list',secs:{Quick:true},gfold:{},wz:1},load(CFG,{}));
 cfg.device=cfg.device||((/iPad/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1))?'iPad':/iPhone/.test(navigator.userAgent)?'iPhone':'Browser');
-const UID={theme:'light',accent:'bluegray',paper:'none',paperPrint:'0',line:'1',dens:'normal',ls:'-0.005',lh:'1.6',dstyle:'dot',dow:'en',weekNo:'1',dday:'1',hol:'1',holX:'',memo:'0',doneBottom:'1',collapse:'1',dimPast:'1',corner:'1',sound:'1',tfmt:'24',zero:'1',ddPos:'both',fLate:'1',fBar:'1',lStat:'1',hCnt:'1',hHol:'1',hEv:'1',rDate:'1',rRep:'1',rMemo:'1',rPlace:'1',snd:'clear',appName:'WEEKLY',tabOrder:'list,week,month,focus,notes',tabHide:'',accentC:'#7489a2',eHide:'',catStyle:'ul',tcol:'1',bigSz:'m'};
+const UID={theme:'light',accent:'bluegray',paper:'none',paperPrint:'0',line:'1',dens:'normal',ls:'-0.005',lh:'1.6',dstyle:'dot',dow:'en',weekNo:'1',dday:'1',hol:'1',holX:'',memo:'0',doneBottom:'1',collapse:'1',dimPast:'1',corner:'1',sound:'1',tfmt:'24',zero:'1',ddPos:'both',fLate:'1',fBar:'1',lStat:'1',hCnt:'1',hHol:'1',hEv:'1',rDate:'1',rRep:'1',rMemo:'1',rPlace:'1',snd:'clear',appName:'WEEKLY',tabOrder:'list,week,month,focus,notes',tabHide:'',accentC:'#7489a2',eHide:'',catStyle:'ul',tcol:'1',bigSz:'m',wNoteShow:'0'};
 function initDb(){db.tasks=db.tasks||[];db.colors=db.colors||{};db.notes=db.notes||{};db.notesP=db.notesP||{};db.events=db.events||{};db.wfixT=db.wfixT||[[],0];db.wprog=db.wprog||{};db.devices=db.devices||{};db.uiT=db.uiT||0;db.ui=Object.assign({},UID,!db.ui&&cfg.theme?{theme:cfg.theme}:{},db.ui||{})}
 initDb();
 const HOL={'2026-01-01':'신정','2026-02-16':'설날','2026-02-17':'설날','2026-02-18':'설날','2026-03-01':'삼일절','2026-03-02':'대체공휴일','2026-05-05':'어린이날','2026-05-24':'부처님오신날','2026-05-25':'대체공휴일','2026-06-03':'지방선거','2026-06-06':'현충일','2026-08-15':'광복절','2026-08-17':'대체공휴일','2026-09-24':'추석','2026-09-25':'추석','2026-09-26':'추석','2026-10-03':'개천절','2026-10-05':'대체공휴일','2026-10-09':'한글날','2026-12-25':'성탄절',
@@ -163,6 +163,7 @@ addEventListener('pagehide',()=>flushDb());
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushDb()});
 /* changes (K9, K10) */
 const CHANGES={
+ 19:'주간 화면 맨 위에 날짜 없는 할 일 칸 · 칸에서 바로 추가 · 주간 메모는 설정에서 표시',
  18:'동기화 호출 절약 · 바뀐 것만 확인 · 바뀐 파일만 올리기 · 남은 API 호출 표시',
  17:'노트 충돌 사본 · 동기화 파일 분리 · 빠른 로딩 · 큰 저장소 · 자동 재시도 · 정보 탭 · 편집 창 항목 고르기 · 분류 표시 방식 · 시간 열 · 체크·취소선 애니메이션',
  16:'노트 · 앱 날짜·시간 선택기 · 탭 순서와 숨기기 · 앱 이름 · 동기화 주기 · 직접 고르는 색 · 완료 소리 종류',
@@ -295,8 +296,8 @@ function renderWeek(){
   const wk=ymd(a), n=$('#wNote'); n.dataset.w=wk; if(ae!==n){n.value=(db.notes[wk]||[''])[0];grow(n);$('#wNoteV').innerHTML=md(n.value);$('.dnote').classList.toggle('reading',!!n.value.trim())}
   if(ae!==$('#fxAdd'))renderFix();
   const un=sorted(L.filter(t=>!t.date&&!t.done&&t.state!=='hold'));
-  $('#plan').hidden=!cfg.plan;$('#planBtn').classList.toggle('on',!!cfg.plan);$('#planBtn').textContent='PLAN'+(un.length?' '+un.length:'');
-  $('#plan').innerHTML=`<div class="ph"><span class="lbl">Unscheduled · ${un.length}</span><span class="hint lbl">Hold &amp; drag to a day</span></div><div class="pl">${un.map(t=>wiHTML(t)).join('')||'<span class="empty2">날짜 없는 할 일이 없습니다</span>'}</div>`;
+  $('.dnote').hidden=!on('wNoteShow');
+  $('#plan').innerHTML=`<div class="ph"><span class="lbl">No date · ${un.length}</span>${un.length?'<span class="hint lbl">Hold &amp; drag to a day</span>':''}</div><div class="pl">${un.map(t=>wiHTML(t)).join('')}</div><div class="dadd"><textarea class="dayadd" rows="1" placeholder="+ 날짜 없이 추가" data-d=""></textarea><button class="dbtn" data-d="">ADD</button></div>`;
   $('#days').innerHTML=days.map(d=>{
     const s=ymd(d), ts=weekSort(tasksOn(L,s)), h=H[s];
     const cls=['day',s===td&&'today',s<td&&'past',(d.getDay()===0||h)&&'sun',!ts.length&&s!==td&&'empty'].filter(Boolean).join(' ');
@@ -505,8 +506,8 @@ $('#addIco').onclick=e=>openDate(e.currentTarget,addDate,v=>setAdd(v,addTime));
 $('#addTIco').onclick=e=>openTime(e.currentTarget,addTime,'',r=>setAdd(addDate,r.start));
 $('#addPend').addEventListener('click',()=>setAdd('',''));
 function submitDay(d){const i=$(`.dayadd[data-d="${d}"]`);if(!i||!i.value.trim())return;const v=i.value;i.value='';forceWeek=true;addTask(v,d);const n=$(`.dayadd[data-d="${d}"]`);n&&n.focus()}
-$('#days').addEventListener('click',e=>{const b=e.target.closest('.dbtn');if(b)submitDay(b.dataset.d)});
-$('#days').addEventListener('keydown',e=>{const i=e.target.closest('.dayadd');if(i&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&!e.isComposing){e.preventDefault();submitDay(i.dataset.d)}});
+['#days','#plan'].forEach(s=>{$(s).addEventListener('click',e=>{const b=e.target.closest('.dbtn');if(b)submitDay(b.dataset.d)});
+$(s).addEventListener('keydown',e=>{const i=e.target.closest('.dayadd');if(i&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&!e.isComposing){e.preventDefault();submitDay(i.dataset.d)}})});
 $('#vSet').addEventListener('click',e=>{
   const b=e.target.closest('.seg[data-k] button');if(b){setUI(b.parentElement.dataset.k,b.dataset.v);if(b.parentElement.dataset.k==='snd')tick();return}
   const mv=e.target.closest('[data-tmv]');if(mv){const o=tabOrder(),i=o.indexOf(mv.dataset.tmv),j=i+(+mv.dataset.dir);if(j<0||j>=o.length)return;[o[i],o[j]]=[o[j],o[i]];setUI('tabOrder',o.join(','));return}
@@ -525,7 +526,6 @@ $('#wNote').addEventListener('input',e=>{const n=e.target,w=n.dataset.w;clearTim
 function submitFocus(){const a=$('#fAdd');if(!a.value.trim())return;addTask(a.value,todayS(),'');a.value='';grow(a)}
 $('#fBtn').onclick=submitFocus;
 $('#fAdd').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&!e.isComposing){e.preventDefault();submitFocus()}});
-$('#planBtn').onclick=()=>{cfg.plan=!cfg.plan;save(CFG,cfg);forceWeek=true;renderWeek()};
 $('#moreBtn').onclick=e=>showPv(e.currentTarget,'<span class="lbl">Save image</span>'+['long','45','11','wall'].map(r=>`<button class="mi" data-img="${r}">${{long:'전체 길이',45:'세로 4:5',11:'정사각형 1:1',wall:'아이폰 배경화면'}[r]}<small>${{long:'AUTO',45:'1080×1350',11:'1080×1080',wall:'9:19.5'}[r]}</small></button>`).join('')+'<span class="lbl mh">Print</span><button class="mi" data-act="print">A4 인쇄<small>PDF</small></button>');
 $('#sort').addEventListener('click',e=>{const b=e.target.closest('button');if(b){cfg.sort=b.dataset.s;save(CFG,cfg);render()}});
 $$('nav button').forEach(b=>b.addEventListener('click',()=>{view=b.dataset.v;cfg.lastView=view;save(CFG,cfg);render();scrollTo(0,0)}));
