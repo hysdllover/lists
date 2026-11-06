@@ -654,3 +654,15 @@ body[data-toast-pos=top] .toast.on{animation:tin3 .2s ease-out}
 .dnav[hidden]{display:none}
 .dnav .ibtn{font-size:1.2rem;font-weight:200;width:1.8rem}
 .days .dh{cursor:pointer}
+
+/* ===== v22: compact undated box at the bottom of WEEK / TODAY ===== */
+#plan,#fPlan{position:static;max-height:none;overflow:visible;border:0;background:none;padding:0;margin:var(--s5) 0 0}
+#plan .ph,#fPlan .ph{justify-content:flex-start;gap:var(--s2);padding-bottom:var(--s1);border-bottom:1px solid var(--hair);margin-bottom:0}
+.planHead .cv{margin-left:var(--s1)}
+.uchips{display:flex;flex-wrap:wrap;align-items:center;gap:.35rem;margin-top:var(--s2)}
+.plan.folded .uchips{display:none}
+.uc.wi{display:inline-block;max-width:100%;padding:.16rem .55rem;border:1px solid var(--line);background:var(--surface);font-size:var(--t-sub);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.uc.wi[style*="--ul"]{box-shadow:inset 2px 0 0 var(--ul)}
+.uc.wi.ustar::before{content:"★ ";color:var(--accent);font-size:.8em}
+.uc.more{padding:.16rem .4rem;font-size:var(--t-lbl);color:var(--sub);font-family:var(--mono)}
+.uadd{flex:1;min-width:7rem;font-size:var(--t-sub);padding:.16rem 0}

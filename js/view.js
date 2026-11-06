@@ -103,7 +103,7 @@ function wiHTML(t,s){
   const tm=t.time&&(!t.end||s===t.date)?`<span class="tm">${fmtT(t.time)}${t.tend?'–'+fmtT(t.tend):''}</span>`:'';
   return `<div class="wi${t.done?' done':''}${t.state==='hold'?' hold':''}${span}${fresh(t)}" data-id="${t.id}">${chkHTML(t)}<div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${tm}${txHTML(t)}${t.repeat?` <span class="rep">↻</span>`:''}</span>${t.memo&&on('rMemo')?`<div class="memo">${md(on('memo')?t.memo:t.memo.split('\n')[0])}</div>`:''}${plcHTML(t)}${t.note&&noteGet(t.note)?`<button class="nlink" data-a="note">${ICON.note}${esc(noteTitle(noteGet(t.note)))}</button>`:''}</div></div>`;
 }
-const isDayAdd=el=>!!(el&&el.classList&&el.classList.contains('dayadd'));
+const isDayAdd=el=>!!(el&&el.classList&&(el.classList.contains('dayadd')||el.classList.contains('uadd')));
 function dhHTML(d,s,ts,H){
   const h=on('hHol')&&H[s];
   return `<div class="dh"><span class="lbl">${dowL(d)}</span><span class="d num">${pz(d.getDate())}</span>${h?`<span class="hn">${esc(H[s])}</span>`:''}${on('hEv')?evOn(s).map(x=>`<span class="hn ev">${esc(x)}</span>`).join(''):''}${notesOn(s).map(noteTag).join('')}${on('hCnt')?`<span class="n num">${ts.length?ts.filter(t=>t.done).length+'/'+ts.length:''}</span>`:''}</div>`;
@@ -119,9 +119,8 @@ function renderWeek(){
   $('#rng').textContent=st==='en'?`${MONS[a.getMonth()]} ${a.getDate()} — ${a.getMonth()!==b.getMonth()?MONS[b.getMonth()]+' ':''}${b.getDate()}`:st==='ko'?`${a.getDate()}일 — ${b.getDate()}일`:`${pz(a.getDate())} — ${pz(b.getDate())}`;
   const wk=ymd(a), n=$('#wNote'); n.dataset.w=wk; if(ae!==n){n.value=(db.notes[wk]||[''])[0];grow(n);$('#wNoteV').innerHTML=md(n.value);$('.dnote').classList.toggle('reading',!!n.value.trim())}
   if(ae!==$('#fxAdd'))renderFix();
-  const un=sorted(L.filter(t=>!t.date&&!t.done&&t.state!=='hold'));
-  $('.dnote').hidden=!on('wNoteShow');$('#plan').classList.toggle('folded',!!cfg.planFold);
-  $('#plan').innerHTML=`<button class="ph${cfg.planFold?' folded':''}" id="planHead"><span class="lbl">No date · ${un.length}</span><span class="hint lbl">${cfg.planFold?'':un.length?'Tap a task to set a day':''}</span><i class="cv"></i></button><div class="pl">${un.map(t=>wiHTML(t)).join('')}</div><div class="dadd"><textarea class="dayadd" rows="1" placeholder="+ 날짜 없이 추가" data-d=""></textarea><button class="dbtn" data-d="">ADD</button></div>`;
+  $('.dnote').hidden=!on('wNoteShow');
+  renderPlan($('#plan'));
   $('#days').innerHTML=days.map(d=>{
     const s=ymd(d), ts=weekSort(tasksOn(L,s)), h=H[s];
     const cls=['day',s===td&&'today',s<td&&'past',(d.getDay()===0||h)&&'sun',!ts.length&&s!==td&&'empty'].filter(Boolean).join(' ');
@@ -130,6 +129,15 @@ function renderWeek(){
       <div class="dadd"><textarea class="dayadd" rows="1" placeholder="+" data-d="${s}"></textarea><button class="dbtn" data-d="${s}">ADD</button></div>
     </div></div>`}).join('');
   for(const d in keep){const i=$(`.dayadd[data-d="${d}"]`);if(i){i.value=keep[d];grow(i)}}
+}
+/* compact undated tasks box (WEEK / TODAY bottom) */
+function renderPlan(el){
+  if(!el)return;
+  const un=sorted(live().filter(t=>!t.date&&!t.done&&t.state!=='hold')), fold=!!cfg.planFold, max=cfg.planAll?1e9:8, vis=un.slice(0,max);
+  const old=el.querySelector('.uadd'), keep=old?old.value:'', focus=old&&document.activeElement===old;
+  el.classList.toggle('folded',fold);
+  el.innerHTML=`<button class="ph planHead"><span class="lbl">No date · ${un.length}</span><i class="cv"></i></button><div class="uchips">${vis.map(t=>`<span class="wi uc${t.star?' ustar':''}" data-id="${t.id}" data-a="edit"${t.cat?` style="--ul:${catColor(t.cat)}"`:''}>${esc(t.text.split('\n')[0])}</span>`).join('')}${un.length>max?`<button class="uc more" data-umore="1">+${un.length-max}</button>`:''}${cfg.planAll&&un.length>8?'<button class="uc more" data-umore="1">접기</button>':''}<input class="uadd" placeholder="+ 날짜 없이 추가" enterkeyhint="done" autocomplete="off"></div>`;
+  if(keep||focus){const n=el.querySelector('.uadd');n.value=keep;if(focus)n.focus()}
 }
 function renderFix(){
   const wk=ymd(weekStart(weekOff)), items=db.wfixT[0]||[];
@@ -188,6 +196,7 @@ function renderFocus(){
   $('#vFocus .fbar').hidden=!on('fBar');$('#fCount').hidden=!on('fBar');
   $('#wakeBtn').classList.toggle('on',!!cfg.wake);
   $('#ddFocus').innerHTML=['both','today'].includes(U('ddPos'))?ddStrip():'';
+  renderPlan($('#fPlan'));
   TC=on('tcol')&&[...ts,...late].some(t=>t.time);
   $('#fList').innerHTML=(ts.map(itemHTML).join('')||`<li class="empty">${isToday?'오늘 ':''}할 일이 없습니다</li>`)+(on('fLate')&&late.length?`<li class="sep lbl">Overdue · ${late.length}</li>`+late.map(itemHTML).join(''):'');TC=false;
 }

@@ -13,7 +13,7 @@ function onAction(e){
   const row=el.closest('[data-id]'); const t=row&&find(row.dataset.id); if(!t)return;
   if(el.dataset.a==='chk'&&e.type==='click')toggleDone(t);
   else if(el.dataset.a==='star'&&e.type==='click')touch(t,{star:!t.star});
-  else if(el.dataset.a==='edit'&&e.type==='click'){if(row.closest('#plan'))quickDay(row,t);else openEdit(t.id)}
+  else if(el.dataset.a==='edit'&&e.type==='click'){if(row.closest('.plan'))quickDay(row,t);else openEdit(t.id)}
   else if(el.dataset.a==='date'&&e.type==='change'){snap('날짜 변경됨');const p={date:el.value||''};if(t.end&&t.date&&p.date)p.end=addDays(p.date,dayDiff(t.date,t.end));if(!p.date)p.end=undefined;touch(t,p);toast()}
   else if(el.dataset.a==='pickdate'&&e.type==='click')openDate(el,t.date,v=>{snap('날짜 변경됨');const p={date:v||''};if(t.end&&t.date&&p.date)p.end=addDays(p.date,dayDiff(t.date,t.end));if(!p.date)p.end=undefined;touch(t,p);toast()});
   else if(el.dataset.a==='note'&&e.type==='click'&&t.note)openNote(t.note);
@@ -299,8 +299,8 @@ addEventListener('scroll',()=>{const s=scrollY>110;if(s!==document.body.classLis
 let closeAndDone=false;
 /* ---------- quick day chips for undated tasks (K2) ---------- */
 function quickDay(row,t){
-  const ds=weekDays(weekOff), td=todayS();
-  showPv(row,'<span class="lbl">Set a day</span><div class="qd">'+ds.map(d=>{const s=ymd(d);return `<button class="${s===td?'today':''}${d.getDay()===0?' red':''}" data-qd="${s}"><span class="lbl">${U('dow')==='ko'?DOW[d.getDay()]:DOWE[d.getDay()]}</span><b class="num">${pz(d.getDate())}</b></button>`}).join('')+'</div><div class="qdx"><button class="tbtn" data-qd="'+addDays(ymd(ds[0]),7)+'">다음 주</button><button class="tbtn" data-qpick="1">날짜 선택</button><button class="tbtn" data-qedit="1">편집</button></div>');
+  const ds=weekDays(view==='week'?weekOff:0), td=todayS();
+  showPv(row,'<span class="lbl">Set a day</span><div class="qd">'+ds.map(d=>{const s=ymd(d);return `<button class="${s===td?'today':''}${d.getDay()===0?' red':''}" data-qd="${s}"><span class="lbl">${U('dow')==='ko'?DOW[d.getDay()]:DOWE[d.getDay()]}</span><b class="num">${pz(d.getDate())}</b></button>`}).join('')+'</div><div class="qdx"><button class="tbtn" data-qd="'+addDays(ymd(ds[0]),7)+'">다음 주</button><button class="tbtn" data-qpick="1">날짜 선택</button><button class="tbtn" data-qdone="1">완료</button><button class="tbtn" data-qedit="1">편집</button></div>');
   quickT=t;
 }
 let quickT=null;
@@ -308,9 +308,14 @@ $('#pv').addEventListener('click',e=>{
   if(!quickT)return;const t=quickT;
   const d=e.target.closest('[data-qd]');if(d){hidePv();quickT=null;snap('날짜 지정됨');touch(t,{date:d.dataset.qd});toast();return}
   if(e.target.closest('[data-qedit]')){hidePv();quickT=null;openEdit(t.id);return}
+  if(e.target.closest('[data-qdone]')){hidePv();quickT=null;snap('완료됨');touch(t,{done:true});toast();return}
   const pk2=e.target.closest('[data-qpick]');if(pk2){const anchor=pk2;openDate(anchor,'',v=>{hidePv();quickT=null;if(v){snap('날짜 지정됨');touch(t,{date:v});toast()}})}
 });
-$('#plan').addEventListener('click',e=>{if(e.target.closest('#planHead')){cfg.planFold=!cfg.planFold;save(CFG,cfg);forceWeek=true;renderWeek()}});
+['#plan','#fPlan'].forEach(s=>{const box=$(s);
+  box.addEventListener('click',e=>{
+    if(e.target.closest('.planHead')){cfg.planFold=!cfg.planFold;save(CFG,cfg);forceWeek=true;render();return}
+    if(e.target.closest('[data-umore]')){cfg.planAll=!cfg.planAll;save(CFG,cfg);forceWeek=true;render()}});
+  box.addEventListener('keydown',e=>{const i=e.target.closest('.uadd');if(!i||e.key!=='Enter'||e.isComposing)return;e.preventDefault();const v=i.value.trim();if(!v)return;i.value='';forceWeek=true;addTask(v,'','');const n=$(s+' .uadd');n&&n.focus()})});
 /* ---------- day view from week (K4) ---------- */
 $('#days').addEventListener('click',e=>{const h=e.target.closest('.dh');if(!h||e.target.closest('[data-note]'))return;dayMode=h.closest('.day').dataset.d;view='focus';render();scrollTo(0,0)});
 $('#dPrev').onclick=()=>{dayMode=addDays(dayMode,-1);render()};
