@@ -615,3 +615,42 @@ body.t12 .tcol{width:4.9em}
   .deck:not(:has(.dnote:not([hidden]))){grid-template-columns:minmax(0,1fr)}
 }
 #plan{position:static;max-height:none;overflow:visible;z-index:auto}
+
+/* ===== v21 ===== */
+::selection{background:color-mix(in srgb,var(--accent) 26%,transparent)}
+/* end-of-list room (6) */
+.view{padding-bottom:calc(var(--s5)*2.4)}
+/* task title size (K6) */
+.item .txt,.wi .txt{font-size:calc(1em*var(--tk,1))}
+/* progress (K5) */
+.chk.pg{background:linear-gradient(to top,var(--cc,var(--accent)) var(--pg),transparent var(--pg));border-color:var(--cc,var(--accent))}
+.pgv{font-family:var(--mono);font-size:var(--t-lbl);color:var(--accent)}
+/* check color / late color (K8, K9) */
+body[data-chk-color=gray] .chk.on,body[data-chk-color=gray] .pop .chk{background:var(--faint);border-color:var(--faint)}
+body[data-chk-color=gray] .chk.pg,body[data-chk-color=gray] .chk.doing{--cc:var(--faint)}
+body[data-late-color=gray] .date.late{color:var(--sub)}
+body[data-late-color=accent] .date.late{color:var(--accent)}
+/* tab size (K11) */
+@media (max-width:767px){body[data-tab-sz=s] nav button{padding:.75rem 0 .7rem;font-size:.58rem}body[data-tab-sz=s] main{padding-bottom:calc(3.6rem + var(--bot))}}
+/* toast position (3) */
+body[data-toast-pos=top] .toast{top:calc(3.8rem + var(--top));bottom:auto}
+body[data-toast-pos=top] .toast.on{animation:tin3 .2s ease-out}
+@keyframes tin3{from{opacity:0;transform:translate(-50%,-.6rem)}}
+/* undated box (K2, K3) */
+.ph{display:flex;width:100%;align-items:center;justify-content:space-between;gap:var(--s2);text-align:left}
+.ph .hint{margin-left:auto}
+.ph .cv{transform:rotate(45deg)}
+.plan.folded .ph .cv{transform:rotate(-45deg)}
+.plan.folded .pl,.plan.folded .dadd{display:none}
+.plan.folded .ph{margin-bottom:0}
+.qd{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin:var(--s2) 0}
+.qd button{display:flex;flex-direction:column;align-items:center;padding:var(--s2) 0;border:1px solid var(--hair)}
+.qd button b{font-weight:300;font-size:var(--t-body)}
+.qd button.today{border-color:var(--accent)}.qd button.today b{color:var(--accent)}
+.qd button.red .lbl{color:var(--danger)}
+.qdx{display:flex;gap:var(--s3);justify-content:flex-end}
+/* day mode (K4) */
+.dnav{display:flex;align-items:center;gap:var(--s3);margin:calc(-1*var(--s2)) 0 var(--s3)}
+.dnav[hidden]{display:none}
+.dnav .ibtn{font-size:1.2rem;font-weight:200;width:1.8rem}
+.days .dh{cursor:pointer}

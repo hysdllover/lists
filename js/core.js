@@ -23,12 +23,12 @@ const fmtD=s=>{const d=parse(s),st=U('dstyle');return st==='en'?`${MONS[d.getMon
 const bigD=d=>{const st=U('dstyle');return st==='en'?`${MONS[d.getMonth()]} ${d.getDate()}`:st==='ko'?`${d.getMonth()+1}월 ${d.getDate()}일`:`${pz(d.getMonth()+1)}.${pz(d.getDate())}`};
 const load=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
 const save=(k,v)=>{if(k===KEY){saveDb();return}try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
-const APP_VER=20;
+const APP_VER=21;
 
 let db=load(KEY,{tasks:[]});
 let cfg=Object.assign({syncInt:'1',noteOpen:'',sort:'date',fold:true,fs:14,theme:'light',split:1,token:'',gist:'',last:0,start:'list',secs:{Quick:true},gfold:{},wz:1},load(CFG,{}));
 cfg.device=cfg.device||((/iPad/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1))?'iPad':/iPhone/.test(navigator.userAgent)?'iPhone':'Browser');
-const UID={theme:'light',accent:'bluegray',paper:'none',paperPrint:'0',line:'1',dens:'normal',ls:'-0.005',lh:'1.6',dstyle:'dot',dow:'en',weekNo:'1',dday:'1',hol:'1',holX:'',memo:'0',doneBottom:'1',collapse:'1',dimPast:'1',corner:'1',sound:'1',tfmt:'24',zero:'1',ddPos:'both',fLate:'1',fBar:'1',lStat:'1',hCnt:'1',hHol:'1',hEv:'1',rDate:'1',rRep:'1',rMemo:'1',rPlace:'1',snd:'clear',appName:'WEEKLY',tabOrder:'list,week,month,focus,notes',tabHide:'',accentC:'#7489a2',eHide:'',catStyle:'ul',tcol:'1',bigSz:'m',wNoteShow:'0'};
+const UID={theme:'light',accent:'bluegray',paper:'none',paperPrint:'0',line:'1',dens:'normal',ls:'-0.005',lh:'1.6',dstyle:'dot',dow:'en',weekNo:'1',dday:'1',hol:'1',holX:'',memo:'0',doneBottom:'1',collapse:'1',dimPast:'1',corner:'1',sound:'1',tfmt:'24',zero:'1',ddPos:'both',fLate:'1',fBar:'1',lStat:'1',hCnt:'1',hHol:'1',hEv:'1',rDate:'1',rRep:'1',rMemo:'1',rPlace:'1',snd:'clear',appName:'WEEKLY',tabOrder:'list,week,month,focus,notes',tabHide:'',accentC:'#7489a2',eHide:'',catStyle:'ul',tcol:'1',bigSz:'m',wNoteShow:'0',preset:'default',taskFs:'m',chkColor:'cat',lateColor:'red',tabSz:'m',toastPos:'bottom',toastSec:'5'};
 function initDb(){db.tasks=db.tasks||[];db.colors=db.colors||{};db.notes=db.notes||{};db.notesP=db.notesP||{};db.events=db.events||{};db.wfixT=db.wfixT||[[],0];db.wprog=db.wprog||{};db.devices=db.devices||{};db.uiT=db.uiT||0;db.ui=Object.assign({},UID,!db.ui&&cfg.theme?{theme:cfg.theme}:{},db.ui||{})}
 initDb();
 const HOL={'2026-01-01':'신정','2026-02-16':'설날','2026-02-17':'설날','2026-02-18':'설날','2026-03-01':'삼일절','2026-03-02':'대체공휴일','2026-05-05':'어린이날','2026-05-24':'부처님오신날','2026-05-25':'대체공휴일','2026-06-03':'지방선거','2026-06-06':'현충일','2026-08-15':'광복절','2026-08-17':'대체공휴일','2026-09-24':'추석','2026-09-25':'추석','2026-09-26':'추석','2026-10-03':'개천절','2026-10-05':'대체공휴일','2026-10-09':'한글날','2026-12-25':'성탄절',
@@ -36,20 +36,21 @@ const HOL={'2026-01-01':'신정','2026-02-16':'설날','2026-02-17':'설날','20
 function holidays(){const m=U('hol')==='1'?{...HOL}:{};for(const l of (U('holX')||'').split('\n')){const r=l.trim().match(/^(\d{4}-\d{2}-\d{2})\s*(.*)$/);if(r)m[r[1]]=r[2]||'휴일'}return m}
 function isoWeek(d){const t=new Date(d.getFullYear(),d.getMonth(),d.getDate()+(d.getDay()===0?1:0));t.setDate(t.getDate()-((t.getDay()+6)%7)+3);const j=new Date(t.getFullYear(),0,4);return 1+Math.round(((t-j)/864e5-3+((j.getDay()+6)%7))/7)}
 let eRep='', eStar=false;
+let dayMode=null;
 let view='list', weekOff=0, editId=null, addDate='', addTime='', rangeTxt='';
 
 const live=()=>db.tasks.filter(t=>!t.deleted);
 const find=id=>db.tasks.find(t=>t.id===id);
 function commit(){save(KEY,db);render();queueSync()}
-const F=['text','done','memo','cat','date','time','repeat','star','order','spawned','deleted','state','end','tend','dord','gone','place','note'];
+const F=['text','done','memo','cat','date','time','repeat','star','order','spawned','deleted','state','end','tend','dord','gone','place','note','prog'];
 function setF(t,p,ts){t.u=t.u||{};t.by=cfg.device;for(const k in p){if(JSON.stringify(t[k])===JSON.stringify(p[k]))continue;if(p[k]===undefined)delete t[k];else t[k]=p[k];t.u[k]=ts}t.updated=ts}
 function touch(t,p){setF(t,p,now());commit()}
 /* undo */
 let undoBuf=null,toastT=null;
 function snap(label){undoBuf={label,tasks:JSON.parse(JSON.stringify(db.tasks))}}
 let noticeFn=null;
-function notice(msg,label,fn){undoBuf=null;noticeFn=fn||null;$('#toastTxt').textContent=msg;$('#undoBtn').textContent=label||'';$('#undoBtn').hidden=!label;$('#toast').classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>{$('#toast').classList.remove('on');$('#undoBtn').hidden=false},4500)}
-function toast(){if(!undoBuf)return;noticeFn=null;$('#undoBtn').textContent='되돌리기';$('#undoBtn').hidden=false;$('#toastTxt').textContent=undoBuf.label;$('#toast').classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>{$('#toast').classList.remove('on');undoBuf=null},5000)}
+function notice(msg,label,fn){undoBuf=null;noticeFn=fn||null;$('#toastTxt').textContent=msg;$('#undoBtn').textContent=label||'';$('#undoBtn').hidden=!label;$('#toast').classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>{$('#toast').classList.remove('on');$('#undoBtn').hidden=false},(+U('toastSec')||5)*1000)}
+function toast(){if(!undoBuf)return;noticeFn=null;$('#undoBtn').textContent='되돌리기';$('#undoBtn').hidden=false;$('#toastTxt').textContent=undoBuf.label;$('#toast').classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>{$('#toast').classList.remove('on');undoBuf=null},(+U('toastSec')||5)*1000)}
 function undo(){
   if(!undoBuf)return;const ts=now(),old=new Map(undoBuf.tasks.map(t=>[t.id,t]));
   for(const t of db.tasks){const o=old.get(t.id);
@@ -112,7 +113,7 @@ const tagHTML=c=>c?`<span class="tag"><i style="background:${catColor(c)}"></i>$
 /* helpers v11 */
 const fmtTs=ts=>{const d=new Date(ts);return `${ymd(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`};
 const md=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>').replace(/^[-*] /gm,'• ');
-const ccStyle=t=>t.cat?` style="--cc:${catColor(t.cat)}"`:'';
+const ccStyle=t=>{const s=[];if(t.cat&&U('chkColor')==='cat')s.push(`--cc:${catColor(t.cat)}`);if(t.prog&&!t.done)s.push(`--pg:${t.prog}%`);return s.length?` style="${s.join(';')}"`:''};
 let actx=null;
 function tick(kind){
   if(U('sound')!=='1')return;
@@ -160,6 +161,7 @@ addEventListener('pagehide',()=>flushDb());
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushDb()});
 /* changes (K9, K10) */
 const CHANGES={
+ 21:'날짜 없는 할 일 요일 칩 · 날짜 없는 칸 접기 · 하루 크게 보기 · 진행률 · 테마 묶음 · 할 일 글자 크기 · 체크·지난 일 색 · 하단 탭 크기 · 알림 위치·시간 · 상단 문구 정리',
  20:'날짜 없는 할 일 칸이 스크롤을 따라오지 않도록 변경',
  19:'주간 화면 맨 위에 날짜 없는 할 일 칸 · 칸에서 바로 추가 · 주간 메모는 설정에서 표시',
  18:'동기화 호출 절약 · 바뀐 것만 확인 · 바뀐 파일만 올리기 · 남은 API 호출 표시',

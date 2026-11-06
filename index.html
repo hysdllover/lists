@@ -99,6 +99,7 @@
       <div class="hl"><span class="lbl" id="fDay"></span><div class="big num" id="fDate"></div></div>
       <div class="hr stat num"><div><b id="fDone">0</b><span class="lbl">Done</span></div><div><b id="fAll">0</b><span class="lbl">Today</span></div></div>
     </div>
+    <div class="dnav" id="dnav" hidden><button class="ibtn" id="dPrev" aria-label="전날">‹</button><button class="tbtn" id="dBack">WEEK로</button><button class="ibtn" id="dNext" aria-label="다음 날">›</button></div>
     <div class="fbar"><i id="fProg"></i></div>
     <div class="fmeta"><span class="lbl num" id="fCount"></span><button class="tbtn" id="wakeBtn" hidden>KEEP AWAKE</button></div>
     <div class="ddays" id="ddFocus"></div>
@@ -154,6 +155,7 @@
       <div class="field"><span>상태</span><div class="seg"><button data-eh="state" data-h="0">표시</button><button data-eh="state" data-h="1">숨김</button></div></div>
       <div class="field"><span>장소</span><div class="seg"><button data-eh="place" data-h="0">표시</button><button data-eh="place" data-h="1">숨김</button></div></div>
       <div class="field"><span>노트</span><div class="seg"><button data-eh="note" data-h="0">표시</button><button data-eh="note" data-h="1">숨김</button></div></div>
+      <div class="field"><span>진행률</span><div class="seg"><button data-eh="prog" data-h="0">표시</button><button data-eh="prog" data-h="1">숨김</button></div></div>
       <p class="note">숨긴 칸은 값이 들어 있는 할 일에서만 나타나요.</p>
     </div>
     <div class="sec" data-sec="Display" data-grp="style">
@@ -161,6 +163,8 @@
       <div class="field"><span>글자 크기</span><div class="size"><span class="a1">A</span><input type="range" id="fsr" min="11" max="19" step="0.5"><span class="a2">A</span><span class="val" id="fsv"></span></div></div>
       <div class="field"><span>자간</span><div class="size"><input type="range" data-k="ls" min="-0.04" max="0.1" step="0.005"><span class="val" data-val="ls"></span></div></div>
       <div class="field"><span>줄 간격</span><div class="size"><input type="range" data-k="lh" min="1.3" max="2.1" step="0.05"><span class="val" data-val="lh"></span></div></div>
+      <div class="field"><span>테마 묶음</span><div class="seg" data-preset="1"><button data-v="default">블루그레이</button><button data-v="sage">세이지</button><button data-v="warm">웜그레이</button><button data-v="mono">모노</button></div></div>
+      <div class="field"><span>할 일 글자</span><div class="seg" data-k="taskFs"><button data-v="s">작게</button><button data-v="m">보통</button><button data-v="l">크게</button></div></div>
       <div class="field"><span>큰 날짜</span><div class="seg" data-k="bigSz"><button data-v="s">작게</button><button data-v="m">보통</button><button data-v="l">크게</button></div></div>
       <div class="field"><span>선</span><div class="seg" data-k="line"><button data-v="0">아주 옅게</button><button data-v="1">옅게</button><button data-v="2">보통</button><button data-v="3">진하게</button></div></div>
       <div class="field"><span>종이 배경</span><div class="seg" data-k="paper"><button data-v="none">없음</button><button data-v="grid">모눈</button><button data-v="lined">줄</button><button data-v="dot">점</button></div></div>
@@ -187,6 +191,14 @@
       <div class="field"><span>지난 날</span><div class="seg" data-k="dimPast"><button data-v="1">흐리게</button><button data-v="0">그대로</button></div></div>
       <div class="field"><span>모서리 표시</span><div class="seg" data-k="corner"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
       <p class="note">화면 설정은 Gist로 기기 간 동기화됩니다. 글자 크기, 분할 화면, 업로드한 폰트는 기기마다 따로 저장됩니다.</p>
+    </div>
+    <div class="sec" data-sec="Detail" data-grp="style">
+      <button class="sh"><span class="lbl">Detail</span><i class="cv"></i></button>
+      <div class="field"><span>체크 색</span><div class="seg" data-k="chkColor"><button data-v="cat">분류 색</button><button data-v="accent">강조색</button><button data-v="gray">회색</button></div></div>
+      <div class="field"><span>지난 일 색</span><div class="seg" data-k="lateColor"><button data-v="red">붉은 톤</button><button data-v="gray">회색</button><button data-v="accent">강조색</button></div></div>
+      <div class="field"><span>하단 탭</span><div class="seg" data-k="tabSz"><button data-v="s">작게</button><button data-v="m">보통</button></div></div>
+      <div class="field"><span>알림 위치</span><div class="seg" data-k="toastPos"><button data-v="bottom">아래</button><button data-v="top">위</button></div></div>
+      <div class="field"><span>알림 시간</span><div class="seg" data-k="toastSec"><button data-v="3">3초</button><button data-v="5">5초</button><button data-v="8">8초</button></div></div>
     </div>
     <div class="sec" data-sec="Items" data-grp="style">
       <button class="sh"><span class="lbl">Items</span><i class="cv"></i></button>
@@ -294,6 +306,7 @@
     <div class="eg lbl" data-eg="m">More</div>
     <div data-g="m" data-ef="state" class="field"><span>상태</span><div class="seg" id="eState"><button data-s="">할 일</button><button data-s="doing">진행 중</button><button data-s="hold">보류</button></div></div>
     <div data-g="m" data-ef="place" class="field"><span>장소</span><input type="text" id="ePlace" placeholder="없음" autocomplete="off"></div>
+    <div data-g="m" data-ef="prog" class="field"><span>진행률</span><div class="seg" id="eProg"><button data-p="">없음</button><button data-p="25">25%</button><button data-p="50">50%</button><button data-p="75">75%</button><button data-p="100">100%</button></div></div>
     <div data-g="m" data-ef="note" class="field"><span>노트</span><button class="tbtn nsel" id="eNote">연결</button></div>
     <div class="row"><button class="tbtn del" id="eDel">삭제</button><button class="btn pri" id="eClose">완료</button></div>
     <p class="einfo num" id="eInfo"></p>

@@ -13,7 +13,7 @@ function onAction(e){
   const row=el.closest('[data-id]'); const t=row&&find(row.dataset.id); if(!t)return;
   if(el.dataset.a==='chk'&&e.type==='click')toggleDone(t);
   else if(el.dataset.a==='star'&&e.type==='click')touch(t,{star:!t.star});
-  else if(el.dataset.a==='edit'&&e.type==='click')openEdit(t.id);
+  else if(el.dataset.a==='edit'&&e.type==='click'){if(row.closest('#plan'))quickDay(row,t);else openEdit(t.id)}
   else if(el.dataset.a==='date'&&e.type==='change'){snap('날짜 변경됨');const p={date:el.value||''};if(t.end&&t.date&&p.date)p.end=addDays(p.date,dayDiff(t.date,t.end));if(!p.date)p.end=undefined;touch(t,p);toast()}
   else if(el.dataset.a==='pickdate'&&e.type==='click')openDate(el,t.date,v=>{snap('날짜 변경됨');const p={date:v||''};if(t.end&&t.date&&p.date)p.end=addDays(p.date,dayDiff(t.date,t.end));if(!p.date)p.end=undefined;touch(t,p);toast()});
   else if(el.dataset.a==='note'&&e.type==='click'&&t.note)openNote(t.note);
@@ -49,12 +49,12 @@ mq.addEventListener&&mq.addEventListener('change',()=>render());
 document.addEventListener('focusout',e=>{if(isDayAdd(e.target))setTimeout(()=>{if(weekDirty&&!isDayAdd(document.activeElement)&&!drag)renderWeek()},300)});
 let noteT=null;
 $('#wNote').addEventListener('input',e=>{const n=e.target,w=n.dataset.w;clearTimeout(noteT);noteT=setTimeout(()=>{db.notes[w]=[n.value,now()];save(KEY,db);queueSync()},500)});
-function submitFocus(){const a=$('#fAdd');if(!a.value.trim())return;addTask(a.value,todayS(),'');a.value='';grow(a)}
+function submitFocus(){const a=$('#fAdd');if(!a.value.trim())return;addTask(a.value,dayMode||todayS(),'');a.value='';grow(a)}
 $('#fBtn').onclick=submitFocus;
 $('#fAdd').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&!e.isComposing){e.preventDefault();submitFocus()}});
 $('#moreBtn').onclick=e=>showPv(e.currentTarget,'<span class="lbl">Save image</span>'+['long','45','11','wall'].map(r=>`<button class="mi" data-img="${r}">${{long:'전체 길이',45:'세로 4:5',11:'정사각형 1:1',wall:'아이폰 배경화면'}[r]}<small>${{long:'AUTO',45:'1080×1350',11:'1080×1080',wall:'9:19.5'}[r]}</small></button>`).join('')+'<span class="lbl mh">Print</span><button class="mi" data-act="print">A4 인쇄<small>PDF</small></button>');
 $('#sort').addEventListener('click',e=>{const b=e.target.closest('button');if(b){cfg.sort=b.dataset.s;save(CFG,cfg);render()}});
-$$('nav button').forEach(b=>b.addEventListener('click',()=>{view=b.dataset.v;cfg.lastView=view;save(CFG,cfg);render();scrollTo(0,0)}));
+$$('nav button').forEach(b=>b.addEventListener('click',()=>{dayMode=null;view=b.dataset.v;cfg.lastView=view;save(CFG,cfg);render();scrollTo(0,0)}));
 $('#prev').onclick=()=>{weekOff--;render()};$('#next').onclick=()=>{weekOff++;render()};$('#today').onclick=()=>{weekOff=0;render()};
 $('#setBtn').onclick=()=>{view='set';render();scrollTo(0,0)};
 addEventListener('beforeprint',renderPrint);
@@ -129,8 +129,8 @@ function endDrag(cancel){
 function openEdit(id){
   const t=find(id); editId=id;
   $('#eTxt').value=t.text;$('#eMemo').value=t.memo||'';$('#eCat').value=t.cat||'';$('#ePlace').value=t.place||'';paintCats();$('#eInfo').textContent=`LAST EDIT · ${t.by||'—'} · ${fmtTs(t.updated||t.created)}`;setDP($('#eDate'),t.date);setTP($('#eTime'),t.time);setDP($('#eEnd'),t.end);setTP($('#eTend'),t.tend);eNoteV=t.note||'';paintENote();eState=t.state||'';
-  eRep=t.repeat||'';eStar=!!t.star;paintEdit();
-  {const hid=(U('eHide')||'').split(','),has={memo:t.memo,cat:t.cat,end:t.end,time:t.time,repeat:t.repeat,state:t.state,place:t.place,note:t.note};
+  eRep=t.repeat||'';eStar=!!t.star;paintEdit();eProg=t.prog?String(t.prog):'';paintProg();
+  {const hid=(U('eHide')||'').split(','),has={prog:t.prog,memo:t.memo,cat:t.cat,end:t.end,time:t.time,repeat:t.repeat,state:t.state,place:t.place,note:t.note};
    $$('#sheet [data-ef]').forEach(r=>{r.hidden=hid.includes(r.dataset.ef)&&!has[r.dataset.ef]});
    $$('#sheet .eg').forEach(g=>{g.hidden=$$(`#sheet [data-g="${g.dataset.eg}"]`).every(r=>r.hidden)})}
   $('#back').classList.add('on');requestAnimationFrame(()=>grow($('#eTxt')));
@@ -138,12 +138,14 @@ function openEdit(id){
 function closeEdit(){
   const t=find(editId); editId=null; $('#back').classList.remove('on');
   if(!t)return;
-  const p={text:$('#eTxt').value.trim()||t.text,memo:$('#eMemo').value,cat:$('#eCat').value.trim(),date:getV('#eDate'),time:getV('#eTime'),repeat:eRep||undefined,star:eStar||undefined,state:eState||undefined,place:$('#ePlace').value.trim()||undefined,note:noteGet(eNoteV)?eNoteV:undefined};
+  const p={text:$('#eTxt').value.trim()||t.text,memo:$('#eMemo').value,cat:$('#eCat').value.trim(),date:getV('#eDate'),time:getV('#eTime'),repeat:eRep||undefined,star:eStar||undefined,state:eState||undefined,prog:eProg&&eProg!=='100'?+eProg:undefined,place:$('#ePlace').value.trim()||undefined,note:noteGet(eNoteV)?eNoteV:undefined};
   const en=getV('#eEnd');p.end=en&&p.date&&en>p.date?en:undefined;const te=getV('#eTend');p.tend=te&&p.time&&te>p.time?te:undefined;
   if(p.repeat&&!p.date)p.date=todayS();
+  if(eProg==='100'&&!t.done){closeAndDone=true}
   const nv=v=>v===false||v===undefined||v===''?'':JSON.stringify(v);
-  if(!Object.keys(p).some(k=>nv(p[k])!==nv(t[k])))return;
+  if(!Object.keys(p).some(k=>nv(p[k])!==nv(t[k]))&&!closeAndDone)return;
   snap(p.date!==(t.date||'')&&t.date?'날짜 변경됨':'수정됨');touch(t,p);toast();
+  if(closeAndDone){closeAndDone=false;toggleDone(t)}
 }
 $('#eClose').onclick=closeEdit;
 $('#back').addEventListener('click',e=>{if(e.target.id==='back')closeEdit()});
@@ -152,6 +154,8 @@ $('#eState').addEventListener('click',e=>{const b=e.target.closest('button');if(
 function paintEdit(){$$('#eState button').forEach(b=>b.classList.toggle('on',b.dataset.s===eState));$$('#eRep button').forEach(b=>b.classList.toggle('on',b.dataset.r===eRep));$('#eStar').classList.toggle('on',eStar)}
 $('#eRep').addEventListener('click',e=>{const b=e.target.closest('button');if(b){eRep=b.dataset.r;paintEdit()}});
 $('#eStar').onclick=()=>{eStar=!eStar;paintEdit()};
+let eProg='';$('#eProg').addEventListener('click',e=>{const b=e.target.closest('button');if(b){eProg=b.dataset.p;paintProg()}});
+function paintProg(){$$('#eProg button').forEach(b=>b.classList.toggle('on',b.dataset.p===String(eProg)))}
 $('#eNoDate').onclick=()=>{setDP($('#eDate'),'');setDP($('#eEnd'),'')};$('#eNoTime').onclick=()=>{setTP($('#eTime'),'');setTP($('#eTend'),'')};$('#eNoEnd').onclick=()=>{setDP($('#eEnd'),'')};
 $('#eDel').onclick=()=>{const t=find(editId);editId=null;$('#back').classList.remove('on');if(t)collapse($$(`[data-id="${t.id}"]`),()=>{snap('삭제됨');touch(t,{deleted:true});toast()})};
 $('#undoBtn').onclick=()=>{if(noticeFn){const f=noticeFn;noticeFn=null;$('#toast').classList.remove('on');f()}else undo()};
@@ -291,3 +295,27 @@ $('#hardReload').onclick=async()=>{
 };
 /* ---------- collapsing header (K15) ---------- */
 addEventListener('scroll',()=>{const s=scrollY>110;if(s!==document.body.classList.contains('scrolled')){document.body.classList.toggle('scrolled',s);setMini()}},{passive:true});
+
+let closeAndDone=false;
+/* ---------- quick day chips for undated tasks (K2) ---------- */
+function quickDay(row,t){
+  const ds=weekDays(weekOff), td=todayS();
+  showPv(row,'<span class="lbl">Set a day</span><div class="qd">'+ds.map(d=>{const s=ymd(d);return `<button class="${s===td?'today':''}${d.getDay()===0?' red':''}" data-qd="${s}"><span class="lbl">${U('dow')==='ko'?DOW[d.getDay()]:DOWE[d.getDay()]}</span><b class="num">${pz(d.getDate())}</b></button>`}).join('')+'</div><div class="qdx"><button class="tbtn" data-qd="'+addDays(ymd(ds[0]),7)+'">다음 주</button><button class="tbtn" data-qpick="1">날짜 선택</button><button class="tbtn" data-qedit="1">편집</button></div>');
+  quickT=t;
+}
+let quickT=null;
+$('#pv').addEventListener('click',e=>{
+  if(!quickT)return;const t=quickT;
+  const d=e.target.closest('[data-qd]');if(d){hidePv();quickT=null;snap('날짜 지정됨');touch(t,{date:d.dataset.qd});toast();return}
+  if(e.target.closest('[data-qedit]')){hidePv();quickT=null;openEdit(t.id);return}
+  const pk2=e.target.closest('[data-qpick]');if(pk2){const anchor=pk2;openDate(anchor,'',v=>{hidePv();quickT=null;if(v){snap('날짜 지정됨');touch(t,{date:v});toast()}})}
+});
+$('#plan').addEventListener('click',e=>{if(e.target.closest('#planHead')){cfg.planFold=!cfg.planFold;save(CFG,cfg);forceWeek=true;renderWeek()}});
+/* ---------- day view from week (K4) ---------- */
+$('#days').addEventListener('click',e=>{const h=e.target.closest('.dh');if(!h||e.target.closest('[data-note]'))return;dayMode=h.closest('.day').dataset.d;view='focus';render();scrollTo(0,0)});
+$('#dPrev').onclick=()=>{dayMode=addDays(dayMode,-1);render()};
+$('#dNext').onclick=()=>{dayMode=addDays(dayMode,1);render()};
+$('#dBack').onclick=()=>{const d=dayMode;dayMode=null;view='week';weekOff=Math.round((weekStart(0)-parse(d))/-(7*864e5))-(parse(d).getDay()<0?1:0);weekOff=Math.floor((parse(d)-weekStart(0))/(7*864e5));render()};
+/* preset (K7) */
+$('#vSet').addEventListener('click',e=>{const b=e.target.closest('[data-preset] button');if(!b)return;const k=b.dataset.v,P=PRESET[k];
+  if(P){db.ui.accent=P.accent;if(P.accentC)db.ui.accentC=P.accentC}else db.ui.accent='bluegray';setUI('preset',k)});
