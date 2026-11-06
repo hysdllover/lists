@@ -51,10 +51,15 @@ function merge(a,b){
 function mergeColors(a,b){const r={...a};for(const k in b)if(!r[k]||b[k][1]>r[k][1])r[k]=b[k];return r}
 const ready=()=>!!cfg.token;
 function setStatus(cls,txt){$('#dot').className='dot '+cls;$('#syncTxt').textContent=txt}
-async function gh(method,path,body){
-  const r=await fetch('https://api.github.com'+path,{method,cache:'no-store',headers:{Authorization:`token ${cfg.token}`,Accept:'application/vnd.github+json',...(body?{'Content-Type':'application/json'}:{})},body:body&&JSON.stringify(body)});
+let apiLeft='';
+async function ghx(method,path,body,etag){
+  const r=await fetch('https://api.github.com'+path,{method,cache:'no-store',headers:{Authorization:`token ${cfg.token}`,Accept:'application/vnd.github+json',...(etag?{'If-None-Match':etag}:{}),...(body?{'Content-Type':'application/json'}:{})},body:body&&JSON.stringify(body)});
+  const rl=r.headers.get('x-ratelimit-remaining');if(rl)apiLeft=rl;
+  if(r.status===304)return {status:304};
   if(!r.ok){const e=new Error(r.status===401?'토큰 오류':r.status===403?'권한(gist) 확인':r.status===404?'Gist 없음':'HTTP '+r.status);e.status=r.status;throw e}
-  return r.json();
+  return {status:r.status,json:await r.json(),etag:r.headers.get('etag')||''};
+}
+async function gh(method,path,body){return (await ghx(method,path,body)).json
 }
 async function findGist(){
   for(let p=1;p<=10;p++){
@@ -76,7 +81,15 @@ async function readGist(g){
 }
 let syncing=false, again=false, timer=null;
 let lastErr='', dirty=false, retryN=0, retryT=null, tokWarned=false;
-function queueSync(){if(!ready())return;dirty=true;if(cfg.syncInt==='0'){setStatus('busy','PENDING');return}clearTimeout(timer);timer=setTimeout(sync,1200)}
+function queueSync(){if(!ready())return;dirty=true;if(cfg.syncInt==='0'){setStatus('busy','PENDING');return}clearTimeout(timer);timer=setTimeout(sync,2500)}
+/* change detection: send only what changed, ask GitHub "changed since?" first */
+const kv2=o=>Object.keys(o||{}).sort().map(k=>[k,o[k]]);
+const sigMainOf=o=>JSON.stringify([o.tasks.map(norm).sort((p,q)=>p.id<q.id?-1:1),kv2(o.colors),kv2(o.notes),o.ui?kv2(o.ui):null,o.uiT||0,o.wfixT,kv2(o.wprog),kv2(o.events)]);
+const sigNotesOf=o=>JSON.stringify(kv2(o.notesP));
+const h32=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)+'.'+s.length.toString(36)};
+const mainPayload=o=>({tasks:o.tasks.map(norm),colors:o.colors,notes:o.notes,ui:o.ui,uiT:o.uiT,wfixT:o.wfixT,wprog:o.wprog,events:o.events,devices:o.devices});
+function syncOk(){cfg.last=now();save(CFG,cfg);dirty=false;lastErr='';retryN=0;tokWarned=false;
+  const d=new Date(cfg.last);setStatus('ok',`${pad(d.getHours())}:${pad(d.getMinutes())}`);$('#gLast').textContent=`LAST SYNC ${ymd(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`}
 function openSyncSettings(){view='set';cfg.setTab='data';cfg.secs=cfg.secs||{};cfg.secs['Gist Sync']=true;save(CFG,cfg);render();setTimeout(()=>{const s=$('[data-sec="Gist Sync"]');s&&s.scrollIntoView({block:'start'})},60)}
 async function sync(){
   if(!ready()){setStatus('','LOCAL');return}
@@ -84,10 +97,19 @@ async function sync(){
   syncing=true;setStatus('busy','SYNC');clearTimeout(retryT);
   try{
     if(!cfg.gist){cfg.gist=await findGist();save(CFG,cfg);fillCfg()}
-    let g;
-    try{g=await gh('GET',`/gists/${cfg.gist}`)}
-    catch(e){if(e.status!==404)throw e;cfg.gist=await findGist();save(CFG,cfg);fillCfg();g=await gh('GET',`/gists/${cfg.gist}`)}
-    const remote=await readGist(g), since=cfg.last||0, conf=[], lm=new Map(db.tasks.map(t=>[t.id,t]));
+    let res;
+    try{res=await ghx('GET',`/gists/${cfg.gist}`,null,cfg.etag&&cfg.sigM?cfg.etag:'')}
+    catch(e){if(e.status!==404)throw e;cfg.gist=await findGist();cfg.etag='';save(CFG,cfg);fillCfg();res=await ghx('GET',`/gists/${cfg.gist}`)}
+    if(res.status===304){
+      /* nothing changed on GitHub since our last sync: upload only our own changes, without downloading */
+      const hm=h32(sigMainOf(db)), hn=h32(sigNotesOf(db)), stale=!(db.devices[cfg.device]&&db.devices[cfg.device][1]>now()-6*36e5), files={}, at=now();
+      if(hm!==cfg.sigM||stale){if(stale){db.devices[cfg.device]=[at,at];save(KEY,db)}files[GFILE]={content:JSON.stringify({...mainPayload(db),by:cfg.device,at},null,1)}}
+      if(hn!==cfg.sigN)files[NFILE]={content:JSON.stringify({notesP:db.notesP},null,1)};
+      if(Object.keys(files).length){const pr=await ghx('PATCH',`/gists/${cfg.gist}`,{files});cfg.etag=pr.etag||'';cfg.lastBy=`${cfg.device} · ${fmtTs(at)}`}
+      cfg.sigM=hm;cfg.sigN=hn;syncOk();syncing=false;if(again){again=false;queueSync()}return;
+    }
+    cfg.etag=res.etag||'';
+    const g=res.json, remote=await readGist(g), since=cfg.last||0, conf=[], lm=new Map(db.tasks.map(t=>[t.id,t]));
     for(const r of remote.tasks){const l=lm.get(r.id);if(!l)continue;for(const f of F){if(f==='order'||f==='dord')continue;if(JSON.stringify(l[f])===JSON.stringify(r[f]))continue;const tl=ft(l,f),tr=ft(r,f);if(tl>since&&tr>since&&tr!==tl)conf.push({t:l,f,by:tr>tl?(r.by||'다른 기기'):cfg.device,vs:tr>tl?cfg.device:(r.by||'다른 기기')})}}
     /* note conflict copies (K1) */
     const copies=[];
@@ -98,9 +120,8 @@ async function sync(){
     const notesP=mergeColors(db.notesP,remote.notesP), events=mergeColors(db.events,remote.events), wprog=mergeColors(db.wprog,remote.wprog), wfixT=(remote.wfixT[1]||0)>(db.wfixT[1]||0)?remote.wfixT:db.wfixT;
     for(const c of copies){const ls=(c.lose[0].body||'').split('\n');ls[0]=`${(ls[0]||'제목 없음').replace(/^#+\s*/,'')} (충돌 사본 · ${c.by})`;notesP[uid()]=[{...c.lose[0],body:ls.join('\n'),pin:false},now()]}
     const devices=mergeColors(db.devices,remote.devices);
-    const kv2=o=>Object.keys(o||{}).sort().map(k=>[k,o[k]]);
     const sigM=(t,c,n,u,ut,wf,wp,ev,dv)=>JSON.stringify([[...t].sort((p,q)=>p.id<q.id?-1:1),kv2(c),kv2(n),u?kv2(u):null,ut,wf,kv2(wp),kv2(ev),kv2(dv)]);
-    let mainNew=sigM(merged,colors,notes,ui,uiT,wfixT,wprog,events,devices)!==sigM(remote.tasks,remote.colors,remote.notes,remote.ui,remote.uiT||0,remote.wfixT,remote.wprog,remote.events,remote.devices);
+    let mainNew=sigM(merged,colors,notes,ui,uiT,wfixT,wprog,events,devices)!==sigM(remote.tasks.map(norm),remote.colors,remote.notes,remote.ui,remote.uiT||0,remote.wfixT,remote.wprog,remote.events,remote.devices);
     const notesNew=JSON.stringify(kv2(notesP))!==JSON.stringify(kv2(remote.notesP))||(!remote.hasN&&Object.keys(notesP).length>0);
     if(mainNew||notesNew||!(devices[cfg.device]&&devices[cfg.device][1]>now()-6*36e5)){devices[cfg.device]=[now(),now()];mainNew=true}
     if(sigM(merged,colors,notes,ui,uiT,wfixT,wprog,events,devices)+JSON.stringify(kv2(notesP))!==sigM(db.tasks,db.colors,db.notes,db.ui,db.uiT,db.wfixT,db.wprog,db.events,db.devices)+JSON.stringify(kv2(db.notesP))&&!drag){
@@ -109,14 +130,14 @@ async function sync(){
     const files={}, at=now();
     if(mainNew)files[GFILE]={content:JSON.stringify({tasks:merged,colors,notes,ui,uiT,wfixT,wprog,events,devices,by:cfg.device,at},null,1)};
     if(notesNew)files[NFILE]={content:JSON.stringify({notesP},null,1)};
-    if(Object.keys(files).length){await gh('PATCH',`/gists/${cfg.gist}`,{files});cfg.lastBy=`${cfg.device} · ${fmtTs(at)}`}
+    if(Object.keys(files).length){const pr=await ghx('PATCH',`/gists/${cfg.gist}`,{files});cfg.etag=pr.etag||'';cfg.lastBy=`${cfg.device} · ${fmtTs(at)}`}
+    const mo={tasks:merged,colors,notes,ui,uiT,wfixT,wprog,events};cfg.sigM=h32(sigMainOf(mo));cfg.sigN=h32(sigNotesOf({notesP}));
+    if(drag)cfg.etag='';
     if(conf.length){const FL={text:'내용',done:'완료',memo:'메모',cat:'분류',date:'날짜',time:'시간',repeat:'반복',star:'중요',deleted:'삭제',state:'상태',end:'종료일',tend:'종료 시간',place:'장소',spawned:'반복',gone:'휴지통',note:'노트'};
       const c=conf[0],msg=conf.length===1?`충돌 · ‘${c.t.text.split('\n')[0].slice(0,14)}’ ${FL[c.f]||c.f} · ${c.vs}·${c.by} 동시 수정 → ${c.by} 기준으로 맞춤`:`충돌 ${conf.length}건 · 나중에 고친 쪽 기준으로 맞춤`;
       notice(msg);cfg.lastConflict=`${fmtTs(now())} · ${msg}`}
     if(copies.length){const msg=`노트 동시 수정 ${copies.length}건 · 다른 쪽 내용을 충돌 사본으로 남겼어요`;notice(msg,'노트 보기',()=>{view='notes';cfg.noteOpen='';render()});cfg.lastConflict=`${fmtTs(now())} · ${msg}`}
-    cfg.last=now();save(CFG,cfg);dirty=false;lastErr='';retryN=0;tokWarned=false;
-    const d=new Date(cfg.last);setStatus('ok',`${pad(d.getHours())}:${pad(d.getMinutes())}`);
-    $('#gLast').textContent=`LAST SYNC ${ymd(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    syncOk();
   }catch(e){
     const net=e.message==='Failed to fetch'||e.message==='Load failed'||e.name==='TypeError'||(e.status>=500);
     lastErr=net?'오프라인':e.message;setStatus('err',lastErr);
@@ -128,12 +149,12 @@ async function sync(){
 function fillCfg(){$('#gToken').value=cfg.token;$('#gId').value=cfg.gist||''}
 $('#gSave').onclick=()=>{
   cfg.token=$('#gToken').value.trim();
-  cfg.gist=$('#gId').value.trim().replace(/^.*gist\.github\.com\/(?:[^/]+\/)?/,'').replace(/[/#?].*$/,'');
+  cfg.gist=$('#gId').value.trim().replace(/^.*gist\.github\.com\/(?:[^/]+\/)?/,'').replace(/[/#?].*$/,'');cfg.etag='';cfg.sigM='';cfg.sigN='';
   save(CFG,cfg);fillCfg();sync();
 };
 $('#gNow').onclick=()=>sync();
 $('#gOff').onclick=()=>{if(confirm('동기화 설정을 이 기기에서 삭제할까요? (할 일 데이터는 유지됩니다)')){cfg.token='';cfg.gist='';save(CFG,cfg);fillCfg();setStatus('','LOCAL')}};
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();if(cfg.syncInt!=='0')sync()}});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();if(cfg.syncInt!=='0'&&(dirty||now()-(cfg.last||0)>20000))sync()}});
 let lastAuto=now();setInterval(()=>{const m=+(cfg.syncInt??1);if(!m||document.visibilityState!=='visible'||!ready())return;if(now()-lastAuto>=m*6e4){lastAuto=now();sync()}},15000);
 
 
@@ -141,7 +162,7 @@ let lastAuto=now();setInterval(()=>{const m=+(cfg.syncInt??1);if(!m||document.vi
 function syncInfo(){
   const st=!ready()?'로컬 전용':cfg.syncInt==='0'&&dirty?'업로드 대기 (수동)':syncing?'동기화 중':lastErr?'오류':dirty?'업로드 대기':'최신 상태';
   const row=(k,v)=>`<div class="pr"><span>${k}</span><b>${v}</b></div>`;
-  return row('상태',st)+row('마지막 동기화',cfg.last?fmtTs(cfg.last):'—')+row('마지막 업로드',esc(cfg.lastBy||'—'))+(lastErr?row('오류',esc(lastErr)):'')+(cfg.lastConflict?row('마지막 충돌',esc(cfg.lastConflict)):'')+row('이 기기',esc(cfg.device))+row('Gist',cfg.gist?esc(cfg.gist.slice(0,10))+'…':'—')+(ready()?'<button class="btn pri" id="pvSync">지금 동기화</button>':'');
+  return row('상태',st)+row('마지막 동기화',cfg.last?fmtTs(cfg.last):'—')+row('마지막 업로드',esc(cfg.lastBy||'—'))+(lastErr?row('오류',esc(lastErr)):'')+(cfg.lastConflict?row('마지막 충돌',esc(cfg.lastConflict)):'')+row('이 기기',esc(cfg.device))+row('Gist',cfg.gist?esc(cfg.gist.slice(0,10))+'…':'—')+row('API 남은 호출',apiLeft?`${apiLeft} / 시간당 5000`:'—')+(ready()?'<button class="btn pri" id="pvSync">지금 동기화</button>':'');
 }
 $('#gHist').onclick=async()=>{
   const box=$('#gHistList');
