@@ -666,3 +666,4 @@ body[data-toast-pos=top] .toast.on{animation:tin3 .2s ease-out}
 .uc.wi.ustar::before{content:"★ ";color:var(--accent);font-size:.8em}
 .uc.more{padding:.16rem .4rem;font-size:var(--t-lbl);color:var(--sub);font-family:var(--mono)}
 .uadd{flex:1;min-width:7rem;font-size:var(--t-sub);padding:.16rem 0}
+#wfix[hidden],.deck[hidden]{display:none}
