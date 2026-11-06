@@ -614,3 +614,4 @@ body.t12 .tcol{width:4.9em}
   .deck{grid-template-columns:repeat(2,minmax(0,1fr))}
   .deck:not(:has(.dnote:not([hidden]))){grid-template-columns:minmax(0,1fr)}
 }
+#plan{position:static;max-height:none;overflow:visible;z-index:auto}
