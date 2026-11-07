@@ -673,3 +673,15 @@ body[data-toast-pos=top] .toast.on{animation:tin3 .2s ease-out}
 .uc.more{padding:.32rem .5rem;font-size:var(--t-sub)}
 .uadd{font-size:var(--t-body);padding:.32rem 0;min-width:9rem}
 #plan .ph .lbl,#fPlan .ph .lbl{font-size:var(--t-sub);letter-spacing:.16em}
+
+/* v26: undated tasks as a quiet two-column list */
+.uchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(10rem,1fr));column-gap:var(--s4);row-gap:0;margin-top:var(--s1)}
+.uc.wi{display:flex;align-items:center;gap:.55rem;min-width:0;padding:.5rem 0;border:0;border-bottom:1px solid var(--hair);background:none;box-shadow:none;font-size:calc(var(--t-body)*var(--tk,1));line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.uc.wi::before{content:"";flex:none;width:.38rem;height:.38rem;background:var(--ul,var(--line))}
+.uc.wi.ustar::before{content:"★";width:auto;height:auto;background:none;color:var(--accent);font-size:.7em}
+.uc.wi:active{color:var(--accent)}
+.uc.more{justify-self:start;padding:.5rem 0;font-size:var(--t-lbl);letter-spacing:.12em;color:var(--sub);font-family:var(--mono)}
+.uadd{grid-column:1/-1;min-width:0;padding:.55rem 0;font-size:calc(var(--t-sub)*var(--tk,1));color:var(--text)}
+.uadd::placeholder{color:var(--faint)}
+#plan .ph,#fPlan .ph{border-bottom-color:var(--line)}
+.uc.wi[style*="--ul"]{box-shadow:none}
