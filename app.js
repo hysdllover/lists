@@ -26,12 +26,12 @@ const fmtD=s=>{const d=parse(s),st=U('dstyle');return st==='en'?`${MONS[d.getMon
 const bigD=d=>{const st=U('dstyle');return st==='en'?`${MONS[d.getMonth()]} ${d.getDate()}`:st==='ko'?`${d.getMonth()+1}월 ${d.getDate()}일`:`${pz(d.getMonth()+1)}.${pz(d.getDate())}`};
 const load=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
 const save=(k,v)=>{if(k===KEY){saveDb();return}try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
-const APP_VER=26;
+const APP_VER=27;
 
 let db=load(KEY,{tasks:[]});
 let cfg=Object.assign({syncInt:'1',noteOpen:'',sort:'date',fold:true,fs:14,theme:'light',split:1,token:'',gist:'',last:0,start:'list',secs:{Quick:true},gfold:{},wz:1},load(CFG,{}));
 cfg.device=cfg.device||((/iPad/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1))?'iPad':/iPhone/.test(navigator.userAgent)?'iPhone':'Browser');
-const UID={theme:'light',accent:'bluegray',paper:'none',paperPrint:'0',line:'1',dens:'normal',ls:'-0.005',lh:'1.6',dstyle:'dot',dow:'en',weekNo:'1',dday:'1',hol:'1',holX:'',memo:'0',doneBottom:'1',collapse:'1',dimPast:'1',corner:'1',sound:'1',tfmt:'24',zero:'1',ddPos:'both',fLate:'1',fBar:'1',lStat:'1',hCnt:'1',hHol:'1',hEv:'1',rDate:'1',rRep:'1',rMemo:'1',rPlace:'1',snd:'clear',appName:'WEEKLY',tabOrder:'list,week,month,focus,notes',tabHide:'',accentC:'#7489a2',eHide:'',catStyle:'ul',tcol:'1',bigSz:'m',wNoteShow:'0',wfixShow:'1',preset:'default',taskFs:'m',chkColor:'cat',lateColor:'red',tabSz:'m',toastPos:'bottom',toastSec:'5'};
+const UID={theme:'light',accent:'bluegray',paper:'none',paperPrint:'0',line:'1',dens:'normal',ls:'-0.005',lh:'1.6',dstyle:'dot',dow:'en',weekNo:'1',dday:'1',hol:'1',holX:'',memo:'0',doneBottom:'1',collapse:'1',dimPast:'1',corner:'1',sound:'1',tfmt:'24',zero:'1',ddPos:'both',fLate:'1',fBar:'1',lStat:'1',hCnt:'1',hHol:'1',hEv:'1',rDate:'1',rRep:'1',rMemo:'1',rPlace:'1',snd:'clear',appName:'WEEKLY',tabOrder:'list,week,month,focus,notes',tabHide:'',accentC:'#7489a2',eHide:'',catStyle:'ul',tcol:'1',tpos:'below',bigSz:'m',wNoteShow:'0',wfixShow:'1',preset:'default',taskFs:'m',chkColor:'cat',lateColor:'red',tabSz:'m',toastPos:'bottom',toastSec:'5'};
 function initDb(){db.tasks=db.tasks||[];db.colors=db.colors||{};db.notes=db.notes||{};db.notesP=db.notesP||{};db.events=db.events||{};db.wfixT=db.wfixT||[[],0];db.wprog=db.wprog||{};db.devices=db.devices||{};db.uiT=db.uiT||0;db.ui=Object.assign({},UID,!db.ui&&cfg.theme?{theme:cfg.theme}:{},db.ui||{})}
 initDb();
 const HOL={'2026-01-01':'신정','2026-02-16':'설날','2026-02-17':'설날','2026-02-18':'설날','2026-03-01':'삼일절','2026-03-02':'대체공휴일','2026-05-05':'어린이날','2026-05-24':'부처님오신날','2026-05-25':'대체공휴일','2026-06-03':'지방선거','2026-06-06':'현충일','2026-08-15':'광복절','2026-08-17':'대체공휴일','2026-09-24':'추석','2026-09-25':'추석','2026-09-26':'추석','2026-10-03':'개천절','2026-10-05':'대체공휴일','2026-10-09':'한글날','2026-12-25':'성탄절',
@@ -164,6 +164,7 @@ addEventListener('pagehide',()=>flushDb());
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushDb()});
 /* changes (K9, K10) */
 const CHANGES={
+ 27:'시간을 할 일 아래에 표시 (설정 > 시간 위치)',
  26:'날짜 없는 할 일 디자인 정리 (2열 목록)',
  25:'날짜 없는 할 일 칩 크기 키움',
  24:'주간 항목 숨기기 설정',
@@ -192,7 +193,8 @@ function metaHTML(t){
   if(t.done&&t.u&&t.u.done)parts.push(`<span class="dn">✓ ${bigD(new Date(t.u.done))}</span>`);
   if(t.state==='doing'&&!t.done)parts.push('<span class="stt">진행 중</span>');
   if(t.state==='hold'&&!t.done)parts.push('<span class="stt">보류</span>');
-  if(on('rDate')&&(t.date||t.time)&&(!TC||t.date))parts.push(`<span class="date${isLate(t)?' late':''}">${TC?whenD(t):when(t)}</span>`);
+  if(!TC&&t.time)parts.unshift(`<span class="tm">${fmtT(t.time)}${t.tend?'–'+fmtT(t.tend):''}</span>`);
+  if(on('rDate')&&t.date)parts.push(`<span class="date${isLate(t)?' late':''}">${whenD(t)}</span>`);
   if(on('dday'))parts.push(ddHTML(t));
   if(t.prog&&!t.done)parts.push(`<span class="pgv">${t.prog}%</span>`);
   if(on('rRep')&&t.repeat)parts.push(`<span class="rep">↻ ${REP[t.repeat]}</span>`);
@@ -243,7 +245,7 @@ function renderList(){
   const gh=(k,l,n)=>`<li class="grp lbl${gf[k]?' closed':''}" data-g="${esc(k)}">${l}<span class="gn">${n}</span><i class="cv"></i></li>`;
   const sep=l=>`<li class="sep lbl">${l}</li>`;
   let h='';
-  TC=on('tcol')&&act.some(t=>t.time);
+  TC=U('tpos')==='left'&&act.some(t=>t.time);
   if(doing.length)h+=sep('In progress')+doing.map(itemHTML).join('');
   if(pin.length&&(cat||doing.length))h+=cat?gh('★','Starred',pin.length):sep('Starred');
   if(!(cat&&gf['★']))h+=pin.map(itemHTML).join('');
@@ -286,7 +288,7 @@ const weekSort=a=>a.sort((x,y)=>(on('doneBottom')?x.done-y.done:0)||(y.state==='
 function wiHTML(t,s){
   const span=t.end&&s?(s===t.date?' span-s':s===t.end?' span-e':' span-m'):'';
   const tm=t.time&&(!t.end||s===t.date)?`<span class="tm">${fmtT(t.time)}${t.tend?'–'+fmtT(t.tend):''}</span>`:'';
-  return `<div class="wi${t.done?' done':''}${t.state==='hold'?' hold':''}${span}${fresh(t)}" data-id="${t.id}">${chkHTML(t)}<div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${tm}${txHTML(t)}${t.repeat?` <span class="rep">↻</span>`:''}</span>${t.memo&&on('rMemo')?`<div class="memo">${md(on('memo')?t.memo:t.memo.split('\n')[0])}</div>`:''}${plcHTML(t)}${t.note&&noteGet(t.note)?`<button class="nlink" data-a="note">${ICON.note}${esc(noteTitle(noteGet(t.note)))}</button>`:''}</div></div>`;
+  return `<div class="wi${t.done?' done':''}${t.state==='hold'?' hold':''}${span}${fresh(t)}" data-id="${t.id}">${chkHTML(t)}<div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${txHTML(t)}${t.repeat?` <span class="rep">↻</span>`:''}</span>${tm}${t.memo&&on('rMemo')?`<div class="memo">${md(on('memo')?t.memo:t.memo.split('\n')[0])}</div>`:''}${plcHTML(t)}${t.note&&noteGet(t.note)?`<button class="nlink" data-a="note">${ICON.note}${esc(noteTitle(noteGet(t.note)))}</button>`:''}</div></div>`;
 }
 const isDayAdd=el=>!!(el&&el.classList&&(el.classList.contains('dayadd')||el.classList.contains('uadd')));
 function dhHTML(d,s,ts,H){
@@ -382,7 +384,7 @@ function renderFocus(){
   $('#wakeBtn').classList.toggle('on',!!cfg.wake);
   $('#ddFocus').innerHTML=['both','today'].includes(U('ddPos'))?ddStrip():'';
   renderPlan($('#fPlan'));
-  TC=on('tcol')&&[...ts,...late].some(t=>t.time);
+  TC=U('tpos')==='left'&&[...ts,...late].some(t=>t.time);
   $('#fList').innerHTML=(ts.map(itemHTML).join('')||`<li class="empty">${isToday?'오늘 ':''}할 일이 없습니다</li>`)+(on('fLate')&&late.length?`<li class="sep lbl">Overdue · ${late.length}</li>`+late.map(itemHTML).join(''):'');TC=false;
 }
 

@@ -685,3 +685,8 @@ body[data-toast-pos=top] .toast.on{animation:tin3 .2s ease-out}
 .uadd::placeholder{color:var(--faint)}
 #plan .ph,#fPlan .ph{border-bottom-color:var(--line)}
 .uc.wi[style*="--ul"]{box-shadow:none}
+
+/* v27: time under the task */
+.meta .tm{min-width:0;margin:0}
+.wi .body>.tm{display:block;min-width:0;margin:.08rem 0 0;line-height:1.3}
+.done .tm{color:var(--faint)}

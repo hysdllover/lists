@@ -7,7 +7,8 @@ function metaHTML(t){
   if(t.done&&t.u&&t.u.done)parts.push(`<span class="dn">✓ ${bigD(new Date(t.u.done))}</span>`);
   if(t.state==='doing'&&!t.done)parts.push('<span class="stt">진행 중</span>');
   if(t.state==='hold'&&!t.done)parts.push('<span class="stt">보류</span>');
-  if(on('rDate')&&(t.date||t.time)&&(!TC||t.date))parts.push(`<span class="date${isLate(t)?' late':''}">${TC?whenD(t):when(t)}</span>`);
+  if(!TC&&t.time)parts.unshift(`<span class="tm">${fmtT(t.time)}${t.tend?'–'+fmtT(t.tend):''}</span>`);
+  if(on('rDate')&&t.date)parts.push(`<span class="date${isLate(t)?' late':''}">${whenD(t)}</span>`);
   if(on('dday'))parts.push(ddHTML(t));
   if(t.prog&&!t.done)parts.push(`<span class="pgv">${t.prog}%</span>`);
   if(on('rRep')&&t.repeat)parts.push(`<span class="rep">↻ ${REP[t.repeat]}</span>`);
@@ -58,7 +59,7 @@ function renderList(){
   const gh=(k,l,n)=>`<li class="grp lbl${gf[k]?' closed':''}" data-g="${esc(k)}">${l}<span class="gn">${n}</span><i class="cv"></i></li>`;
   const sep=l=>`<li class="sep lbl">${l}</li>`;
   let h='';
-  TC=on('tcol')&&act.some(t=>t.time);
+  TC=U('tpos')==='left'&&act.some(t=>t.time);
   if(doing.length)h+=sep('In progress')+doing.map(itemHTML).join('');
   if(pin.length&&(cat||doing.length))h+=cat?gh('★','Starred',pin.length):sep('Starred');
   if(!(cat&&gf['★']))h+=pin.map(itemHTML).join('');
@@ -101,7 +102,7 @@ const weekSort=a=>a.sort((x,y)=>(on('doneBottom')?x.done-y.done:0)||(y.state==='
 function wiHTML(t,s){
   const span=t.end&&s?(s===t.date?' span-s':s===t.end?' span-e':' span-m'):'';
   const tm=t.time&&(!t.end||s===t.date)?`<span class="tm">${fmtT(t.time)}${t.tend?'–'+fmtT(t.tend):''}</span>`:'';
-  return `<div class="wi${t.done?' done':''}${t.state==='hold'?' hold':''}${span}${fresh(t)}" data-id="${t.id}">${chkHTML(t)}<div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${tm}${txHTML(t)}${t.repeat?` <span class="rep">↻</span>`:''}</span>${t.memo&&on('rMemo')?`<div class="memo">${md(on('memo')?t.memo:t.memo.split('\n')[0])}</div>`:''}${plcHTML(t)}${t.note&&noteGet(t.note)?`<button class="nlink" data-a="note">${ICON.note}${esc(noteTitle(noteGet(t.note)))}</button>`:''}</div></div>`;
+  return `<div class="wi${t.done?' done':''}${t.state==='hold'?' hold':''}${span}${fresh(t)}" data-id="${t.id}">${chkHTML(t)}<div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${txHTML(t)}${t.repeat?` <span class="rep">↻</span>`:''}</span>${tm}${t.memo&&on('rMemo')?`<div class="memo">${md(on('memo')?t.memo:t.memo.split('\n')[0])}</div>`:''}${plcHTML(t)}${t.note&&noteGet(t.note)?`<button class="nlink" data-a="note">${ICON.note}${esc(noteTitle(noteGet(t.note)))}</button>`:''}</div></div>`;
 }
 const isDayAdd=el=>!!(el&&el.classList&&(el.classList.contains('dayadd')||el.classList.contains('uadd')));
 function dhHTML(d,s,ts,H){
@@ -197,7 +198,7 @@ function renderFocus(){
   $('#wakeBtn').classList.toggle('on',!!cfg.wake);
   $('#ddFocus').innerHTML=['both','today'].includes(U('ddPos'))?ddStrip():'';
   renderPlan($('#fPlan'));
-  TC=on('tcol')&&[...ts,...late].some(t=>t.time);
+  TC=U('tpos')==='left'&&[...ts,...late].some(t=>t.time);
   $('#fList').innerHTML=(ts.map(itemHTML).join('')||`<li class="empty">${isToday?'오늘 ':''}할 일이 없습니다</li>`)+(on('fLate')&&late.length?`<li class="sep lbl">Overdue · ${late.length}</li>`+late.map(itemHTML).join(''):'');TC=false;
 }
 
