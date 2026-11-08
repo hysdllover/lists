@@ -17,14 +17,15 @@ function metaHTML(t){
   const h=parts.join('');return h?`<div class="meta">${h}</div>`:'';
 }
 let TC=false;
+const pgHTML=t=>t.prog&&!t.done?`<i class="pgl" style="--p:${t.prog}%;--pc:${t.cat&&U('chkColor')==='cat'?catColor(t.cat):'var(--accent)'}"></i>`:'';
 const tcolHTML=t=>TC?`<span class="tcol num">${t.time?fmtT(t.time):''}${t.tend?`<i>${fmtT(t.tend)}</i>`:''}</span>`:'';
 const whenD=t=>t.date?fmtD(t.date)+(t.end&&t.end>t.date?' – '+fmtD(t.end):''):'';
-const chkHTML=t=>`<button class="chk${t.done?' on':''}${t.state==='doing'&&!t.done?' doing':''}${t.prog&&!t.done?' pg':''}" data-a="chk" aria-label="완료"${ccStyle(t)}></button>`;
+const chkHTML=t=>`<button class="chk${t.done?' on':''}${t.state==='doing'&&!t.done?' doing':''}" data-a="chk" aria-label="완료"${ccStyle(t)}></button>`;
 function itemHTML(t){
   return `<li class="item${t.done?' done':''}${t.star&&!t.done?' starred':''}${t.state==='hold'?' hold':''}${fresh(t)}" data-id="${t.id}">
     ${chkHTML(t)}${tcolHTML(t)}
     <div class="body" data-a="edit">
-      <div class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${txHTML(t)}</div>
+      <div class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${txHTML(t)}</div>${pgHTML(t)}
       ${t.memo&&on('rMemo')?`<div class="memo">${md(on('memo')?t.memo:t.memo.split('\n')[0])}</div>`:''}
       ${metaHTML(t)}
     </div>
@@ -70,7 +71,7 @@ function renderList(){
     if(bydate){const b=dateBucket(t,td,tm,we);if(b!==g){g=b;h+=sep(b)}}
     if(!(cat&&gf[t.cat||'']))h+=itemHTML(t);
   }
-  $('#open').innerHTML=h||'<li class="empty">할 일이 없습니다</li>';TC=false;
+  $('#open').innerHTML=h||'<li class="empty">비어 있음</li>';TC=false;
   // bin (K2, K14, K15)
   const B={done:sorted(L.filter(t=>t.done&&!isArch(t))),hold:sorted(L.filter(t=>!t.done&&t.state==='hold')),arch:L.filter(isArch).sort((a,b)=>ft(b,'done')-ft(a,'done')),trash:db.tasks.filter(t=>t.deleted&&!t.gone).sort((a,b)=>ft(b,'deleted')-ft(a,'deleted'))};
   const NM={done:'Completed',hold:'Hold',arch:'Archive',trash:'Trash'};
@@ -96,13 +97,13 @@ function renderMeta(){
 /* ---------- week (Sunday start) ---------- */
 function weekStart(off){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-d.getDay()+off*7);return d}
 function weekDays(off){const s=weekStart(off);return[...Array(7)].map((_,i)=>{const d=new Date(s);d.setDate(s.getDate()+i);return d})}
-let weekDirty=false, forceWeek=false;
+let weekDirty=false, forceWeek=false, wExp='';
 const big=1e15;
 const weekSort=a=>a.sort((x,y)=>(on('doneBottom')?x.done-y.done:0)||(y.state==='doing')-(x.state==='doing')||((x.dord??big)-(y.dord??big))||!!y.star-!!x.star||(x.time||'99').localeCompare(y.time||'99')||x.created-y.created);
 function wiHTML(t,s){
   const span=t.end&&s?(s===t.date?' span-s':s===t.end?' span-e':' span-m'):'';
   const tm=t.time&&(!t.end||s===t.date)?`<span class="tm">${fmtT(t.time)}${t.tend?'–'+fmtT(t.tend):''}</span>`:'';
-  return `<div class="wi${t.done?' done':''}${t.state==='hold'?' hold':''}${span}${fresh(t)}" data-id="${t.id}">${chkHTML(t)}<div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${txHTML(t)}${t.repeat?` <span class="rep">↻</span>`:''}</span>${tm}${t.memo&&on('rMemo')?`<div class="memo">${md(on('memo')?t.memo:t.memo.split('\n')[0])}</div>`:''}${plcHTML(t)}${t.note&&noteGet(t.note)?`<button class="nlink" data-a="note">${ICON.note}${esc(noteTitle(noteGet(t.note)))}</button>`:''}</div></div>`;
+  return `<div class="wi${t.done?' done':''}${t.state==='hold'?' hold':''}${span}${fresh(t)}" data-id="${t.id}">${chkHTML(t)}<div class="body" data-a="edit"><span class="txt">${t.star?`<span class="st">${STAR}</span>`:''}${txHTML(t)}${t.repeat?` <span class="rep">↻</span>`:''}</span>${pgHTML(t)}${tm}${t.memo&&on('rMemo')?`<div class="memo">${md(on('memo')?t.memo:t.memo.split('\n')[0])}</div>`:''}${plcHTML(t)}${t.note&&noteGet(t.note)?`<button class="nlink" data-a="note">${ICON.note}${esc(noteTitle(noteGet(t.note)))}</button>`:''}</div></div>`;
 }
 const isDayAdd=el=>!!(el&&el.classList&&(el.classList.contains('dayadd')||el.classList.contains('uadd')));
 function dhHTML(d,s,ts,H){
@@ -121,17 +122,24 @@ function renderWeek(){
   const wk=ymd(a), n=$('#wNote'); n.dataset.w=wk; if(ae!==n){n.value=(db.notes[wk]||[''])[0];grow(n);$('#wNoteV').innerHTML=md(n.value);$('.dnote').classList.toggle('reading',!!n.value.trim())}
   if(ae!==$('#fxAdd'))renderFix();
   $('.dnote').hidden=!on('wNoteShow');$('#wfix').hidden=!on('wfixShow');$('.deck').hidden=!on('wNoteShow')&&!on('wfixShow');
-  renderPlan($('#plan'));
-  $('#days').innerHTML=days.map(d=>{
+  placePlan($('#plan'),$('#vWeek .wbody'),'week');renderPlan($('#plan'));
+  const em=days.map(d=>{const s=ymd(d);return !tasksOn(L,s).length&&s!==td}), grp=days.map(()=>0);
+  if(on('collapse')&&wExp!==wk)for(let i=0;i<7;){let j=i;while(j<7&&em[j])j++;if(j-i>=2)for(let k=i;k<j;k++)grp[k]=k===i?j-i:-1;i=Math.max(j,i+1)}
+  $('#days').innerHTML=days.map((d,i)=>{
     const s=ymd(d), ts=weekSort(tasksOn(L,s)), h=H[s];
-    const cls=['day',s===td&&'today',s<td&&'past',(d.getDay()===0||h)&&'sun',!ts.length&&s!==td&&'empty'].filter(Boolean).join(' ');
-    return `<div class="${cls}" data-d="${s}">${dhHTML(d,s,ts,H)}<div class="dl">
+    const cls=['day',s===td&&'today',s<td&&'past',(d.getDay()===0||h)&&'sun',!ts.length&&s!==td&&'empty',grp[i]&&'gh'].filter(Boolean).join(' ');
+    const g=grp[i]>0?`<button class="dgrp" data-wk="${wk}"><span class="lbl">${dowL(d)}</span><span class="num">${pz(d.getDate())}</span><span class="dgs">—</span><span class="lbl">${dowL(days[i+grp[i]-1])}</span><span class="num">${pz(days[i+grp[i]-1].getDate())}</span><span class="dge lbl">비어 있음</span></button>`:'';
+    return `${g}<div class="${cls}" data-d="${s}">${dhHTML(d,s,ts,H)}<div class="dl">
       ${ts.map(t=>wiHTML(t,s)).join('')}
       <div class="dadd"><textarea class="dayadd" rows="1" placeholder="+" data-d="${s}"></textarea><button class="dbtn" data-d="${s}">ADD</button></div>
     </div></div>`}).join('');
   for(const d in keep){const i=$(`.dayadd[data-d="${d}"]`);if(i){i.value=keep[d];grow(i)}}
 }
-/* compact undated tasks box (WEEK / TODAY bottom) */
+function placePlan(p,ref,w){
+  const top=U('planPos')==='top';p.classList.toggle('top',top);
+  if(top){if(p.nextElementSibling!==ref)ref.before(p)}else{const after=w==='focus'?$('#vFocus .fadd'):ref;if(after.nextElementSibling!==p)after.after(p)}
+}
+/* compact undated tasks box (WEEK / TODAY) */
 function renderPlan(el){
   if(!el)return;
   const un=sorted(live().filter(t=>!t.date&&!t.done&&t.state!=='hold')), fold=!!cfg.planFold, max=cfg.planAll?1e9:8, vis=un.slice(0,max);
@@ -181,8 +189,9 @@ function renderMonth(){
   const sd=parse(mSel), ts=weekSort(tasksOn(L,mSel));
   $('#mpDay').textContent=dowL(sd,true);$('#mpDate').textContent=bigD(sd);
   $('#mpHol').innerHTML=[H[mSel]?`<span class="hn">${esc(H[mSel])}</span>`:'',...evOn(mSel).map(x=>`<span class="hn ev">${esc(x)}</span>`)].join('');
-  $('#mpList').innerHTML=ts.map(t=>wiHTML(t,mSel)).join('')||'<span class="empty2">할 일이 없습니다</span>';
+  $('#mpList').innerHTML=ts.map(t=>wiHTML(t,mSel)).join('')||'<span class="empty2">비어 있음</span>';
   $('#mAdd').dataset.d=mSel;
+  $('#ddMonth').innerHTML=U('ddPos')==='month'?ddStrip():'';
 }
 
 function renderFocus(){
@@ -197,9 +206,9 @@ function renderFocus(){
   $('#vFocus .fbar').hidden=!on('fBar');$('#fCount').hidden=!on('fBar');
   $('#wakeBtn').classList.toggle('on',!!cfg.wake);
   $('#ddFocus').innerHTML=['both','today'].includes(U('ddPos'))?ddStrip():'';
-  renderPlan($('#fPlan'));
+  placePlan($('#fPlan'),$('#fList'),'focus');renderPlan($('#fPlan'));
   TC=U('tpos')==='left'&&[...ts,...late].some(t=>t.time);
-  $('#fList').innerHTML=(ts.map(itemHTML).join('')||`<li class="empty">${isToday?'오늘 ':''}할 일이 없습니다</li>`)+(on('fLate')&&late.length?`<li class="sep lbl">Overdue · ${late.length}</li>`+late.map(itemHTML).join(''):'');TC=false;
+  $('#fList').innerHTML=(ts.map(itemHTML).join('')||'<li class="empty">비어 있음</li>')+(on('fLate')&&late.length?`<li class="sep lbl">Overdue · ${late.length}</li>`+late.map(itemHTML).join(''):'');TC=false;
 }
 
 /* ---------- print (A4) ---------- */

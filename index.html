@@ -84,10 +84,11 @@
       <div class="hl"><span class="lbl" id="mMon"></span><div class="big num" id="mBig"></div></div>
       <div class="hr ctl"><button class="ibtn" id="mPrev" aria-label="이전 달"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5"/></svg></button><button class="tbtn" id="mNow">NOW</button><button class="ibtn" id="mNext" aria-label="다음 달"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5L10.5 8 6 12.5"/></svg></button><button class="ibtn" id="mMore" aria-label="더 보기"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r=".6"/><circle cx="8" cy="8" r=".6"/><circle cx="12.5" cy="8" r=".6"/></svg></button></div>
     </div>
+    <div class="ddays" id="ddMonth"></div>
     <div class="mwrap">
       <div class="mcal"><div class="mhead" id="mHead"></div><div class="mgrid" id="mGrid"></div></div>
       <div class="mpanel">
-        <div class="mph"><span class="lbl" id="mpDay"></span><b class="num" id="mpDate"></b><span id="mpHol"></span></div>
+        <div class="mph"><span class="lbl" id="mpDay"></span><b class="num" id="mpDate"></b><span id="mpHol"></span><button class="ibtn mpx" id="mpClose" aria-label="닫기">×</button></div>
         <div id="mpList"></div>
         <div class="dadd"><textarea id="mAdd" rows="1" placeholder="+ 이 날에 추가"></textarea><button class="dbtn" id="mBtn">ADD</button></div>
       </div>
@@ -185,6 +186,7 @@
     </div>
     <div class="sec" data-sec="Layout" data-grp="style">
       <button class="sh"><span class="lbl">Layout</span><i class="cv"></i></button>
+      <div class="field"><span>No date 위치</span><div class="seg" data-k="planPos"><button data-v="bottom">아래</button><button data-v="top">위</button></div></div>
       <div class="field"><span>주간 항목</span><div class="seg" data-k="wfixShow"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
       <div class="field"><span>주간 메모</span><div class="seg" data-k="wNoteShow"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
       <div class="field"><span>메모</span><div class="seg" data-k="memo"><button data-v="0">첫 줄만</button><button data-v="1">모두 펼침</button></div></div>
@@ -206,7 +208,7 @@
       <button class="sh"><span class="lbl">Items</span><i class="cv"></i></button>
       <div class="field"><span>분류 표시</span><div class="seg" data-k="catStyle"><button data-v="ul">밑줄</button><button data-v="bar">세로선</button><button data-v="dot">점</button></div></div>
       <div class="field"><span>시간 위치</span><div class="seg" data-k="tpos"><button data-v="below">할 일 아래</button><button data-v="left">왼쪽 열</button></div></div>
-      <div class="field"><span>디데이 줄</span><div class="seg" data-k="ddPos"><button data-v="both">둘 다</button><button data-v="list">LIST</button><button data-v="today">TODAY</button><button data-v="none">숨김</button></div></div>
+      <div class="field"><span>디데이 줄</span><div class="seg" data-k="ddPos"><button data-v="month">MONTH</button><button data-v="both">LIST·TODAY</button><button data-v="list">LIST</button><button data-v="today">TODAY</button><button data-v="none">숨김</button></div></div>
       <div class="field"><span>리스트 숫자</span><div class="seg" data-k="lStat"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
       <div class="field"><span>리스트 날짜</span><div class="seg" data-k="rDate"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>
       <div class="field"><span>리스트 D-day</span><div class="seg" data-k="dday"><button data-v="1">표시</button><button data-v="0">숨김</button></div></div>

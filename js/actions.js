@@ -52,7 +52,8 @@ $('#wNote').addEventListener('input',e=>{const n=e.target,w=n.dataset.w;clearTim
 function submitFocus(){const a=$('#fAdd');if(!a.value.trim())return;addTask(a.value,dayMode||todayS(),'');a.value='';grow(a)}
 $('#fBtn').onclick=submitFocus;
 $('#fAdd').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&!e.isComposing){e.preventDefault();submitFocus()}});
-$('#moreBtn').onclick=e=>showPv(e.currentTarget,'<span class="lbl">Save image</span>'+['long','45','11','wall'].map(r=>`<button class="mi" data-img="${r}">${{long:'전체 길이',45:'세로 4:5',11:'정사각형 1:1',wall:'아이폰 배경화면'}[r]}<small>${{long:'AUTO',45:'1080×1350',11:'1080×1080',wall:'9:19.5'}[r]}</small></button>`).join('')+'<span class="lbl mh">Print</span><button class="mi" data-act="print">A4 인쇄<small>PDF</small></button>');
+$('#moreBtn').onclick=e=>showPv(e.currentTarget,'<span class="lbl">Save image</span>'+['long','45','11','wall'].map(r=>`<button class="mi" data-img="${r}">${{long:'전체 길이',45:'세로 4:5',11:'정사각형 1:1',wall:'아이폰 배경화면'}[r]}<small>${{long:'AUTO',45:'1080×1350',11:'1080×1080',wall:'9:19.5'}[r]}</small></button>`).join('')+'<span class="lbl mh">Print</span><button class="mi" data-act="print">A4 인쇄<small>PDF</small></button><span class="lbl mh">Show</span>'+[['wNoteShow','주간 메모'],['wfixShow','주간 항목']].map(([k,l])=>`<button class="mi" data-tg="${k}">${l}<small>${on(k)?'ON':'OFF'}</small></button>`).join('')+`<button class="mi" data-tg="planPos">No date 위치<small>${U('planPos')==='top'?'위':'아래'}</small></button>`);
+document.addEventListener('click',e=>{const b=e.target.closest('#pv [data-tg]');if(!b)return;const k=b.dataset.tg;setUI(k,k==='planPos'?(U(k)==='top'?'bottom':'top'):(on(k)?'0':'1'));forceWeek=true;render();hidePv()});
 $('#sort').addEventListener('click',e=>{const b=e.target.closest('button');if(b){cfg.sort=b.dataset.s;save(CFG,cfg);render()}});
 $$('nav button').forEach(b=>b.addEventListener('click',()=>{dayMode=null;view=b.dataset.v;cfg.lastView=view;save(CFG,cfg);render();scrollTo(0,0)}));
 $('#prev').onclick=()=>{weekOff--;render()};$('#next').onclick=()=>{weekOff++;render()};$('#today').onclick=()=>{weekOff=0;render()};
@@ -267,7 +268,11 @@ $('#mNext').onclick=()=>{monOff++;mSel=null;renderMonth()};
 $('#mNow').onclick=()=>{monOff=0;mSel=null;renderMonth()};
 $('#mGrid').addEventListener('click',e=>{const w=e.target.closest('.mwk');if(w){weekOff=Math.round((parse(w.dataset.w)-weekStart(0))/(7*864e5));view='week';cfg.lastView=view;save(CFG,cfg);render();scrollTo(0,0);return}
   const c=e.target.closest('.mc');if(!c)return;const s=c.dataset.d;
-  if(c.classList.contains('out'))monOff+=parse(s)<monthGrid(monOff).first?-1:1;mSel=s;renderMonth()});
+  if(c.classList.contains('out'))monOff+=parse(s)<monthGrid(monOff).first?-1:1;mSel=s;renderMonth();
+  if(matchMedia('(max-width:767px)').matches)$('#vMonth').classList.add('mopen')});
+$('#mpClose').onclick=()=>$('#vMonth').classList.remove('mopen');
+document.addEventListener('click',e=>{const v=$('#vMonth');if(!v.classList.contains('mopen')||e.target.closest('.mpanel,.mc,.back,#pv,#pk,.sheet'))return;v.classList.remove('mopen')});
+document.addEventListener('click',e=>{const g=e.target.closest('.dgrp');if(!g)return;wExp=g.dataset.wk;forceWeek=true;renderWeek()});
 function submitMonth(){const a=$('#mAdd');if(!a.value.trim())return;addTask(a.value,a.dataset.d,'');a.value='';grow(a)}
 $('#mBtn').onclick=submitMonth;
 $('#mAdd').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&!e.isComposing){e.preventDefault();submitMonth()}});
