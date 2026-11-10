@@ -245,7 +245,6 @@ const PRESET={
 function applyUI(){
   const r=document.documentElement, B=document.body, dk=U('theme')==='dark'||(U('theme')==='auto'&&mq.matches)?1:0, li=+U('line')||0;
   r.dataset.theme=U('theme');r.dataset.skin=U('preset')||'default';
-  if(U('preset')==='pencil'&&!$('#pencilFont')){const l=document.createElement('link');l.id='pencilFont';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Pen+Script&family=Courier+Prime&display=swap';document.head.appendChild(l)}
   r.style.setProperty('--fs',cfg.fs+'px');
   {const P=PRESET[U('preset')]||null;
    ['bg','surface'].forEach((k,i)=>{if(P)r.style.setProperty('--'+k,P.bg[dk][i]);else r.style.removeProperty('--'+k)});

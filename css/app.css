@@ -737,9 +737,6 @@ body[data-toast-pos=top] .toast.on{animation:tin3 .2s ease-out}
 :root[data-skin=pencil]{
   --line:#d8d3c8; --hair:#e7e3da;
   --text:#3a3935; --sub:#7b776f; --faint:#aba69c; --danger:#a8857c;
-  --font:"Gowun Dodum","Noto Sans KR",-apple-system,sans-serif;
-  --mono:"Courier Prime","IBM Plex Mono",ui-monospace,monospace;
-  --hand:"Nanum Pen Script","Gowun Dodum",sans-serif;
   --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .33 0 0 0 0 .3 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 :root[data-skin=pencil][data-theme=dark]{--line:#3a3833;--hair:#2e2c28;--text:#dcd8cf;--sub:#9d988e;--faint:#6b675f}
@@ -749,14 +746,6 @@ body[data-toast-pos=top] .toast.on{animation:tin3 .2s ease-out}
 @media print{:root[data-skin=pencil] body::before{display:none}}
 :root[data-skin=pencil][data-theme=dark] body::before{mix-blend-mode:screen;opacity:.12}
 @media (prefers-color-scheme:dark){:root[data-skin=pencil][data-theme=auto] body::before{mix-blend-mode:screen;opacity:.12}}
-:root[data-skin=pencil] body{font-weight:400;letter-spacing:0}
-/* handwritten numerals */
-:root[data-skin=pencil] .big,:root[data-skin=pencil] .dh .d,:root[data-skin=pencil] .stat b,:root[data-skin=pencil] #mpDate{font-family:var(--hand);font-weight:400;letter-spacing:.01em}
-:root[data-skin=pencil] .big{font-size:calc(var(--t-big)*1.22);line-height:.9}
-:root[data-skin=pencil] .dh .d{font-size:calc(var(--t-num)*1.2)}
-:root[data-skin=pencil] .stat b{font-size:1.6rem}
-:root[data-skin=pencil] #mpDate{font-size:1.9rem}
-:root[data-skin=pencil] .lbl{letter-spacing:.1em}
 /* pencil checkbox: drawn box + stroke check */
 :root[data-skin=pencil] .chk{border:1.2px solid var(--sub);border-radius:2px 4px 3px 5px/4px 2px 5px 3px;background:none}
 :root[data-skin=pencil] .chk.on,:root[data-skin=pencil] .pop .chk{background:none;border-color:var(--cc,var(--text))}
