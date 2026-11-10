@@ -23,7 +23,7 @@ const fmtD=s=>{const d=parse(s),st=U('dstyle');return st==='en'?`${MONS[d.getMon
 const bigD=d=>{const st=U('dstyle');return st==='en'?`${MONS[d.getMonth()]} ${d.getDate()}`:st==='ko'?`${d.getMonth()+1}월 ${d.getDate()}일`:`${pz(d.getMonth()+1)}.${pz(d.getDate())}`};
 const load=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
 const save=(k,v)=>{if(k===KEY){saveDb();return}try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
-const APP_VER=28;
+const APP_VER=29;
 
 let db=load(KEY,{tasks:[]});
 let cfg=Object.assign({syncInt:'1',noteOpen:'',sort:'date',fold:true,fs:14,theme:'light',split:1,token:'',gist:'',last:0,start:'list',secs:{Quick:true},gfold:{},wz:1},load(CFG,{}));
@@ -161,6 +161,7 @@ addEventListener('pagehide',()=>flushDb());
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushDb()});
 /* changes (K9, K10) */
 const CHANGES={
+ 29:'연필 테마 (종이 질감 · 흑연색 · 손글씨 숫자) · 설정 > 테마 묶음에서 변경',
  28:'빈 날 묶기 · MONTH 날짜 시트 · 진행률 얇은 선 · 메타 · 구분 · No date 위치 · WEEK 메뉴 정리 · 디데이 줄 MONTH로',
  27:'시간을 할 일 아래에 표시 (설정 > 시간 위치)',
  26:'날짜 없는 할 일 디자인 정리 (2열 목록)',

@@ -5,6 +5,7 @@ try{if(localStorage.getItem(KEY)!==null){await kv('readwrite',s=>s.put(db,'db'))
 dbReady=true;
 if((cfg.seenVer||0)<23){cfg.planFold=false;cfg.planAll=false}
 if((cfg.seenVer||0)<28&&db.ui.ddPos==='both')db.ui.ddPos='month';
+if((cfg.seenVer||0)<29&&db.ui.preset!=='pencil'){Object.assign(db.ui,{preset:'pencil',accent:'custom',accentC:'#6f6b64'});db.uiT=now();save(KEY,db)}
 view=cfg.start==='last'?(['list','week','month','focus','notes'].includes(cfg.lastView)?cfg.lastView:'list'):(cfg.start||'list');
 (function(){
   const q=new URLSearchParams(location.search);if(![...q.keys()].length)return;

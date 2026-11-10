@@ -240,10 +240,12 @@ const mq=matchMedia('(prefers-color-scheme: dark)');
 const PRESET={
   sage:{accent:'sage',bg:[['#f8faf8','#ffffff'],['#1b201d','#222823']],cat:['#a9c2b6','#b8c9a6','#d1c3a6','#b6b9c9','#a3c3c5','#cdc39e','#c7b1b3','#b5bdb8']},
   warm:{accent:'custom',accentC:'#8d8279',bg:[['#faf9f7','#ffffff'],['#201e1c','#282522']],cat:['#cdbba8','#c9b0b0','#b9b49d','#b5aec0','#a9bcb7','#d3c09a','#c2b3a5','#bab5ae']},
+  pencil:{accent:'custom',accentC:'#6f6b64',bg:[['#f6f4ef','#fbfaf6'],['#1e1d1b','#262522']],cat:['#b9a48f','#9fb0a2','#c4a5a0','#a7b0c0','#c9b98f','#b2a6bd','#a3b8b6','#b8b2a8']},
   mono:{accent:'slate',bg:[['#fafafa','#ffffff'],['#1c1c1e','#242427']],cat:['#b9bec4','#c3c7c0','#c9c4bd','#bfbcc6','#b7c2c2','#c9c5b8','#c6bcbe','#bdbdbd']}};
 function applyUI(){
   const r=document.documentElement, B=document.body, dk=U('theme')==='dark'||(U('theme')==='auto'&&mq.matches)?1:0, li=+U('line')||0;
-  r.dataset.theme=U('theme');
+  r.dataset.theme=U('theme');r.dataset.skin=U('preset')||'default';
+  if(U('preset')==='pencil'&&!$('#pencilFont')){const l=document.createElement('link');l.id='pencilFont';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Pen+Script&family=Courier+Prime&display=swap';document.head.appendChild(l)}
   r.style.setProperty('--fs',cfg.fs+'px');
   {const P=PRESET[U('preset')]||null;
    ['bg','surface'].forEach((k,i)=>{if(P)r.style.setProperty('--'+k,P.bg[dk][i]);else r.style.removeProperty('--'+k)});
@@ -253,7 +255,7 @@ function applyUI(){
   r.style.setProperty('--accent',U('accent')==='custom'?toneAcc(U('accentC'),dk):(ACC[U('accent')]||ACC.bluegray)[dk]);
   $('.brand').textContent=U('appName')||'WEEKLY';document.title=U('appName')||'Weekly';
   applyTabs();
-  r.style.setProperty('--hair',HAIR[dk][li]);r.style.setProperty('--line',LINE[dk][li]);
+  r.style.setProperty('--hair',HAIR[dk][li]);r.style.setProperty('--line',LINE[dk][li]);if(U('preset')==='pencil'){const W=[['#ebe7df','#e2ddd3','#d6d0c4'],['#2b2926','#34312d','#3e3b36']][dk];r.style.setProperty('--hair',W[Math.min(li,2)]);r.style.setProperty('--line',W[Math.min(li+1,2)])}
   r.style.setProperty('--ls',U('ls')+'em');r.style.setProperty('--lh',U('lh'));
   r.style.setProperty('--t-big',{s:'2.3rem',m:'2.9rem',l:'3.6rem'}[U('bigSz')]||'2.9rem');B.classList.toggle('t12',U('tfmt')==='12');
   r.style.setProperty('--dn',{loose:1.3,normal:1,tight:.7}[U('dens')]||1);
